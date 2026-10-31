@@ -112,6 +112,186 @@
         </button>
       </div>
 
+      <!-- INTERACTIVE FULL-BODY MUSCLE AVATAR (FRONT & BACK ANATOMY HEATMAP) -->
+      <div class="bg-dark-950/70 rounded-2xl p-3 border border-slate-800/80">
+        
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <div class="flex items-center space-x-2">
+            <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-500 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-cyan-500/20">
+              <i data-lucide="user" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-xs sm:text-sm font-bold text-white uppercase tracking-wider flex items-center space-x-1.5 font-heading">
+                <span>Interactive Muscle Avatar</span>
+                <span class="text-[10px] font-normal text-cyan-400 font-sans hidden sm:inline">(Tap any muscle to filter)</span>
+              </h3>
+              <p class="text-[10px] text-slate-400">Front & Back anatomy heat map • Works across all 3 databases</p>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <!-- Active Selected Muscle Badge -->
+            <div id="active-muscle-badge" class="hidden items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+              <span id="active-muscle-text">Chest</span>
+              <button type="button" onclick="clearMuscleFilter()" class="hover:text-white p-0.5 ml-1" title="Clear muscle filter">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+            <!-- Minimize/Maximize Avatar Toggle -->
+            <button type="button" onclick="toggleAvatarVisibility()" class="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg bg-dark-900 border border-slate-800 flex items-center space-x-1">
+              <span id="avatar-toggle-label">Hide</span>
+              <i data-lucide="chevron-up" id="avatar-toggle-icon" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- SVG Muscle Map Container -->
+        <div id="avatar-interactive-wrapper" class="flex flex-col items-center justify-center pt-1 transition-all duration-300">
+          
+          <div class="w-full max-w-lg mx-auto overflow-hidden">
+            <svg id="muscle-avatar-svg" viewBox="0 0 460 370" class="w-full h-auto max-h-72 sm:max-h-80 select-none">
+              <!-- Defs for glow effects -->
+              <defs>
+                <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#06b6d4" flood-opacity="0.8"/>
+                </filter>
+              </defs>
+
+              <!-- Labels -->
+              <text x="115" y="18" text-anchor="middle" fill="#64748b" font-size="11" font-weight="800" letter-spacing="1">FRONT BODY</text>
+              <text x="345" y="18" text-anchor="middle" fill="#64748b" font-size="11" font-weight="800" letter-spacing="1">BACK BODY</text>
+
+              <!-- Hover / Status indicator inside SVG -->
+              <text id="svg-muscle-tooltip" x="230" y="18" text-anchor="middle" fill="#06b6d4" font-size="11" font-weight="700"></text>
+
+              <!-- =================== FRONT VIEW =================== -->
+              <!-- Head & Neck Base -->
+              <circle cx="115" cy="45" r="15" class="avatar-body-base" />
+              <rect x="109" y="58" width="12" height="14" class="avatar-body-base" />
+              <!-- Traps Front -->
+              <path d="M 109 60 L 121 60 L 128 74 L 102 74 Z" class="muscle-path" data-muscle="traps" data-title="Traps (Neck/Upper Back)" />
+
+              <!-- Front Shoulders -->
+              <path d="M 92 74 C 78 78 74 95 80 108 C 88 110 94 104 98 94 C 99 85 96 76 92 74 Z" class="muscle-path" data-muscle="shoulders" data-title="Front Deltoids (Shoulders)" />
+              <path d="M 138 74 C 152 78 156 95 150 108 C 142 110 136 104 132 94 C 131 85 134 76 138 74 Z" class="muscle-path" data-muscle="shoulders" data-title="Front Deltoids (Shoulders)" />
+
+              <!-- Chest (Pectorals) -->
+              <path d="M 98 80 L 114 80 L 114 114 C 102 116 92 110 90 99 C 89 91 92 84 98 80 Z" class="muscle-path" data-muscle="chest" data-title="Pectorals (Chest)" />
+              <path d="M 132 80 L 116 80 L 116 114 C 128 116 138 110 140 99 C 141 91 138 84 132 80 Z" class="muscle-path" data-muscle="chest" data-title="Pectorals (Chest)" />
+
+              <!-- Biceps -->
+              <path d="M 78 110 C 69 116 68 132 74 146 C 81 146 86 138 86 128 C 86 120 83 114 78 110 Z" class="muscle-path" data-muscle="biceps" data-title="Biceps" />
+              <path d="M 152 110 C 161 116 162 132 156 146 C 149 146 144 138 144 128 C 144 120 147 114 152 110 Z" class="muscle-path" data-muscle="biceps" data-title="Biceps" />
+
+              <!-- Forearms -->
+              <path d="M 72 150 C 62 158 60 180 68 202 C 74 202 78 190 80 176 C 81 164 78 156 72 150 Z" class="muscle-path" data-muscle="forearms" data-title="Forearms" />
+              <path d="M 158 150 C 168 158 170 180 162 202 C 156 202 152 190 150 176 C 149 164 152 156 158 150 Z" class="muscle-path" data-muscle="forearms" data-title="Forearms" />
+
+              <!-- Hands Base -->
+              <circle cx="67" cy="210" r="5" class="avatar-body-base" />
+              <circle cx="163" cy="210" r="5" class="avatar-body-base" />
+
+              <!-- Abdominals / Core / Obliques -->
+              <path d="M 102 118 L 128 118 L 126 164 C 115 168 115 168 104 164 Z" class="muscle-path" data-muscle="abs" data-title="Abdominals (Core)" />
+              <path d="M 93 118 L 101 118 L 103 162 L 95 158 Z" class="muscle-path" data-muscle="abs" data-title="Obliques (Side Core)" />
+              <path d="M 137 118 L 129 118 L 127 162 L 135 158 Z" class="muscle-path" data-muscle="abs" data-title="Obliques (Side Core)" />
+
+              <!-- Pelvis Base -->
+              <polygon points="96,164 134,164 130,180 100,180" class="avatar-body-base" />
+
+              <!-- Quadriceps (Front Thighs) -->
+              <path d="M 96 182 C 86 198 84 228 89 256 C 97 260 104 258 110 248 C 112 224 112 204 111 182 Z" class="muscle-path" data-muscle="quads" data-title="Quadriceps (Quads)" />
+              <path d="M 134 182 C 144 198 146 228 141 256 C 133 260 126 258 120 248 C 118 224 118 204 119 182 Z" class="muscle-path" data-muscle="quads" data-title="Quadriceps (Quads)" />
+
+              <!-- Knees Base -->
+              <circle cx="100" cy="264" r="5" class="avatar-body-base" />
+              <circle cx="130" cy="264" r="5" class="avatar-body-base" />
+
+              <!-- Calves Front -->
+              <path d="M 92 272 C 86 288 86 316 94 338 C 99 340 104 334 106 320 C 107 304 105 286 101 272 Z" class="muscle-path" data-muscle="calves" data-title="Calves & Shin" />
+              <path d="M 138 272 C 144 288 144 316 136 338 C 131 340 126 334 124 320 C 123 304 125 286 129 272 Z" class="muscle-path" data-muscle="calves" data-title="Calves & Shin" />
+
+              <!-- Feet Base -->
+              <ellipse cx="97" cy="346" rx="7" ry="4" class="avatar-body-base" />
+              <ellipse cx="133" cy="346" rx="7" ry="4" class="avatar-body-base" />
+
+
+              <!-- =================== BACK VIEW =================== -->
+              <!-- Head & Neck Base Back -->
+              <circle cx="345" cy="45" r="15" class="avatar-body-base" />
+              <rect x="339" y="58" width="12" height="14" class="avatar-body-base" />
+
+              <!-- Trapezius (Traps / Upper Back) -->
+              <path d="M 339 60 L 351 60 L 366 78 C 358 94 350 108 345 118 C 340 108 332 94 324 78 Z" class="muscle-path" data-muscle="traps" data-title="Trapezius (Upper Back)" />
+
+              <!-- Rear Shoulders (Delts) -->
+              <path d="M 322 74 C 308 78 304 95 310 108 C 318 110 324 104 328 94 C 329 85 326 76 322 74 Z" class="muscle-path" data-muscle="shoulders" data-title="Rear Deltoids (Shoulders)" />
+              <path d="M 368 74 C 382 78 386 95 380 108 C 372 110 366 104 362 94 C 361 85 364 76 368 74 Z" class="muscle-path" data-muscle="shoulders" data-title="Rear Deltoids (Shoulders)" />
+
+              <!-- Triceps -->
+              <path d="M 308 110 C 299 116 298 132 304 146 C 311 146 316 138 316 128 C 316 120 313 114 308 110 Z" class="muscle-path" data-muscle="triceps" data-title="Triceps (Posterior Arms)" />
+              <path d="M 382 110 C 391 116 392 132 386 146 C 379 146 374 138 374 128 C 374 120 377 114 382 110 Z" class="muscle-path" data-muscle="triceps" data-title="Triceps (Posterior Arms)" />
+
+              <!-- Forearms Back -->
+              <path d="M 302 150 C 292 158 290 180 298 202 C 304 202 308 190 310 176 C 311 164 308 156 302 150 Z" class="muscle-path" data-muscle="forearms" data-title="Forearms (Extensors)" />
+              <path d="M 388 150 C 398 158 400 180 392 202 C 386 202 382 190 380 176 C 379 164 382 156 388 150 Z" class="muscle-path" data-muscle="forearms" data-title="Forearms (Extensors)" />
+
+              <!-- Hands Base Back -->
+              <circle cx="297" cy="210" r="5" class="avatar-body-base" />
+              <circle cx="393" cy="210" r="5" class="avatar-body-base" />
+
+              <!-- Lats (Latissimus Dorsi / Wings) -->
+              <path d="M 324 94 C 316 112 316 136 322 160 C 332 156 338 146 340 132 C 336 116 332 104 324 94 Z" class="muscle-path" data-muscle="lats" data-title="Lats (Latissimus Dorsi)" />
+              <path d="M 366 94 C 374 112 374 136 368 160 C 358 156 352 146 350 132 C 354 116 358 104 366 94 Z" class="muscle-path" data-muscle="lats" data-title="Lats (Latissimus Dorsi)" />
+
+              <!-- Lower Back / Spine -->
+              <path d="M 334 138 L 356 138 L 354 178 L 336 178 Z" class="muscle-path" data-muscle="lowerback" data-title="Lower Back & Erector Spinae" />
+
+              <!-- Glutes (Gluteus Maximus) -->
+              <path d="M 320 178 C 312 194 314 216 326 224 C 336 226 342 216 343 196 C 343 184 336 178 320 178 Z" class="muscle-path" data-muscle="glutes" data-title="Glutes (Gluteus Maximus)" />
+              <path d="M 370 178 C 378 194 376 216 364 224 C 354 226 348 216 347 196 C 347 184 354 178 370 178 Z" class="muscle-path" data-muscle="glutes" data-title="Glutes (Gluteus Maximus)" />
+
+              <!-- Hamstrings (Back of Thighs) -->
+              <path d="M 320 226 C 312 244 312 264 318 280 C 326 282 332 278 338 268 C 340 250 340 236 338 226 Z" class="muscle-path" data-muscle="hamstrings" data-title="Hamstrings" />
+              <path d="M 370 226 C 378 244 378 264 372 280 C 364 282 358 278 352 268 C 350 250 350 236 352 226 Z" class="muscle-path" data-muscle="hamstrings" data-title="Hamstrings" />
+
+              <!-- Knees Base Back -->
+              <circle cx="328" cy="284" r="5" class="avatar-body-base" />
+              <circle cx="362" cy="284" r="5" class="avatar-body-base" />
+
+              <!-- Calves Back (Gastrocnemius / Soleus) -->
+              <path d="M 319 288 C 312 304 312 330 320 348 C 325 350 330 344 332 331 C 333 316 332 301 328 288 Z" class="muscle-path" data-muscle="calves" data-title="Calves (Gastrocnemius)" />
+              <path d="M 371 288 C 378 304 378 330 370 348 C 365 350 360 344 358 331 C 357 316 358 301 362 288 Z" class="muscle-path" data-muscle="calves" data-title="Calves (Gastrocnemius)" />
+
+              <!-- Feet Base Back -->
+              <ellipse cx="324" cy="354" rx="7" ry="4" class="avatar-body-base" />
+              <ellipse cx="366" cy="354" rx="7" ry="4" class="avatar-body-base" />
+
+            </svg>
+          </div>
+
+          <!-- Quick Muscle Chips Bar Below Avatar -->
+          <div class="flex flex-wrap items-center justify-center gap-1.5 pt-2 pb-1 text-[11px] max-w-2xl mx-auto">
+            <button type="button" onclick="selectMuscle('chest')" class="muscle-chip px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-chip="chest">Chest</button>
+            <button type="button" onclick="selectMuscle('shoulders')" class="muscle-chip px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-chip="shoulders">Shoulders</button>
+            <button type="button" onclick="selectMuscle('biceps')" class="muscle-chip px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-chip="biceps">Biceps</button>
+            <button type="button" onclick="selectMuscle('triceps')" class="muscle-chip px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-chip="triceps">Triceps</button>
+            <button type="button" onclick="selectMuscle('lats')" class="muscle-chip px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-chip="lats">Lats/Back</button>
+            <button type="button" onclick="selectMuscle('abs')" class="muscle-chip px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-chip="abs">Abs/Core</button>
+            <button type="button" onclick="selectMuscle('quads')" class="muscle-chip px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-chip="quads">Quads</button>
+            <button type="button" onclick="selectMuscle('hamstrings')" class="muscle-chip px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-chip="hamstrings">Hamstrings</button>
+            <button type="button" onclick="selectMuscle('glutes')" class="muscle-chip px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-chip="glutes">Glutes</button>
+            <button type="button" onclick="selectMuscle('calves')" class="muscle-chip px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-chip="calves">Calves</button>
+            <button type="button" onclick="selectMuscle('forearms')" class="muscle-chip px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-chip="forearms">Forearms</button>
+            <button type="button" onclick="selectMuscle('traps')" class="muscle-chip px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-chip="traps">Traps</button>
+            <button type="button" onclick="selectMuscle('lowerback')" class="muscle-chip px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-chip="lowerback">Lower Back</button>
+          </div>
+
+        </div>
+
+      </div>
+
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
         
         <!-- Live Search Input -->

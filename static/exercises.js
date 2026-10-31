@@ -1,9 +1,11 @@
-// Tri-Mode Exercise Library Client Script:
+// Tri-Mode Exercise Library Client Script with Interactive Front & Back Muscle Avatar:
 // 1. 90-Day Plan Routine (64 Moves)
 // 2. Free-Exercise-DB (876 Photos, Mechanics & Levels)
 // 3. ExerciseDB Global (1,324 Animated GIFs & Instructions)
 
 let currentMode = 'plan'; // 'plan', '876', or 'catalog'
+let selectedMuscle = null;
+let isAvatarVisible = true;
 
 // State for 90-Day Plan Mode
 let planExercises = [];
@@ -42,8 +44,104 @@ const PLAN_GROUPS = [
   'Cool-Down Stretches'
 ];
 
+// Interactive Muscle Anatomy Map Dictionary
+const MUSCLE_MAP = {
+  chest: {
+    label: 'Chest (Pectorals)',
+    keywords: ['chest', 'pectoral', 'pec'],
+    fedbCategory: 'Chest',
+    catalogTarget: 'Pectorals',
+    catalogBodyPart: 'Chest'
+  },
+  shoulders: {
+    label: 'Shoulders (Deltoids)',
+    keywords: ['delt', 'shoulder', 'rotator'],
+    fedbCategory: 'Shoulders',
+    catalogTarget: 'Delts',
+    catalogBodyPart: 'Shoulders'
+  },
+  biceps: {
+    label: 'Biceps (Arms)',
+    keywords: ['bicep', 'brachii', 'brachialis'],
+    fedbCategory: 'Biceps',
+    catalogTarget: 'Biceps',
+    catalogBodyPart: 'Upper Arms'
+  },
+  triceps: {
+    label: 'Triceps (Arms)',
+    keywords: ['tricep'],
+    fedbCategory: 'Triceps',
+    catalogTarget: 'Triceps',
+    catalogBodyPart: 'Upper Arms'
+  },
+  forearms: {
+    label: 'Forearms & Grip',
+    keywords: ['forearm', 'wrist'],
+    fedbCategory: 'Forearms',
+    catalogTarget: 'Forearms',
+    catalogBodyPart: 'Lower Arms'
+  },
+  abs: {
+    label: 'Abs & Core',
+    keywords: ['abdomin', 'core', 'waist', 'transverse', 'oblique', 'sit-up'],
+    fedbCategory: 'Abdominals',
+    catalogTarget: 'Abs',
+    catalogBodyPart: 'Waist'
+  },
+  quads: {
+    label: 'Quadriceps (Quads)',
+    keywords: ['quad', 'quadriceps', 'squat', 'leg press'],
+    fedbCategory: 'Quadriceps',
+    catalogTarget: 'Quads',
+    catalogBodyPart: 'Upper Legs'
+  },
+  hamstrings: {
+    label: 'Hamstrings',
+    keywords: ['hamstring', 'rdl', 'deadlift', 'leg curl'],
+    fedbCategory: 'Hamstrings',
+    catalogTarget: 'Hamstrings',
+    catalogBodyPart: 'Upper Legs'
+  },
+  glutes: {
+    label: 'Glutes (Hips)',
+    keywords: ['glute', 'thrust', 'hip'],
+    fedbCategory: 'Glutes',
+    catalogTarget: 'Glutes',
+    catalogBodyPart: 'Upper Legs'
+  },
+  calves: {
+    label: 'Calves',
+    keywords: ['calf', 'calves', 'gastrocnemius', 'soleus'],
+    fedbCategory: 'Calves',
+    catalogTarget: 'Calves',
+    catalogBodyPart: 'Lower Legs'
+  },
+  lats: {
+    label: 'Lats / Back',
+    keywords: ['lat', 'back', 'row', 'pulldown', 'rhomboid'],
+    fedbCategory: 'Lats',
+    catalogTarget: 'Lats',
+    catalogBodyPart: 'Back'
+  },
+  traps: {
+    label: 'Traps (Upper Back/Neck)',
+    keywords: ['trapezius', 'trap', 'shrug'],
+    fedbCategory: 'Traps',
+    catalogTarget: 'Traps',
+    catalogBodyPart: 'Back'
+  },
+  lowerback: {
+    label: 'Lower Back',
+    keywords: ['lower back', 'erector', 'spine', 'hyperextension'],
+    fedbCategory: 'Lower Back',
+    catalogTarget: 'Spine',
+    catalogBodyPart: 'Back'
+  }
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
   setupEventListeners();
+  setupMuscleAvatarListeners();
   await loadInitialData();
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -51,6 +149,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (modeParam === '876' || modeParam === 'catalog') {
     switchLibraryMode(modeParam);
   }
+
+  const muscleParam = urlParams.get('muscle');
+  if (muscleParam && MUSCLE_MAP[muscleParam.toLowerCase()]) {
+    selectMuscle(muscleParam.toLowerCase());
+  }
+
+  lucide.createIcons();
 });
 
 function setupEventListeners() {
@@ -120,6 +225,138 @@ function clearSearch() {
   }
 }
 
+// -------------------------------------------------------------
+// INTERACTIVE MUSCLE AVATAR (FRONT & BACK HEATMAP LOGIC)
+// -------------------------------------------------------------
+function setupMuscleAvatarListeners() {
+  const paths = document.querySelectorAll('.muscle-path');
+  const tooltip = document.getElementById('svg-muscle-tooltip');
+
+  paths.forEach(p => {
+    p.addEventListener('mouseenter', () => {
+      const title = p.getAttribute('data-title') || p.getAttribute('data-muscle');
+      if (tooltip) tooltip.textContent = `Muscle: ${title}`;
+    });
+
+    p.addEventListener('mouseleave', () => {
+      if (tooltip) {
+        if (selectedMuscle && MUSCLE_MAP[selectedMuscle]) {
+          tooltip.textContent = `Active: ${MUSCLE_MAP[selectedMuscle].label}`;
+        } else {
+          tooltip.textContent = '';
+        }
+      }
+    });
+
+    p.addEventListener('click', () => {
+      const muscleKey = p.getAttribute('data-muscle');
+      selectMuscle(muscleKey);
+    });
+  });
+}
+
+function selectMuscle(muscleKey) {
+  if (selectedMuscle === muscleKey) {
+    clearMuscleFilter();
+    return;
+  }
+
+  selectedMuscle = muscleKey;
+  const mInfo = MUSCLE_MAP[muscleKey];
+  if (!mInfo) return;
+
+  // Update SVG active paths on both front and back
+  document.querySelectorAll('.muscle-path').forEach(p => {
+    if (p.getAttribute('data-muscle') === muscleKey) {
+      p.classList.add('active');
+    } else {
+      p.classList.remove('active');
+    }
+  });
+
+  // Highlight quick chip button
+  document.querySelectorAll('.muscle-chip').forEach(c => {
+    if (c.getAttribute('data-chip') === muscleKey) {
+      c.className = "muscle-chip px-2.5 py-1 rounded-lg bg-cyan-500 text-dark-900 font-black border border-cyan-400 shadow-md shadow-cyan-500/30 transition";
+    } else {
+      c.className = "muscle-chip px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition";
+    }
+  });
+
+  // Show active indicator badge
+  const badge = document.getElementById('active-muscle-badge');
+  const text = document.getElementById('active-muscle-text');
+  if (badge && text) {
+    text.innerText = mInfo.label;
+    badge.classList.remove('hidden');
+    badge.classList.add('flex');
+  }
+
+  const tooltip = document.getElementById('svg-muscle-tooltip');
+  if (tooltip) tooltip.textContent = `Active: ${mInfo.label}`;
+
+  // Apply to current mode
+  if (currentMode === 'plan') {
+    applyPlanFilters();
+  } else if (currentMode === '876') {
+    fedbSkip = 0;
+    fedbExercises = [];
+    loadFedbExercises();
+  } else {
+    catalogSkip = 0;
+    catalogExercises = [];
+    loadCatalogExercises();
+  }
+}
+
+function clearMuscleFilter() {
+  selectedMuscle = null;
+
+  document.querySelectorAll('.muscle-path').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.muscle-chip').forEach(c => {
+    c.className = "muscle-chip px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition";
+  });
+
+  const badge = document.getElementById('active-muscle-badge');
+  if (badge) {
+    badge.classList.add('hidden');
+    badge.classList.remove('flex');
+  }
+
+  const tooltip = document.getElementById('svg-muscle-tooltip');
+  if (tooltip) tooltip.textContent = '';
+
+  if (currentMode === 'plan') {
+    applyPlanFilters();
+  } else if (currentMode === '876') {
+    fedbSkip = 0;
+    fedbExercises = [];
+    loadFedbExercises();
+  } else {
+    catalogSkip = 0;
+    catalogExercises = [];
+    loadCatalogExercises();
+  }
+}
+
+function toggleAvatarVisibility() {
+  isAvatarVisible = !isAvatarVisible;
+  const wrapper = document.getElementById('avatar-interactive-wrapper');
+  const label = document.getElementById('avatar-toggle-label');
+  const icon = document.getElementById('avatar-toggle-icon');
+
+  if (isAvatarVisible) {
+    wrapper.classList.remove('hidden');
+    label.innerText = 'Hide';
+    if (icon) icon.setAttribute('data-lucide', 'chevron-up');
+  } else {
+    wrapper.classList.add('hidden');
+    label.innerText = 'Show Avatar';
+    if (icon) icon.setAttribute('data-lucide', 'chevron-down');
+  }
+  lucide.createIcons();
+}
+
 async function loadInitialData() {
   await Promise.all([
     loadPlanExercises(),
@@ -154,22 +391,16 @@ function switchLibraryMode(mode) {
     btn876.className = "py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-emerald-600 text-white shadow-md shadow-emerald-600/30";
     renderFedbCategoryTabs();
     populateFedbEquipment();
-    if (fedbExercises.length === 0) {
-      fedbSkip = 0;
-      loadFedbExercises();
-    } else {
-      renderFedbGrid();
-    }
+    fedbSkip = 0;
+    fedbExercises = [];
+    loadFedbExercises();
   } else if (mode === 'catalog') {
     btnCatalog.className = "py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-cyan-600 text-white shadow-md shadow-cyan-600/30";
     renderCatalogCategoryTabs();
     populateCatalogEquipment();
-    if (catalogExercises.length === 0) {
-      catalogSkip = 0;
-      loadCatalogExercises();
-    } else {
-      renderCatalogGrid();
-    }
+    catalogSkip = 0;
+    catalogExercises = [];
+    loadCatalogExercises();
   }
 }
 
@@ -249,16 +480,29 @@ function populatePlanEquipment() {
 
 function applyPlanFilters() {
   filteredPlanExercises = planExercises.filter(ex => {
+    // 1. Muscle Avatar Filter
+    if (selectedMuscle && MUSCLE_MAP[selectedMuscle]) {
+      const mInfo = MUSCLE_MAP[selectedMuscle];
+      const allText = `${ex.name} ${ex.display_name} ${(ex.primary_muscles || []).join(' ')} ${(ex.secondary_muscles || []).join(' ')} ${ex.category} ${ex.body_group}`.toLowerCase();
+      const matches = mInfo.keywords.some(k => allText.includes(k));
+      if (!matches) return false;
+    }
+
+    // 2. Category Tab Filter
     if (activePlanGroup !== 'All') {
       if ((ex.body_group || '').toLowerCase() !== activePlanGroup.toLowerCase()) {
         return false;
       }
     }
+
+    // 3. Equipment Filter
     if (activeEquipment !== 'All') {
       if (!ex.equipment || !ex.equipment.toLowerCase().includes(activeEquipment.toLowerCase())) {
         return false;
       }
     }
+
+    // 4. Search Filter
     if (searchQuery) {
       const name = (ex.display_name || '').toLowerCase();
       const cat = (ex.category || '').toLowerCase();
@@ -283,18 +527,20 @@ function applyPlanFilters() {
 function renderPlanGrid() {
   const container = document.getElementById('exercises-grid');
   const countBadge = document.getElementById('result-count-badge');
+  const musclePrefix = selectedMuscle && MUSCLE_MAP[selectedMuscle] ? `[${MUSCLE_MAP[selectedMuscle].label}] ` : '';
+
   if (countBadge) {
-    countBadge.innerText = `Showing ${filteredPlanExercises.length} of ${planExercises.length} plan exercises`;
+    countBadge.innerText = `${musclePrefix}Showing ${filteredPlanExercises.length} of ${planExercises.length} plan exercises`;
   }
 
   if (filteredPlanExercises.length === 0) {
     container.innerHTML = `
       <div class="col-span-full py-14 text-center text-slate-400 bg-dark-850/60 rounded-2xl border border-slate-800 p-8">
         <i data-lucide="search-x" class="w-12 h-12 mx-auto mb-3 text-slate-600"></i>
-        <h3 class="text-base font-bold text-white mb-1">No plan exercises match your filter</h3>
-        <p class="text-xs text-slate-400 mb-4">Try clearing your search keyword or switching category tab.</p>
-        <button onclick="clearSearch(); setPlanGroupFilter('All');" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-500">
-          Reset Filters
+        <h3 class="text-base font-bold text-white mb-1">No plan exercises match ${selectedMuscle ? 'selected muscle' : 'your filter'}</h3>
+        <p class="text-xs text-slate-400 mb-4">Try clearing your selection or switching to the 876 / 1,324 dataset tabs.</p>
+        <button onclick="clearSearch(); clearMuscleFilter(); setPlanGroupFilter('All');" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-500">
+          Reset All Filters
         </button>
       </div>
     `;
@@ -465,7 +711,14 @@ async function loadFedbExercises(append = false) {
 
     if (activeFedbCategory !== 'All') params.set('category', activeFedbCategory);
     if (activeEquipment !== 'All') params.set('equipment', activeEquipment);
-    if (searchQuery) params.set('search', searchQuery);
+    
+    // Muscle Avatar filter
+    if (selectedMuscle && MUSCLE_MAP[selectedMuscle]) {
+      params.set('muscle', MUSCLE_MAP[selectedMuscle].fedbCategory);
+    }
+    if (searchQuery) {
+      params.set('search', searchQuery);
+    }
 
     const res = await fetch(`/api/catalog-876?${params.toString()}`);
     const data = await res.json();
@@ -488,8 +741,10 @@ async function loadFedbExercises(append = false) {
 function renderFedbGrid() {
   const container = document.getElementById('exercises-grid');
   const countBadge = document.getElementById('result-count-badge');
+  const musclePrefix = selectedMuscle && MUSCLE_MAP[selectedMuscle] ? `[${MUSCLE_MAP[selectedMuscle].label}] ` : '';
+
   if (countBadge) {
-    countBadge.innerText = `Showing ${fedbExercises.length} of ${fedbTotal} exercises (Free-Exercise-DB 876)`;
+    countBadge.innerText = `${musclePrefix}Showing ${fedbExercises.length} of ${fedbTotal} exercises (Free-Exercise-DB 876)`;
   }
 
   if (fedbExercises.length === 0) {
@@ -497,8 +752,8 @@ function renderFedbGrid() {
       <div class="col-span-full py-14 text-center text-slate-400 bg-dark-850/60 rounded-2xl border border-slate-800 p-8">
         <i data-lucide="search-x" class="w-12 h-12 mx-auto mb-3 text-slate-600"></i>
         <h3 class="text-base font-bold text-white mb-1">No exercises found in Free-Exercise-DB</h3>
-        <p class="text-xs text-slate-400 mb-4">Try clearing your search keyword or changing category.</p>
-        <button onclick="clearSearch(); setFedbCategoryFilter('All');" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-dark-900 hover:bg-emerald-400">
+        <p class="text-xs text-slate-400 mb-4">Try clearing your selection or changing category.</p>
+        <button onclick="clearSearch(); clearMuscleFilter(); setFedbCategoryFilter('All');" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-dark-900 hover:bg-emerald-400">
           Reset Filters
         </button>
       </div>
@@ -740,7 +995,16 @@ async function loadCatalogExercises(append = false) {
 
     if (activeCatalogPart !== 'All') params.set('body_part', activeCatalogPart);
     if (activeEquipment !== 'All') params.set('equipment', activeEquipment);
-    if (searchQuery) params.set('search', searchQuery);
+    
+    // Muscle Avatar Filter
+    if (selectedMuscle && MUSCLE_MAP[selectedMuscle]) {
+      const mInfo = MUSCLE_MAP[selectedMuscle];
+      if (mInfo.catalogTarget) params.set('target', mInfo.catalogTarget);
+      if (mInfo.catalogBodyPart) params.set('body_part', mInfo.catalogBodyPart);
+    }
+    if (searchQuery) {
+      params.set('search', searchQuery);
+    }
 
     const res = await fetch(`/api/catalog?${params.toString()}`);
     const data = await res.json();
@@ -763,8 +1027,10 @@ async function loadCatalogExercises(append = false) {
 function renderCatalogGrid() {
   const container = document.getElementById('exercises-grid');
   const countBadge = document.getElementById('result-count-badge');
+  const musclePrefix = selectedMuscle && MUSCLE_MAP[selectedMuscle] ? `[${MUSCLE_MAP[selectedMuscle].label}] ` : '';
+
   if (countBadge) {
-    countBadge.innerText = `Showing ${catalogExercises.length} of ${catalogTotal} global exercises (ExerciseDB)`;
+    countBadge.innerText = `${musclePrefix}Showing ${catalogExercises.length} of ${catalogTotal} global exercises (ExerciseDB)`;
   }
 
   if (catalogExercises.length === 0) {
@@ -773,7 +1039,7 @@ function renderCatalogGrid() {
         <i data-lucide="search-x" class="w-12 h-12 mx-auto mb-3 text-slate-600"></i>
         <h3 class="text-base font-bold text-white mb-1">No exercises found in ExerciseDB</h3>
         <p class="text-xs text-slate-400 mb-4">Try a different search term or reset filters.</p>
-        <button onclick="clearSearch(); setCatalogPartFilter('All');" class="px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500 text-dark-900 hover:bg-cyan-400">
+        <button onclick="clearSearch(); clearMuscleFilter(); setCatalogPartFilter('All');" class="px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500 text-dark-900 hover:bg-cyan-400">
           Reset Filters
         </button>
       </div>

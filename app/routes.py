@@ -170,6 +170,7 @@ def get_catalog_876(
     level: Optional[str] = None,
     equipment: Optional[str] = None,
     search: Optional[str] = None,
+    muscle: Optional[str] = None,
     limit: int = Query(50, ge=1, le=200),
     skip: int = Query(0, ge=0)
 ):
@@ -184,6 +185,8 @@ def get_catalog_876(
         query["level"] = {"$regex": f"^{level}$", "$options": "i"}
     if equipment and equipment.lower() != "all":
         query["equipment"] = {"$regex": equipment, "$options": "i"}
+    if muscle and muscle.lower() != "all":
+        query["primary_muscles"] = {"$regex": muscle, "$options": "i"}
     if search:
         s = search.strip()
         query["$or"] = [
