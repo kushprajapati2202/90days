@@ -622,6 +622,11 @@ function clearMuscleFilter() {
   }
 }
 
+// Expose muscle filters globally for 3D avatar two-way interaction
+window.selectMuscle = selectMuscle;
+window.clearMuscleFilter = clearMuscleFilter;
+window.filterByAvatarMuscle = selectMuscle;
+
 function toggleAvatarVisibility() {
   isAvatarVisible = !isAvatarVisible;
   const wrapper = document.getElementById('avatar-interactive-wrapper');

@@ -228,11 +228,10 @@
               <!-- WebGL Canvas Mount Element -->
               <div id="avatar-3d-viewport" class="w-full h-full"></div>
 
-              <!-- Model Loading State Overlay -->
-              <div id="avatar-3d-loading" class="absolute inset-0 flex flex-col items-center justify-center bg-dark-950/90 backdrop-blur-md z-30 transition-opacity duration-300">
+              <!-- Model Loading State Overlay (Instant, non-blocking) -->
+              <div id="avatar-3d-loading" class="hidden absolute inset-0 flex-col items-center justify-center bg-dark-950/90 backdrop-blur-md z-30 transition-opacity duration-300 pointer-events-none" style="display: none;">
                 <div class="w-10 h-10 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mb-3"></div>
-                <div id="avatar-3d-loading-text" class="text-xs font-bold text-cyan-300">Loading 3D Anatomy Model (177 Meshes)...</div>
-                <p class="text-[10px] text-slate-400 mt-1">Calibrating Front & Back WebGL Viewports</p>
+                <div id="avatar-3d-loading-text" class="text-xs font-bold text-cyan-300">Instant 3D Viewports Ready</div>
               </div>
 
               <!-- Floating Anatomical HUD Card (Appears when muscle is clicked) -->
