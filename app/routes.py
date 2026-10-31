@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 import logging
+import re
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -34,6 +35,55 @@ def classify_exercise_group(ex: dict) -> str:
     if any(k in p for k in ['bicep', 'tricep', 'forearm', 'brachii', 'brachialis']):
         return 'Arms'
     return 'Strength Lifts'
+
+def calculate_day_completion(day: dict) -> float:
+    """Calculate granular completion percentage based on items done.
+    If any item is marked not done, reduce from 100% (do not force 100% just because completed=True)."""
+    if not day:
+        return 0.0
+
+    warmups = day.get("warmup_stretches") or []
+    warmup_total = len(warmups)
+    warmup_done = sum(1 for s in warmups if s.get("completed"))
+
+    exercises = day.get("parsed_exercises") or []
+    sets_total = 0
+    sets_done = 0
+    for ex in exercises:
+        sets = ex.get("logged_sets") or []
+        if sets:
+            sets_total += len(sets)
+            sets_done += sum(1 for s in sets if s.get("completed"))
+        else:
+            target = ex.get("target") or ""
+            m = re.match(r"^(\d+)", target)
+            planned = int(m.group(1)) if m else 3
+            sets_total += planned
+
+    cond_raw = (day.get("bodyweight_conditioning") or "").lower()
+    has_cond = bool(cond_raw and "optional" not in cond_raw and "no conditioning" not in cond_raw)
+    cond_total = 1 if has_cond else 0
+    cond_done = 1 if (has_cond and day.get("conditioning_completed")) else 0
+
+    cardio_raw = (day.get("cardio") or "").lower()
+    has_cardio = bool(cardio_raw and "none" not in cardio_raw and "optional" not in cardio_raw)
+    cardio_total = 1 if has_cardio else 0
+    cardio_done = 1 if (has_cardio and day.get("cardio_completed")) else 0
+
+    cooldowns = day.get("cooldown_stretches") or []
+    cooldown_total = len(cooldowns)
+    cooldown_done = sum(1 for s in cooldowns if s.get("completed"))
+
+    total = warmup_total + sets_total + cond_total + cardio_total + cooldown_total
+    done = warmup_done + sets_done + cond_done + cardio_done + cooldown_done
+
+    if total == 0:
+        return 100.0 if day.get("completed") else 0.0
+
+    pct = round((done / total) * 100.0, 1)
+    if done < total and pct >= 100.0:
+        pct = 99.0
+    return pct
 
 @router.get("/health")
 def get_health():
@@ -268,15 +318,15 @@ def get_days(
     """Get workout days with flexible filtering."""
     db = get_db()
     query = {}
-    if week is not None:
+    if isinstance(week, int):
         query["week_number"] = week
-    if phase:
+    if isinstance(phase, str) and phase:
         query["phase"] = {"$regex": phase, "$options": "i"}
-    if completed is not None:
+    if isinstance(completed, bool):
         query["completed"] = completed
-    if is_deload is not None:
+    if isinstance(is_deload, bool):
         query["is_deload"] = is_deload
-    if search:
+    if isinstance(search, str) and search:
         query["$or"] = [
             {"day_type": {"$regex": search, "$options": "i"}},
             {"strength_workout": {"$regex": search, "$options": "i"}},
@@ -290,6 +340,8 @@ def get_days(
         if not days and not query:
             seed_database()
             days = list(db.workout_days.find({}, {"_id": 0}).sort("day_number", 1))
+        for d in days:
+            d["completion_percentage"] = calculate_day_completion(d)
         return {"total": len(days), "days": days}
     except HTTPException:
         raise
@@ -307,6 +359,7 @@ def get_day(day_number: int):
     day = db.workout_days.find_one({"day_number": day_number}, {"_id": 0})
     if not day:
         raise HTTPException(status_code=404, detail=f"Day {day_number} not found")
+    day["completion_percentage"] = calculate_day_completion(day)
     return day
 
 @router.patch("/days/{day_number}")
@@ -345,6 +398,8 @@ def update_day(day_number: int, data: DayUpdateModel):
 
     db.workout_days.update_one({"day_number": day_number}, {"$set": update_fields})
     updated = db.workout_days.find_one({"day_number": day_number}, {"_id": 0})
+    if updated:
+        updated["completion_percentage"] = calculate_day_completion(updated)
     return {"status": "success", "day": updated}
 
 @router.post("/days/{day_number}/toggle")
@@ -361,11 +416,14 @@ def toggle_day_completion(day_number: int):
         "completed_at": datetime.now(timezone.utc).isoformat() if new_status else None
     }
     db.workout_days.update_one({"day_number": day_number}, {"$set": update})
+    updated_day = db.workout_days.find_one({"day_number": day_number}, {"_id": 0})
+    pct = calculate_day_completion(updated_day)
     return {
         "status": "success",
         "day_number": day_number,
         "completed": new_status,
-        "completed_at": update["completed_at"]
+        "completed_at": update["completed_at"],
+        "completion_percentage": pct
     }
 
 @router.get("/stats")
@@ -411,6 +469,18 @@ def get_stats():
     phase3_total = db.workout_days.count_documents({"phase": {"$regex": "Phase 3"}})
     phase3_done = db.workout_days.count_documents({"phase": {"$regex": "Phase 3"}, "completed": True})
 
+    # Week breakdown
+    weeks_stats = {}
+    for w in range(1, 14):
+        w_total = db.workout_days.count_documents({"week_number": w})
+        w_done = db.workout_days.count_documents({"week_number": w, "completed": True})
+        weeks_stats[str(w)] = {
+            "week_number": w,
+            "total": w_total,
+            "completed": w_done,
+            "pct": round((w_done / w_total * 100), 1) if w_total else 0.0
+        }
+
     # Weight tracking
     start_weight = float(profile.get("start_weight_kg", 92.5))
     target_weight = float(profile.get("target_weight_kg", 82.0))
@@ -455,6 +525,7 @@ def get_stats():
                 "pct": round((phase3_done / phase3_total * 100), 1) if phase3_total else 0
             }
         },
+        "weeks": weeks_stats,
         "weight_stats": {
             "start_weight_kg": start_weight,
             "target_weight_kg": target_weight,

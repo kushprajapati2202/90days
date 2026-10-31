@@ -153,6 +153,126 @@ async function loadStats() {
   }
 }
 
+// Calculate granular day progress percentage and breakdown
+function getDayCompletionStats(day) {
+  if (!day) return { percentage: 0, completedItems: 0, totalItems: 0, isCompleted: false };
+
+  const isCompleted = !!day.completed;
+
+  // 1. Warmup Stretches
+  const warmups = day.warmup_stretches || [];
+  const warmupTotal = warmups.length;
+  const warmupDone = warmups.filter(s => s.completed).length;
+
+  // 2. Strength Sets
+  const exercises = day.parsed_exercises || [];
+  let setsTotal = 0;
+  let setsDone = 0;
+  exercises.forEach(ex => {
+    const sets = ex.logged_sets || [];
+    if (sets.length > 0) {
+      setsTotal += sets.length;
+      setsDone += sets.filter(s => s.completed).length;
+    } else {
+      let planned = 3;
+      if (ex.target) {
+        const m = ex.target.match(/^(\d+)/);
+        if (m) planned = parseInt(m[1]);
+      }
+      setsTotal += planned;
+    }
+  });
+
+  // 3. Conditioning
+  const condText = (day.bodyweight_conditioning || '').toLowerCase();
+  const hasCond = condText && !condText.includes('optional') && !condText.includes('no conditioning');
+  let condTotal = hasCond ? 1 : 0;
+  let condDone = 0;
+  if (hasCond) {
+    if (day._conditioning_items && day._conditioning_items.length > 0) {
+      condTotal = day._conditioning_items.length;
+      condDone = day._conditioning_items.filter(i => i.completed).length;
+    } else {
+      condDone = day.conditioning_completed ? 1 : 0;
+    }
+  }
+
+  // 4. Cardio
+  const cardioText = (day.cardio || '').toLowerCase();
+  const hasCardio = cardioText && !cardioText.includes('none') && !cardioText.includes('optional');
+  const cardioTotal = hasCardio ? 1 : 0;
+  const cardioDone = (hasCardio && day.cardio_completed) ? 1 : 0;
+
+  // 5. Cooldown Stretches
+  const cooldowns = day.cooldown_stretches || [];
+  const cooldownTotal = cooldowns.length;
+  const cooldownDone = cooldowns.filter(s => s.completed).length;
+
+  const totalItems = warmupTotal + setsTotal + condTotal + cardioTotal + cooldownTotal;
+  const completedItems = warmupDone + setsDone + condDone + cardioDone + cooldownDone;
+
+  let percentage = 0;
+  if (totalItems === 0) {
+    percentage = isCompleted ? 100 : 0;
+  } else {
+    percentage = Math.round((completedItems / totalItems) * 100);
+    // If any item is marked not done, ensure it reduces from 100% and cannot be 100%
+    if (completedItems < totalItems && percentage >= 100) {
+      percentage = 99;
+    }
+  }
+
+  return {
+    percentage,
+    completedItems,
+    totalItems,
+    isCompleted,
+    breakdown: {
+      warmup: { done: warmupDone, total: warmupTotal },
+      sets: { done: setsDone, total: setsTotal },
+      conditioning: { done: condDone, total: condTotal },
+      cardio: { done: cardioDone, total: cardioTotal },
+      cooldown: { done: cooldownDone, total: cooldownTotal }
+    }
+  };
+}
+
+function updateWeekPillsProgress(s) {
+  const allPill = document.querySelector('.week-pill[data-week=""]');
+  if (allPill && s) {
+    allPill.innerText = `All (90 Days • ${s.completion_percentage}%)`;
+  }
+
+  if (s && s.weeks) {
+    for (let w = 1; w <= 13; w++) {
+      const pill = document.querySelector(`.week-pill[data-week="${w}"]`);
+      const wData = s.weeks[String(w)];
+      if (pill && wData) {
+        let label = `W${w}`;
+        if (w === 4 || w === 8 || w === 12) {
+          label += ` ⚡ DELOAD`;
+        } else if (w === 5) {
+          label += ` (Progress)`;
+        } else if (w === 10) {
+          label += ` (Consolidate)`;
+        } else if (w === 13) {
+          label += ` (Peak)`;
+        }
+        if (wData.pct > 0) {
+          label += ` • ${wData.pct}%`;
+        }
+        pill.innerText = label;
+      }
+    }
+  }
+
+  // Update filter pill counts
+  const compFilter = document.querySelector('.filter-pill[data-filter="completed"]');
+  if (compFilter && s) compFilter.innerText = `Completed (${s.completed_days})`;
+  const pendFilter = document.querySelector('.filter-pill[data-filter="pending"]');
+  if (pendFilter && s) pendFilter.innerText = `Pending (${s.remaining_days})`;
+}
+
 function renderStats(s) {
   if (!s) return;
   document.getElementById('hero-days-completed').innerText = s.completed_days;
@@ -166,14 +286,22 @@ function renderStats(s) {
   document.getElementById('overall-progress-bar').style.width = `${s.completion_percentage}%`;
   
   if (s.phases && s.phases.phase1) {
-    document.getElementById('p1-count').innerText = `${s.phases.phase1.completed}/${s.phases.phase1.total} Done`;
+    document.getElementById('p1-count').innerText = `${s.phases.phase1.completed}/${s.phases.phase1.total} Done (${s.phases.phase1.pct}%)`;
+    const p1Bar = document.getElementById('p1-bar');
+    if (p1Bar) p1Bar.style.width = `${s.phases.phase1.pct}%`;
   }
   if (s.phases && s.phases.phase2) {
-    document.getElementById('p2-count').innerText = `${s.phases.phase2.completed}/${s.phases.phase2.total} Done`;
+    document.getElementById('p2-count').innerText = `${s.phases.phase2.completed}/${s.phases.phase2.total} Done (${s.phases.phase2.pct}%)`;
+    const p2Bar = document.getElementById('p2-bar');
+    if (p2Bar) p2Bar.style.width = `${s.phases.phase2.pct}%`;
   }
   if (s.phases && s.phases.phase3) {
-    document.getElementById('p3-count').innerText = `${s.phases.phase3.completed}/${s.phases.phase3.total} Done`;
+    document.getElementById('p3-count').innerText = `${s.phases.phase3.completed}/${s.phases.phase3.total} Done (${s.phases.phase3.pct}%)`;
+    const p3Bar = document.getElementById('p3-bar');
+    if (p3Bar) p3Bar.style.width = `${s.phases.phase3.pct}%`;
   }
+
+  updateWeekPillsProgress(s);
 }
 
 // Load Days
@@ -213,6 +341,237 @@ async function loadDays() {
   }
 }
 
+// Helper: Build single day card HTML
+function buildDayCardHTML(day) {
+  const isCompleted = !!day.completed;
+  const isRecovery = day.day_type.toLowerCase().includes('recovery');
+  const isDeload = day.is_deload;
+
+  const stats = getDayCompletionStats(day);
+  const pct = stats.percentage;
+
+  let badgeClass = 'badge-push';
+  if (day.day_type.toLowerCase().includes('pull')) badgeClass = 'badge-pull';
+  else if (day.day_type.toLowerCase().includes('legs')) badgeClass = 'badge-legs';
+  else if (isRecovery) badgeClass = 'badge-recovery';
+
+  let cardBorder = 'border-slate-800 bg-dark-850';
+  if (pct === 100) {
+    cardBorder = 'border-emerald-500/40 bg-emerald-950/15 shadow-[0_0_15px_-4px_rgba(16,185,129,0.2)]';
+  } else if (pct > 0) {
+    cardBorder = 'border-cyan-500/40 bg-cyan-950/15 shadow-[0_0_15px_-4px_rgba(6,182,212,0.2)]';
+  } else if (isDeload) {
+    cardBorder = 'border-amber-500/35 bg-amber-950/10';
+  }
+
+  const warmupCount = (day.warmup_stretches || []).length || 5;
+  const cooldownCount = (day.cooldown_stretches || []).length || 5;
+
+  let pctBadgeClass = 'bg-dark-900 text-slate-500 border border-slate-700/80';
+  if (pct === 100) {
+    pctBadgeClass = 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-black';
+  } else if (pct > 0) {
+    pctBadgeClass = 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-black';
+  }
+
+  return `
+    <div id="day-card-${day.day_number}" class="glass-card rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between border ${cardBorder} relative active:border-cyan-500/50 transition-all duration-200" onclick="handleCardClick(${day.day_number}, event)">
+      
+      <div>
+        <!-- Top Row: Day #, Date, Phase, Deload Tag, Progress %, Checkbox -->
+        <div class="flex items-center justify-between gap-1.5 mb-2">
+          <div class="flex items-center space-x-1.5">
+            <span class="px-2 py-0.5 rounded-md text-[11px] font-black font-heading tracking-wide ${isCompleted ? 'bg-emerald-500 text-dark-900' : 'bg-dark-900 text-cyan-400 border border-slate-700'}">
+              DAY ${day.day_number}
+            </span>
+            <span class="text-xs font-semibold text-slate-200">${day.date_display}</span>
+            <span class="text-[10px] text-slate-500 font-medium">W${day.week_number}</span>
+          </div>
+
+          <!-- Deload & Completion Badge & Checkbox -->
+          <div class="flex items-center space-x-2" onclick="event.stopPropagation()">
+            ${isDeload ? `<span class="badge-deload px-1.5 py-0.2 rounded text-[9px] font-black">DELOAD</span>` : ''}
+            
+            <span class="px-2 py-0.5 rounded-md text-[11px] font-mono ${pctBadgeClass}" title="Day completion progress">
+              ${pct}%
+            </span>
+
+            <label class="flex items-center cursor-pointer p-0.5" title="Tap to Toggle Completed">
+              <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleDayCompletionDirect(${day.day_number}, event)" class="custom-checkbox">
+            </label>
+          </div>
+        </div>
+
+        <!-- Day Type Badge -->
+        <div class="mb-2">
+          <span class="${badgeClass} px-2 py-0.5 rounded-md text-xs font-bold inline-block">
+            ${day.day_type.split('\n')[0]}
+          </span>
+        </div>
+
+        <!-- Day Completion Progress Bar -->
+        <div class="mb-2.5 bg-dark-900/60 p-2 rounded-xl border border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] mb-1 font-semibold">
+            <span class="text-slate-400 flex items-center space-x-1">
+              <i data-lucide="${pct === 100 ? 'check-circle-2' : (pct > 0 ? 'clock' : 'circle')}" class="w-3 h-3 ${pct === 100 ? 'text-emerald-400' : (pct > 0 ? 'text-cyan-400' : 'text-slate-500')}"></i>
+              <span class="${pct === 100 ? 'text-emerald-300 font-bold' : (pct > 0 ? 'text-cyan-300 font-semibold' : 'text-slate-400')}">
+                ${pct === 100 ? 'Completed (100%)' : (isCompleted ? `Logged (${pct}%)` : (pct > 0 ? 'In Progress' : 'Pending'))}
+              </span>
+            </span>
+            <span class="font-black font-mono text-xs ${pct === 100 ? 'text-emerald-400' : (pct > 0 ? 'text-cyan-400' : 'text-slate-500')}">
+              ${pct}%
+            </span>
+          </div>
+          <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-slate-800/50">
+            <div class="h-full rounded-full transition-all duration-500 ${pct === 100 ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : (pct > 0 ? 'bg-gradient-to-r from-cyan-500 to-indigo-500 shadow-[0_0_8px_rgba(6,182,212,0.4)]' : 'bg-transparent')}" style="width: ${pct}%"></div>
+          </div>
+        </div>
+
+        <!-- Strength Lifts Preview -->
+        <div class="text-xs text-slate-300 bg-dark-900/70 p-2.5 rounded-xl border border-slate-800/80 mb-2 min-h-[48px] line-clamp-2">
+          ${day.strength_workout}
+        </div>
+
+        <!-- Stretches & Protocol Chips -->
+        <div class="flex items-center justify-between text-[10px] text-slate-400 bg-dark-900/40 p-2 rounded-lg border border-slate-800/60 mb-2.5">
+          <span class="flex items-center space-x-1 text-cyan-400 font-semibold">
+            <i data-lucide="wind" class="w-3 h-3"></i>
+            <span>${warmupCount} Dynamic Stretches</span>
+          </span>
+          <span class="text-slate-600">•</span>
+          <span class="flex items-center space-x-1 text-indigo-400 font-semibold">
+            <i data-lucide="heart-pulse" class="w-3 h-3"></i>
+            <span>${cooldownCount} Static Stretches</span>
+          </span>
+        </div>
+
+        <!-- Quick Meta Chips: Time, Steps, Effort -->
+        <div class="grid grid-cols-3 gap-1 text-[10px] text-slate-400 mb-2.5">
+          <div class="bg-dark-900/60 px-1.5 py-1 rounded border border-slate-800 text-center truncate" title="Duration">
+            ⏱️ ${day.target_duration}
+          </div>
+          <div class="bg-dark-900/60 px-1.5 py-1 rounded border border-slate-800 text-center truncate" title="Daily Steps">
+            👟 ${day.daily_steps_target}
+          </div>
+          <div class="bg-dark-900/60 px-1.5 py-1 rounded border border-slate-800 text-center truncate" title="Effort">
+            ⚡ ${day.effort_target.replace('RPE ', '')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+        <div class="text-[11px]">
+          ${day.actual_weight_kg 
+            ? `<span class="text-emerald-400 font-bold">⚖️ ${day.actual_weight_kg} kg • ${pct}%</span>` 
+            : (pct === 100 
+                ? `<span class="text-emerald-400 font-semibold flex items-center space-x-1"><i data-lucide="check" class="w-3.5 h-3.5 inline"></i><span>100% Completed</span></span>` 
+                : (pct > 0 ? `<span class="text-cyan-400 font-semibold">${pct}% Done</span>` : '<span class="text-slate-500">Not logged</span>')
+              )
+          }
+        </div>
+        <button type="button" class="px-2.5 py-1 rounded-lg text-xs font-bold text-cyan-400 hover:text-cyan-300 bg-dark-900 hover:bg-slate-800 border border-slate-700 flex items-center space-x-1">
+          <span>View Full Plan</span>
+          <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+
+    </div>
+  `;
+}
+
+// Update single card in DOM dynamically without touching other cards
+function renderSingleCard(dayNumber) {
+  const cardEl = document.getElementById(`day-card-${dayNumber}`);
+  const day = allDays.find(d => d.day_number === dayNumber);
+  if (!cardEl || !day) return;
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = buildDayCardHTML(day);
+  const newCardEl = tempDiv.firstElementChild;
+  if (newCardEl) {
+    cardEl.replaceWith(newCardEl);
+    lucide.createIcons();
+  }
+}
+
+// Recalculate stats dynamically on the fly without network request
+function recalculateStatsOnTheFly() {
+  if (!allDays || allDays.length === 0) return;
+
+  const totalDays = allDays.length;
+  const completedDays = allDays.filter(d => d.completed).length;
+  const remainingDays = totalDays - completedDays;
+  const overallPct = Math.round((completedDays / totalDays) * 100 * 10) / 10;
+
+  // Streak calculation (backwards from latest completed day)
+  let currentStreak = 0;
+  for (let i = allDays.length - 1; i >= 0; i--) {
+    if (allDays[i].completed) {
+      currentStreak++;
+    } else if (currentStreak > 0) {
+      break;
+    }
+  }
+
+  // Weight tracking: latest logged weight
+  let currentWeight = null;
+  for (let i = allDays.length - 1; i >= 0; i--) {
+    if (allDays[i].actual_weight_kg) {
+      currentWeight = allDays[i].actual_weight_kg;
+      break;
+    }
+  }
+
+  // Phase breakdowns
+  const p1Days = allDays.filter(d => (d.phase || '').toLowerCase().includes('phase 1'));
+  const p1Total = p1Days.length || 28;
+  const p1Done = p1Days.filter(d => d.completed).length;
+  const p1Pct = p1Total ? Math.round((p1Done / p1Total) * 100 * 10) / 10 : 0;
+
+  const p2Days = allDays.filter(d => (d.phase || '').toLowerCase().includes('phase 2'));
+  const p2Total = p2Days.length || 35;
+  const p2Done = p2Days.filter(d => d.completed).length;
+  const p2Pct = p2Total ? Math.round((p2Done / p2Total) * 100 * 10) / 10 : 0;
+
+  const p3Days = allDays.filter(d => (d.phase || '').toLowerCase().includes('phase 3'));
+  const p3Total = p3Days.length || 27;
+  const p3Done = p3Days.filter(d => d.completed).length;
+  const p3Pct = p3Total ? Math.round((p3Done / p3Total) * 100 * 10) / 10 : 0;
+
+  // Weeks breakdown
+  const weeks = {};
+  for (let w = 1; w <= 13; w++) {
+    const wDays = allDays.filter(d => d.week_number === w);
+    const wTotal = wDays.length;
+    const wDone = wDays.filter(d => d.completed).length;
+    const wPct = wTotal ? Math.round((wDone / wTotal) * 100 * 10) / 10 : 0;
+    weeks[String(w)] = { week_number: w, total: wTotal, completed: wDone, pct: wPct };
+  }
+
+  const simulatedStats = {
+    total_days: totalDays,
+    completed_days: completedDays,
+    remaining_days: remainingDays,
+    completion_percentage: overallPct,
+    current_streak: currentStreak,
+    phases: {
+      phase1: { total: p1Total, completed: p1Done, pct: p1Pct },
+      phase2: { total: p2Total, completed: p2Done, pct: p2Pct },
+      phase3: { total: p3Total, completed: p3Done, pct: p3Pct }
+    },
+    weeks: weeks,
+    weight_stats: currentWeight ? { current_weight_kg: currentWeight } : (statsData ? statsData.weight_stats : null)
+  };
+
+  renderStats(simulatedStats);
+
+  const countEl = document.getElementById('filtered-count');
+  if (countEl) {
+    const currentRenderedCards = document.querySelectorAll('#workout-grid > div[id^="day-card-"]').length;
+    countEl.innerText = `Showing ${currentRenderedCards} of ${allDays.length} days • ${completedDays} completed (${overallPct}%)`;
+  }
+}
+
 // Filter and render workout grid
 function renderWorkoutGrid() {
   const grid = document.getElementById('workout-grid');
@@ -245,7 +604,9 @@ function renderWorkoutGrid() {
     return true;
   });
 
-  document.getElementById('filtered-count').innerText = `Showing ${filtered.length} of ${allDays.length} days`;
+  const completedCount = allDays.filter(d => d.completed).length;
+  const overallPct = allDays.length > 0 ? ((completedCount / allDays.length) * 100).toFixed(1) : 0;
+  document.getElementById('filtered-count').innerText = `Showing ${filtered.length} of ${allDays.length} days • ${completedCount} completed (${overallPct}%)`;
 
   if (filtered.length === 0) {
     grid.innerHTML = `
@@ -261,100 +622,7 @@ function renderWorkoutGrid() {
     return;
   }
 
-  grid.innerHTML = filtered.map(day => {
-    const isCompleted = day.completed;
-    const isRecovery = day.day_type.toLowerCase().includes('recovery');
-    const isDeload = day.is_deload;
-
-    let badgeClass = 'badge-push';
-    if (day.day_type.toLowerCase().includes('pull')) badgeClass = 'badge-pull';
-    else if (day.day_type.toLowerCase().includes('legs')) badgeClass = 'badge-legs';
-    else if (isRecovery) badgeClass = 'badge-recovery';
-
-    const cardBorder = isCompleted ? 'border-emerald-500/40 bg-emerald-950/15' : (isDeload ? 'border-amber-500/35 bg-amber-950/10' : 'border-slate-800 bg-dark-850');
-    const warmupCount = (day.warmup_stretches || []).length || 5;
-    const cooldownCount = (day.cooldown_stretches || []).length || 5;
-
-    return `
-      <div id="day-card-${day.day_number}" class="glass-card rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between border ${cardBorder} relative active:border-cyan-500/50" onclick="handleCardClick(${day.day_number}, event)">
-        
-        <div>
-          <!-- Top Row: Day #, Date, Phase, Deload Tag, Checkbox -->
-          <div class="flex items-center justify-between gap-1.5 mb-2">
-            <div class="flex items-center space-x-1.5">
-              <span class="px-2 py-0.5 rounded-md text-[11px] font-black font-heading tracking-wide ${isCompleted ? 'bg-emerald-500 text-dark-900' : 'bg-dark-900 text-cyan-400 border border-slate-700'}">
-                DAY ${day.day_number}
-              </span>
-              <span class="text-xs font-semibold text-slate-200">${day.date_display}</span>
-              <span class="text-[10px] text-slate-500 font-medium">W${day.week_number}</span>
-            </div>
-
-            <!-- Deload & Touch Checkbox -->
-            <div class="flex items-center space-x-2" onclick="event.stopPropagation()">
-              ${isDeload ? `<span class="badge-deload px-1.5 py-0.2 rounded text-[9px] font-black">DELOAD</span>` : ''}
-              <label class="flex items-center cursor-pointer p-0.5" title="Tap to Toggle Completed">
-                <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleDayCompletionDirect(${day.day_number}, event)" class="custom-checkbox">
-              </label>
-            </div>
-          </div>
-
-          <!-- Day Type Badge -->
-          <div class="mb-2">
-            <span class="${badgeClass} px-2 py-0.5 rounded-md text-xs font-bold inline-block">
-              ${day.day_type.split('\n')[0]}
-            </span>
-          </div>
-
-          <!-- Strength Lifts Preview -->
-          <div class="text-xs text-slate-300 bg-dark-900/70 p-2.5 rounded-xl border border-slate-800/80 mb-2 min-h-[48px] line-clamp-2">
-            ${day.strength_workout}
-          </div>
-
-          <!-- Stretches & Protocol Chips -->
-          <div class="flex items-center justify-between text-[10px] text-slate-400 bg-dark-900/40 p-2 rounded-lg border border-slate-800/60 mb-2.5">
-            <span class="flex items-center space-x-1 text-cyan-400 font-semibold">
-              <i data-lucide="wind" class="w-3 h-3"></i>
-              <span>${warmupCount} Dynamic Stretches</span>
-            </span>
-            <span class="text-slate-600">•</span>
-            <span class="flex items-center space-x-1 text-indigo-400 font-semibold">
-              <i data-lucide="heart-pulse" class="w-3 h-3"></i>
-              <span>${cooldownCount} Static Stretches</span>
-            </span>
-          </div>
-
-          <!-- Quick Meta Chips: Time, Steps, Effort -->
-          <div class="grid grid-cols-3 gap-1 text-[10px] text-slate-400 mb-2.5">
-            <div class="bg-dark-900/60 px-1.5 py-1 rounded border border-slate-800 text-center truncate" title="Duration">
-              ⏱️ ${day.target_duration}
-            </div>
-            <div class="bg-dark-900/60 px-1.5 py-1 rounded border border-slate-800 text-center truncate" title="Daily Steps">
-              👟 ${day.daily_steps_target}
-            </div>
-            <div class="bg-dark-900/60 px-1.5 py-1 rounded border border-slate-800 text-center truncate" title="Effort">
-              ⚡ ${day.effort_target.replace('RPE ', '')}
-            </div>
-          </div>
-        </div>
-
-        <!-- Action Footer -->
-        <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
-          <div class="text-[11px]">
-            ${day.actual_weight_kg 
-              ? `<span class="text-emerald-400 font-bold">⚖️ ${day.actual_weight_kg} kg</span>` 
-              : (day.completed ? '<span class="text-emerald-400 font-semibold">✓ Completed</span>' : '<span class="text-slate-500">Not logged</span>')
-            }
-          </div>
-          <button type="button" class="px-2.5 py-1 rounded-lg text-xs font-bold text-cyan-400 hover:text-cyan-300 bg-dark-900 hover:bg-slate-800 border border-slate-700 flex items-center space-x-1">
-            <span>View Full Plan</span>
-            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-          </button>
-        </div>
-
-      </div>
-    `;
-  }).join('');
-
+  grid.innerHTML = filtered.map(day => buildDayCardHTML(day)).join('');
   lucide.createIcons();
 }
 
@@ -375,10 +643,13 @@ async function toggleDayCompletionDirect(dayNumber, event) {
     if (d) {
       d.completed = data.completed;
       d.completed_at = data.completed_at;
+      if (data.completion_percentage !== undefined) {
+        d.completion_percentage = data.completion_percentage;
+      }
     }
     
-    await loadStats();
-    renderWorkoutGrid();
+    renderSingleCard(dayNumber);
+    recalculateStatsOnTheFly();
     
     if (data.completed) {
       showToast(`Day ${dayNumber} completed! Keep going Kush 🔥`, 'success');
@@ -438,16 +709,217 @@ function openWorkoutModal(dayNumber) {
 
   document.getElementById('modal-completed-checkbox').checked = !!day.completed;
 
+  // Initialize auto-save indicator
+  const indicator = document.getElementById('modal-autosave-indicator');
+  if (indicator) {
+    indicator.innerHTML = `<span class="text-emerald-400 flex items-center space-x-1"><i data-lucide="cloud-check" class="w-3.5 h-3.5 text-emerald-400"></i><span>Auto-saved</span></span>`;
+  }
+
+  // Update live session progress
+  updateModalProgress();
+
   // Show Modal
   document.getElementById('workout-modal').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
   lucide.createIcons();
 }
 
+let modalAutoSaveTimer = null;
+let isModalSaving = false;
+let hasPendingModalSave = false;
+
+function triggerModalAutoSave(immediate = false) {
+  if (!currentModalDay) return;
+
+  // 1. Synchronize form inputs into currentModalDay
+  const chk = document.getElementById('modal-completed-checkbox');
+  if (chk) currentModalDay.completed = chk.checked;
+
+  const wInput = document.getElementById('input-modal-weight');
+  if (wInput) currentModalDay.actual_weight_kg = wInput.value ? parseFloat(wInput.value) : null;
+
+  const sInput = document.getElementById('input-modal-steps');
+  if (sInput) currentModalDay.actual_steps = sInput.value ? parseInt(sInput.value) : null;
+
+  const dInput = document.getElementById('input-modal-duration');
+  if (dInput) currentModalDay.actual_duration_min = dInput.value ? parseInt(dInput.value) : null;
+
+  const rInput = document.getElementById('input-modal-rpe');
+  if (rInput) currentModalDay.rpe_rating = rInput.value ? parseFloat(rInput.value) : null;
+
+  const nInput = document.getElementById('input-modal-notes');
+  if (nInput) currentModalDay.user_notes = nInput.value || '';
+
+  // 2. Synchronize to allDays in memory
+  const day = allDays.find(d => d.day_number === currentModalDay.day_number);
+  if (day) {
+    day.completed = currentModalDay.completed;
+    day.actual_weight_kg = currentModalDay.actual_weight_kg;
+    day.actual_steps = currentModalDay.actual_steps;
+    day.actual_duration_min = currentModalDay.actual_duration_min;
+    day.rpe_rating = currentModalDay.rpe_rating;
+    day.user_notes = currentModalDay.user_notes;
+    day.parsed_exercises = currentModalDay.parsed_exercises;
+    day.warmup_stretches = currentModalDay.warmup_stretches;
+    day.cooldown_stretches = currentModalDay.cooldown_stretches;
+    day.conditioning_completed = currentModalDay.conditioning_completed;
+    day.cardio_completed = currentModalDay.cardio_completed;
+    day._conditioning_items = currentModalDay._conditioning_items;
+    day.completion_percentage = getDayCompletionStats(day).percentage;
+  }
+
+  // 3. Update UI on the fly
+  updateModalProgress();
+  renderSingleCard(currentModalDay.day_number);
+  recalculateStatsOnTheFly();
+
+  // 4. Update status indicator
+  const indicator = document.getElementById('modal-autosave-indicator');
+  if (indicator) {
+    indicator.innerHTML = `<span class="text-amber-400 flex items-center space-x-1"><svg class="animate-spin w-3 h-3 text-amber-400 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg><span>Saving...</span></span>`;
+  }
+
+  // 5. Debounce or execute save
+  if (modalAutoSaveTimer) {
+    clearTimeout(modalAutoSaveTimer);
+    modalAutoSaveTimer = null;
+  }
+
+  if (immediate) {
+    performModalSave();
+  } else {
+    modalAutoSaveTimer = setTimeout(() => {
+      performModalSave();
+    }, 400);
+  }
+}
+
+async function performModalSave() {
+  if (!currentModalDay) return;
+  if (modalAutoSaveTimer) {
+    clearTimeout(modalAutoSaveTimer);
+    modalAutoSaveTimer = null;
+  }
+
+  if (isModalSaving) {
+    hasPendingModalSave = true;
+    return;
+  }
+
+  isModalSaving = true;
+  const dayNumber = currentModalDay.day_number;
+  const indicator = document.getElementById('modal-autosave-indicator');
+
+  try {
+    const isCompleted = document.getElementById('modal-completed-checkbox')?.checked ?? !!currentModalDay.completed;
+    const weightVal = document.getElementById('input-modal-weight')?.value;
+    const stepsVal = document.getElementById('input-modal-steps')?.value;
+    const durationVal = document.getElementById('input-modal-duration')?.value;
+    const rpeVal = document.getElementById('input-modal-rpe')?.value;
+    const notesVal = document.getElementById('input-modal-notes')?.value;
+
+    const payload = {
+      completed: isCompleted,
+      actual_weight_kg: weightVal ? parseFloat(weightVal) : null,
+      actual_steps: stepsVal ? parseInt(stepsVal) : null,
+      actual_duration_min: durationVal ? parseInt(durationVal) : null,
+      rpe_rating: rpeVal ? parseFloat(rpeVal) : null,
+      user_notes: notesVal || "",
+      parsed_exercises: currentModalDay.parsed_exercises || [],
+      warmup_stretches: currentModalDay.warmup_stretches || [],
+      cooldown_stretches: currentModalDay.cooldown_stretches || [],
+      conditioning_completed: !!(currentModalDay.conditioning_completed),
+      cardio_completed: !!(currentModalDay.cardio_completed)
+    };
+
+    const res = await fetch(`/api/days/${dayNumber}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) throw new Error("Failed to save to backend");
+    const data = await res.json();
+
+    const idx = allDays.findIndex(d => d.day_number === dayNumber);
+    if (idx !== -1 && data.day) {
+      allDays[idx] = data.day;
+    }
+
+    if (indicator) {
+      indicator.innerHTML = `<span class="text-emerald-400 flex items-center space-x-1"><i data-lucide="cloud-check" class="w-3.5 h-3.5 text-emerald-400"></i><span>Auto-saved</span></span>`;
+      lucide.createIcons();
+    }
+  } catch (err) {
+    console.error("Auto-save error:", err);
+    if (indicator) {
+      indicator.innerHTML = `<span class="text-rose-400 text-[11px]">Save error</span>`;
+    }
+  } finally {
+    isModalSaving = false;
+    if (hasPendingModalSave) {
+      hasPendingModalSave = false;
+      performModalSave();
+    }
+  }
+}
+
 function closeWorkoutModal() {
+  if (modalAutoSaveTimer) {
+    clearTimeout(modalAutoSaveTimer);
+    modalAutoSaveTimer = null;
+    performModalSave();
+  }
   document.getElementById('workout-modal').classList.add('hidden');
   document.body.style.overflow = '';
   currentModalDay = null;
+}
+
+// Live Session Progress inside Workout Modal
+function updateModalProgress() {
+  if (!currentModalDay) return;
+
+  const chk = document.getElementById('modal-completed-checkbox');
+  const isDone = chk ? chk.checked : !!currentModalDay.completed;
+  
+  const tempDay = { ...currentModalDay, completed: isDone };
+  const stats = getDayCompletionStats(tempDay);
+  const pct = stats.percentage;
+
+  const pctEl = document.getElementById('modal-progress-pct');
+  const barEl = document.getElementById('modal-progress-bar');
+  const bdownEl = document.getElementById('modal-progress-breakdown');
+
+  if (pctEl) {
+    pctEl.innerText = `${pct}%`;
+    pctEl.className = `font-black font-mono text-sm ${pct === 100 ? 'text-emerald-400' : (pct > 0 ? 'text-cyan-400' : 'text-slate-400')}`;
+  }
+
+  if (barEl) {
+    barEl.style.width = `${pct}%`;
+    if (pct === 100) {
+      barEl.className = 'h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-300 shadow-[0_0_10px_rgba(16,185,129,0.5)]';
+    } else {
+      barEl.className = 'h-full rounded-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-emerald-400 transition-all duration-300';
+    }
+  }
+
+  if (bdownEl) {
+    const b = stats.breakdown;
+    const items = [];
+    if (b.warmup.total > 0) items.push(`Warmups: ${b.warmup.done}/${b.warmup.total}`);
+    if (b.sets.total > 0) items.push(`Sets: ${b.sets.done}/${b.sets.total}`);
+    if (b.conditioning.total > 0) items.push(`Cond: ${b.conditioning.done}/${b.conditioning.total}`);
+    if (b.cardio.total > 0) items.push(`Cardio: ${b.cardio.done ? '✓' : '—'}`);
+    if (b.cooldown.total > 0) items.push(`Cooldown: ${b.cooldown.done}/${b.cooldown.total}`);
+    bdownEl.innerText = items.join(' • ');
+  }
+}
+
+function handleModalCompletedToggle(checked) {
+  if (!currentModalDay) return;
+  currentModalDay.completed = checked;
+  triggerModalAutoSave(true);
 }
 
 // Stage 1: Render Dynamic Warm-up & Stretches (with Photos & Video)
@@ -502,6 +974,7 @@ function toggleWarmupStretch(idx, checked) {
   if (!currentModalDay || !currentModalDay.warmup_stretches) return;
   currentModalDay.warmup_stretches[idx].completed = checked;
   renderModalWarmupStretches(currentModalDay);
+  triggerModalAutoSave(true);
 }
 
 // Stage 5: Render Post-Workout Cool-Down & Static Stretches (with Photos & Video)
@@ -556,6 +1029,7 @@ function toggleCooldownStretch(idx, checked) {
   if (!currentModalDay || !currentModalDay.cooldown_stretches) return;
   currentModalDay.cooldown_stretches[idx].completed = checked;
   renderModalCooldownStretches(currentModalDay);
+  triggerModalAutoSave(true);
 }
 
 // Quick timer trigger for stretches
@@ -645,6 +1119,7 @@ function renderModalExercises(day) {
                 <div class="relative w-16">
                   <input type="number" step="0.5" value="${s.weight_kg !== undefined ? s.weight_kg : ''}" 
                     id="set-weight-${exIdx}-${sIdx}"
+                    oninput="updateExerciseSet(${exIdx}, ${sIdx}, 'weight_kg', this.value)"
                     onchange="updateExerciseSet(${exIdx}, ${sIdx}, 'weight_kg', this.value)"
                     placeholder="kg" 
                     class="w-full bg-dark-900 border border-slate-700 rounded px-1.5 py-1 text-xs text-center text-white focus:outline-none focus:border-cyan-500 font-bold">
@@ -658,6 +1133,7 @@ function renderModalExercises(day) {
                 <div class="relative w-14">
                   <input type="number" value="${s.reps !== undefined ? s.reps : ''}" 
                     id="set-reps-${exIdx}-${sIdx}"
+                    oninput="updateExerciseSet(${exIdx}, ${sIdx}, 'reps', this.value)"
                     onchange="updateExerciseSet(${exIdx}, ${sIdx}, 'reps', this.value)"
                     placeholder="reps" 
                     class="w-full bg-dark-900 border border-slate-700 rounded px-1.5 py-1 text-xs text-center text-white focus:outline-none focus:border-cyan-500 font-bold">
@@ -696,6 +1172,7 @@ function adjustSetField(exIdx, setIdx, field, delta) {
 
   const inputEl = document.getElementById(`set-${field === 'weight_kg' ? 'weight' : 'reps'}-${exIdx}-${setIdx}`);
   if (inputEl) inputEl.value = nextVal;
+  triggerModalAutoSave(false);
 }
 
 function addSetToExercise(exIdx) {
@@ -705,6 +1182,7 @@ function addSetToExercise(exIdx) {
   const nextSetNum = ex.logged_sets.length + 1;
   ex.logged_sets.push({ set_num: nextSetNum, weight_kg: '', reps: '', completed: false });
   renderModalExercises(currentModalDay);
+  triggerModalAutoSave(true);
 }
 
 function updateExerciseSet(exIdx, setIdx, field, val) {
@@ -721,8 +1199,10 @@ function updateExerciseSet(exIdx, setIdx, field, val) {
       setTimerSeconds(90);
       toggleTimer();
     }
+    triggerModalAutoSave(true);
   } else {
-    ex.logged_sets[setIdx][field] = val ? parseFloat(val) : '';
+    ex.logged_sets[setIdx][field] = (val !== '' && val !== null && !isNaN(val)) ? parseFloat(val) : '';
+    triggerModalAutoSave(false);
   }
 }
 
@@ -834,6 +1314,7 @@ function toggleConditioningItem(idx, checked) {
   const allDone = currentModalDay._conditioning_items.every(i => i.completed);
   currentModalDay.conditioning_completed = allDone;
   renderModalConditioning(currentModalDay);
+  triggerModalAutoSave(true);
 }
 
 // Stage 4: Render Cardio Protocol (with Photos & Video)
@@ -906,6 +1387,7 @@ function toggleCardioComplete(checked) {
   if (!currentModalDay) return;
   currentModalDay.cardio_completed = checked;
   renderModalCardio(currentModalDay);
+  triggerModalAutoSave(true);
 }
 
 function startCardioTimer(mins) {
@@ -919,53 +1401,15 @@ async function saveWorkoutModalData() {
   if (!currentModalDay) return;
   const dayNumber = currentModalDay.day_number;
   const saveBtn = document.getElementById('modal-save-btn');
-  saveBtn.disabled = true;
-  saveBtn.innerHTML = `<span>Saving...</span>`;
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = `<span>Saving...</span>`;
+  }
 
-  try {
-    const isCompleted = document.getElementById('modal-completed-checkbox').checked;
-    const weightVal = document.getElementById('input-modal-weight').value;
-    const stepsVal = document.getElementById('input-modal-steps').value;
-    const durationVal = document.getElementById('input-modal-duration').value;
-    const rpeVal = document.getElementById('input-modal-rpe').value;
-    const notesVal = document.getElementById('input-modal-notes').value;
+  await performModalSave();
 
-    const payload = {
-      completed: isCompleted,
-      actual_weight_kg: weightVal ? parseFloat(weightVal) : null,
-      actual_steps: stepsVal ? parseInt(stepsVal) : null,
-      actual_duration_min: durationVal ? parseInt(durationVal) : null,
-      rpe_rating: rpeVal ? parseFloat(rpeVal) : null,
-      user_notes: notesVal || "",
-      parsed_exercises: currentModalDay.parsed_exercises || [],
-      warmup_stretches: currentModalDay.warmup_stretches || [],
-      cooldown_stretches: currentModalDay.cooldown_stretches || [],
-      conditioning_completed: !!(currentModalDay.conditioning_completed),
-      cardio_completed: !!(currentModalDay.cardio_completed)
-    };
-
-    const res = await fetch(`/api/days/${dayNumber}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!res.ok) throw new Error("Failed to save to backend");
-    const data = await res.json();
-
-    const idx = allDays.findIndex(d => d.day_number === dayNumber);
-    if (idx !== -1) {
-      allDays[idx] = data.day;
-    }
-
-    await loadStats();
-    renderWorkoutGrid();
-    closeWorkoutModal();
-    showToast(`Day ${dayNumber} saved to MongoDB Atlas!`, 'success');
-  } catch (err) {
-    console.error("Save error:", err);
-    showToast("Failed to save changes to MongoDB Atlas", "error");
-  } finally {
+  showToast(`Day ${dayNumber} saved to MongoDB Atlas!`, 'success');
+  if (saveBtn) {
     saveBtn.disabled = false;
     saveBtn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Save to Atlas</span>`;
     lucide.createIcons();
@@ -1424,4 +1868,12 @@ function setupEventListeners() {
   document.getElementById('input-modal-rpe').addEventListener('input', (e) => {
     updateRpeLabel(e.target.value);
   });
+
+  // Modal Completed Checkbox
+  const chkModalCompleted = document.getElementById('modal-completed-checkbox');
+  if (chkModalCompleted) {
+    chkModalCompleted.addEventListener('change', (e) => {
+      handleModalCompletedToggle(e.target.checked);
+    });
+  }
 }
