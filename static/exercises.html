@@ -112,7 +112,7 @@
         </button>
       </div>
 
-      <!-- INTERACTIVE FULL-BODY MUSCLE AVATAR (FRONT & BACK ANATOMY HEATMAP) -->
+      <!-- INTERACTIVE REALISTIC 3D MUSCULAR ANATOMY AVATAR (DUAL FRONT & BACK 3D VIEWPORTS) -->
       <div class="bg-dark-950/70 rounded-2xl p-3 border border-slate-800/80">
         
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-2.5">
@@ -122,23 +122,18 @@
             </div>
             <div>
               <h3 class="text-xs sm:text-sm font-black text-white uppercase tracking-wider flex items-center space-x-2 font-heading">
-                <span>Ultra-Realistic 3D Muscular Anatomy Avatar</span>
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">360° 3D</span>
+                <span>Ultra-Realistic 3D Muscular Anatomy</span>
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Dual 3D Views</span>
               </h3>
-              <p class="text-[11px] text-slate-400">Athletic male physique (~12–15% body fat) • Click any muscle to inspect & filter all 3 datasets</p>
+              <p class="text-[11px] text-slate-400">Authentic adult male muscular physique (177 segmented meshes) • Front & Back real-time 3D</p>
             </div>
           </div>
 
           <div class="flex items-center flex-wrap gap-1.5">
-            <!-- Mode Switcher: Realistic Vector Anatomy (Default) & 3D Studio -->
-            <div class="bg-dark-900/90 p-0.5 rounded-lg border border-slate-800 flex items-center space-x-1">
-              <button type="button" id="btn-avatar-mode-2d" onclick="switchAvatarView('2d')" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-cyan-500 text-dark-900 border border-cyan-400 shadow-sm transition">
-                Realistic Anatomy Chart
-              </button>
-              <button type="button" id="btn-avatar-mode-3d" onclick="switchAvatarView('3d')" class="px-2.5 py-1 rounded-md text-[11px] font-bold text-slate-400 hover:text-white bg-transparent transition">
-                3D Studio
-              </button>
-            </div>
+            <!-- View Mode Switcher -->
+            <button type="button" id="btn-3d-viewmode" onclick="window.avatar3D.toggleViewMode()" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-dark-900 hover:bg-slate-800 text-cyan-300 border border-cyan-500/40 shadow-sm transition">
+              Dual Front+Back
+            </button>
 
             <!-- Active Selected Muscle Badge -->
             <div id="active-muscle-badge" class="hidden items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
@@ -156,16 +151,15 @@
           </div>
         </div>
 
-        <!-- Interactive Wrapper Container -->
+        <!-- Interactive 3D Wrapper Container -->
         <div id="avatar-interactive-wrapper" class="flex flex-col items-center justify-center pt-1 transition-all duration-300">
           
-          <!-- 1. THREE.JS 3D ANATOMY VIEWPORT -->
-          <div id="avatar-3d-wrapper" class="hidden w-full flex flex-col items-center">
+          <div id="avatar-3d-wrapper" class="w-full flex flex-col items-center">
             
             <!-- 3D Camera Controls Toolbar -->
-            <div class="w-full max-w-2xl flex flex-wrap items-center justify-between gap-1.5 mb-2 px-1">
+            <div class="w-full max-w-4xl flex flex-wrap items-center justify-between gap-1.5 mb-2 px-1">
               <div class="flex items-center space-x-1 text-[11px]">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1 hidden sm:inline">Views:</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1 hidden sm:inline">Orbit Presets:</span>
                 <button type="button" onclick="window.avatar3D.setView('front')" class="px-2 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-semibold transition" title="Front View">Front</button>
                 <button type="button" onclick="window.avatar3D.setView('back')" class="px-2 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-semibold transition" title="Back View">Back</button>
                 <button type="button" onclick="window.avatar3D.setView('left')" class="px-2 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-semibold transition" title="Left Profile">Left</button>
@@ -181,410 +175,56 @@
               </div>
             </div>
 
-            <!-- 3D Canvas Container -->
-            <div class="relative w-full max-w-2xl h-80 sm:h-96 md:h-[440px] rounded-2xl bg-gradient-to-b from-dark-950 via-dark-900 to-dark-950 border border-slate-800/80 overflow-hidden shadow-2xl flex items-center justify-center">
+            <!-- Real-time 3D WebGL Canvas Container -->
+            <div class="relative w-full max-w-4xl h-96 sm:h-[480px] md:h-[530px] rounded-2xl bg-gradient-to-b from-dark-950 via-dark-900 to-dark-950 border border-slate-800/80 overflow-hidden shadow-2xl flex items-center justify-center">
               
+              <!-- Floating Top View Header Labels & Live Tooltip Bar -->
+              <div class="absolute top-2.5 inset-x-3 flex items-center justify-between pointer-events-none z-10 px-2">
+                <!-- Front View Label (Left) -->
+                <div class="flex items-center space-x-1.5 bg-dark-950/80 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-slate-800/80">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                  <span class="text-[11px] font-black tracking-widest text-slate-200 uppercase font-heading">FRONT VIEW</span>
+                  <span class="text-[9px] text-cyan-400 font-mono font-bold hidden sm:inline">0° Anterior</span>
+                </div>
+
+                <!-- Live Muscle Hover / Selected Tooltip Pill (Center) -->
+                <div id="avatar-3d-tooltip" class="px-3 py-1 rounded-full bg-dark-950/90 backdrop-blur-sm border border-cyan-500/40 text-[11px] font-bold text-cyan-300 text-center shadow-lg truncate max-w-[200px] sm:max-w-xs pointer-events-auto">
+                  Drag to rotate 360° • Click any muscle to inspect
+                </div>
+
+                <!-- Back View Label (Right) -->
+                <div id="avatar-label-back" class="flex items-center space-x-1.5 bg-dark-950/80 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-slate-800/80">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                  <span class="text-[11px] font-black tracking-widest text-slate-200 uppercase font-heading">BACK VIEW</span>
+                  <span class="text-[9px] text-cyan-400 font-mono font-bold hidden sm:inline">180° Posterior</span>
+                </div>
+              </div>
+
+              <!-- Subtle Center Viewport Divider Line -->
+              <div id="avatar-3d-center-divider" class="absolute inset-y-12 left-1/2 w-px bg-slate-800/60 pointer-events-none"></div>
+
               <!-- WebGL Canvas Mount Element -->
               <div id="avatar-3d-viewport" class="w-full h-full"></div>
 
+              <!-- Model Loading State Overlay -->
+              <div id="avatar-3d-loading" class="absolute inset-0 flex flex-col items-center justify-center bg-dark-950/90 backdrop-blur-md z-30 transition-opacity duration-300">
+                <div class="w-10 h-10 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mb-3"></div>
+                <div id="avatar-3d-loading-text" class="text-xs font-bold text-cyan-300">Loading 3D Anatomy Model (177 Meshes)...</div>
+                <p class="text-[10px] text-slate-400 mt-1">Calibrating Front & Back WebGL Viewports</p>
+              </div>
+
               <!-- Floating Anatomical HUD Card (Appears when muscle is clicked) -->
-              <div id="avatar-3d-hud-card" class="hidden absolute top-3 left-3 right-3 sm:right-auto sm:max-w-xs p-3 rounded-xl bg-dark-950/90 backdrop-blur-md border border-cyan-500/40 shadow-xl shadow-cyan-500/10 transition-all z-20">
+              <div id="avatar-3d-hud-card" class="hidden absolute top-12 left-4 right-4 sm:right-auto sm:max-w-sm p-4 rounded-xl bg-dark-950/95 backdrop-blur-md border border-cyan-500/50 shadow-2xl shadow-cyan-500/20 transition-all z-20">
                 <!-- Injected dynamically by avatar3d.js -->
               </div>
 
               <!-- Interaction Hint Pill at Bottom -->
-              <div class="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-dark-950/80 backdrop-blur-sm border border-slate-800/80 text-[10px] text-slate-400 pointer-events-none whitespace-nowrap flex items-center space-x-1.5 shadow-md">
+              <div class="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-dark-950/85 backdrop-blur-sm border border-slate-800/80 text-[10px] text-slate-400 pointer-events-none whitespace-nowrap flex items-center space-x-1.5 shadow-md">
                 <i data-lucide="move" class="w-3 h-3 text-cyan-400"></i>
-                <span>Drag to rotate 360° • Scroll / Pinch to zoom • Click muscle to inspect</span>
+                <span>Drag anywhere to rotate 360° in sync • Scroll / Pinch to zoom • Click any muscle to inspect</span>
               </div>
             </div>
 
-          </div>
-
-          <!-- 2. 2D SVG HEATMAP AVATAR (Hidden by default, toggleable) -->
-          <div id="avatar-2d-wrapper" class="w-full max-w-3xl mx-auto overflow-hidden">
-            <!-- Floating Anatomical HUD Card for Realistic Anatomy Chart -->
-            <div id="avatar-2d-hud-card" class="hidden mb-3 p-3.5 rounded-xl bg-dark-900/95 backdrop-blur-md border border-cyan-500/40 shadow-xl shadow-cyan-500/10 transition-all max-w-lg mx-auto"></div>
-            <svg id="muscle-avatar-svg" viewBox="0 0 800 700" class="w-full h-auto max-h-[520px] select-none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <!-- Neon Drop Shadow Filter for Active/Hover State -->
-    <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#06b6d4" flood-opacity="0.9"/>
-    </filter>
-    <linearGradient id="bodyBaseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#090f1d"/>
-      <stop offset="100%" stop-color="#0f172a"/>
-    </linearGradient>
-  </defs>
-
-  <!-- Titles / Labels -->
-  <text x="200" y="24" text-anchor="middle" fill="#64748b" font-size="13" font-weight="900" letter-spacing="2">FRONT VIEW</text>
-  <text x="600" y="24" text-anchor="middle" fill="#64748b" font-size="13" font-weight="900" letter-spacing="2">BACK VIEW</text>
-  
-  <!-- Interactive Hover Tooltip in center -->
-  <text id="svg-muscle-tooltip" x="400" y="24" text-anchor="middle" fill="#06b6d4" font-size="12" font-weight="800"></text>
-
-  <!-- ========================================================================= -->
-  <!-- FRONT VIEW ANATOMY (Left Side: Center X = 200)                            -->
-  <!-- ========================================================================= -->
-
-  <!-- 1. HEAD & FACE BASE -->
-  <g class="avatar-head-group">
-    <!-- Cranium & Jawline -->
-    <path d="M 180,48 C 172,25 228,25 220,48 C 224,65 212,85 200,88 C 188,85 176,65 180,48 Z" class="avatar-body-base" />
-    <!-- Ears -->
-    <path d="M 174,48 C 170,45 170,62 175,64" stroke="#334155" stroke-width="1.5" fill="none" />
-    <path d="M 226,48 C 230,45 230,62 225,64" stroke="#334155" stroke-width="1.5" fill="none" />
-    <!-- Facial Features (Subtle Vector Lines) -->
-    <path d="M 188,52 Q 194,50 197,52 M 203,52 Q 206,50 212,52" stroke="#475569" stroke-width="1.2" fill="none" />
-    <path d="M 200,55 L 200,64 L 197,67 L 203,67" stroke="#475569" stroke-width="1.2" fill="none" />
-    <path d="M 194,74 Q 200,77 206,74" stroke="#475569" stroke-width="1.2" fill="none" />
-  </g>
-
-  <!-- 2. NECK & STERNOCLEIDOMASTOID (SCM) -->
-  <path d="M 190,88 L 197,124 L 203,124 L 210,88 Z" class="avatar-body-base" />
-  <!-- SCM & Throat V-bands -->
-  <path d="M 184,85 C 188,102 196,122 198,126" stroke="#475569" stroke-width="1.2" fill="none" />
-  <path d="M 216,85 C 212,102 204,122 202,126" stroke="#475569" stroke-width="1.2" fill="none" />
-
-  <!-- 3. TRAPEZIUS (FRONT NECK SLOPE) -->
-  <path d="M 184,86 C 170,95 156,112 148,124 L 165,124 C 175,116 182,100 188,88 Z" 
-        class="muscle-path" data-muscle="traps" data-title="Trapezius (Neck Slope)" />
-  <path d="M 216,86 C 230,95 244,112 252,124 L 235,124 C 225,116 218,100 212,88 Z" 
-        class="muscle-path" data-muscle="traps" data-title="Trapezius (Neck Slope)" />
-
-  <!-- Clavicles (Collar Bones) -->
-  <path d="M 198,127 C 182,125 162,128 148,124 M 202,127 C 218,125 238,128 252,124" 
-        stroke="#64748b" stroke-width="1.75" fill="none" />
-
-  <!-- 4. DELTOIDS (FRONT SHOULDERS - Anterior & Lateral Heads) -->
-  <!-- Left Deltoid -->
-  <path d="M 148,124 C 132,128 116,145 116,168 C 116,182 125,200 134,204 C 138,198 140,180 144,162 C 146,146 148,135 148,124 Z" 
-        class="muscle-path" data-muscle="shoulders" data-title="Deltoid (Front & Side Shoulder)" />
-  <!-- Left Deltoid separation line -->
-  <path d="M 132,130 C 128,152 130,178 134,204" stroke="#334155" stroke-width="1" fill="none" />
-
-  <!-- Right Deltoid -->
-  <path d="M 252,124 C 268,128 284,145 284,168 C 284,182 275,200 266,204 C 262,198 260,180 256,162 C 254,146 252,135 252,124 Z" 
-        class="muscle-path" data-muscle="shoulders" data-title="Deltoid (Front & Side Shoulder)" />
-  <!-- Right Deltoid separation line -->
-  <path d="M 268,130 C 272,152 270,178 266,204" stroke="#334155" stroke-width="1" fill="none" />
-
-  <!-- 5. PECTORALIS MAJOR (CHEST - Sternal & Clavicular Heads) -->
-  <!-- Left Pectoral -->
-  <path d="M 198,128 L 152,128 C 145,136 140,154 140,165 C 138,185 145,204 154,206 C 172,210 190,208 198,206 Z" 
-        class="muscle-path" data-muscle="chest" data-title="Pectoralis Major (Left Chest)" />
-  <!-- Left Pec clavicular division crease -->
-  <path d="M 198,148 C 178,148 155,152 142,165" stroke="#334155" stroke-width="1" fill="none" />
-
-  <!-- Right Pectoral -->
-  <path d="M 202,128 L 248,128 C 255,136 260,154 260,165 C 262,185 255,204 246,206 C 228,210 210,208 202,206 Z" 
-        class="muscle-path" data-muscle="chest" data-title="Pectoralis Major (Right Chest)" />
-  <!-- Right Pec clavicular division crease -->
-  <path d="M 202,148 C 222,148 245,152 258,165" stroke="#334155" stroke-width="1" fill="none" />
-
-  <!-- Sternal cleavage center line -->
-  <line x1="200" y1="126" x2="200" y2="207" stroke="#1e293b" stroke-width="2" />
-
-  <!-- 6. BICEPS BRACHII & BRACHIALIS (ANTERIOR ARMS) -->
-  <!-- Left Bicep -->
-  <path d="M 134,204 C 122,212 118,235 120,258 C 122,272 130,284 135,286 C 140,282 144,265 144,242 C 144,222 140,210 134,204 Z" 
-        class="muscle-path" data-muscle="biceps" data-title="Biceps Brachii (Left Arm)" />
-  <!-- Left Brachialis line -->
-  <path d="M 124,225 C 120,245 122,268 128,284" stroke="#334155" stroke-width="1" fill="none" />
-
-  <!-- Right Bicep -->
-  <path d="M 266,204 C 278,212 282,235 280,258 C 278,272 270,284 265,286 C 260,282 256,265 256,242 C 256,222 260,210 266,204 Z" 
-        class="muscle-path" data-muscle="biceps" data-title="Biceps Brachii (Right Arm)" />
-  <!-- Right Brachialis line -->
-  <path d="M 276,225 C 280,245 278,268 272,284" stroke="#334155" stroke-width="1" fill="none" />
-
-  <!-- 7. FOREARMS (BRACHIORADIALIS & FLEXOR/EXTENSOR GROUPS) -->
-  <!-- Left Forearm -->
-  <path d="M 120,268 C 110,280 102,305 104,332 C 106,358 114,382 118,390 L 132,388 C 132,374 136,340 135,310 C 135,296 132,285 126,275 Z" 
-        class="muscle-path" data-muscle="forearms" data-title="Forearm (Brachioradialis & Flexors)" />
-  <!-- Forearm muscle separation lines -->
-  <path d="M 112,298 C 114,332 122,365 126,388" stroke="#334155" stroke-width="1" fill="none" />
-
-  <!-- Right Forearm -->
-  <path d="M 280,268 C 290,280 298,305 296,332 C 294,358 286,382 282,390 L 268,388 C 268,374 264,340 265,310 C 265,296 268,285 274,275 Z" 
-        class="muscle-path" data-muscle="forearms" data-title="Forearm (Brachioradialis & Flexors)" />
-  <!-- Forearm muscle separation lines -->
-  <path d="M 288,298 C 286,332 278,365 274,388" stroke="#334155" stroke-width="1" fill="none" />
-
-  <!-- Hands & Fingers Base -->
-  <!-- Left Hand -->
-  <path d="M 118,390 C 115,402 110,425 110,438 C 110,450 114,458 116,458 C 118,458 122,442 124,432 L 126,452 L 128,450 L 132,425 C 136,412 135,398 132,388 Z" 
-        class="avatar-body-base" />
-  <!-- Right Hand -->
-  <path d="M 282,390 C 285,402 290,425 290,438 C 290,450 286,458 284,458 C 282,458 278,442 276,432 L 274,452 L 272,450 L 268,425 C 264,412 265,398 268,388 Z" 
-        class="avatar-body-base" />
-
-  <!-- 8. RECTUS ABDOMINIS (EIGHT-PACK / SIX-PACK CORE) -->
-  <!-- Linea Alba (Center furrow) -->
-  <line x1="200" y1="207" x2="200" y2="355" stroke="#090f1d" stroke-width="2.5" />
-
-  <!-- Tier 1 (Upper Abs) -->
-  <path d="M 198,210 L 168,214 C 165,232 165,246 168,252 L 198,250 Z" 
-        class="muscle-path" data-muscle="abs" data-title="Rectus Abdominis (Upper Abs)" />
-  <path d="M 202,210 L 232,214 C 235,232 235,246 232,252 L 202,250 Z" 
-        class="muscle-path" data-muscle="abs" data-title="Rectus Abdominis (Upper Abs)" />
-
-  <!-- Tier 2 (Mid-Upper Abs) -->
-  <path d="M 198,254 L 167,255 C 165,270 165,286 167,294 L 198,292 Z" 
-        class="muscle-path" data-muscle="abs" data-title="Rectus Abdominis (Mid Abs)" />
-  <path d="M 202,254 L 233,255 C 235,270 235,286 233,294 L 202,292 Z" 
-        class="muscle-path" data-muscle="abs" data-title="Rectus Abdominis (Mid Abs)" />
-
-  <!-- Tier 3 (Mid-Lower Abs with Umbilicus) -->
-  <path d="M 198,296 L 168,298 C 168,312 170,328 174,336 L 198,336 Z" 
-        class="muscle-path" data-muscle="abs" data-title="Rectus Abdominis (Lower Core)" />
-  <path d="M 202,296 L 232,298 C 232,312 230,328 226,336 L 202,336 Z" 
-        class="muscle-path" data-muscle="abs" data-title="Rectus Abdominis (Lower Core)" />
-
-  <!-- Tier 4 (Suprapubic V-Abs) -->
-  <path d="M 198,338 L 175,338 C 180,358 190,372 198,375 Z" 
-        class="muscle-path" data-muscle="abs" data-title="Rectus Abdominis (Suprapubic Base)" />
-  <path d="M 202,338 L 225,338 C 220,358 210,372 202,375 Z" 
-        class="muscle-path" data-muscle="abs" data-title="Rectus Abdominis (Suprapubic Base)" />
-
-  <!-- Navel (Belly Button) -->
-  <circle cx="200" cy="302" r="2.5" fill="#1e293b" />
-
-  <!-- 9. SERRATUS ANTERIOR & EXTERNAL OBLIQUES (Flanks & V-Line) -->
-  <!-- Left Obliques & Serratus -->
-  <path d="M 152,207 C 145,216 142,238 144,258 C 145,282 148,310 152,332 C 155,348 162,364 174,374 L 176,340 C 168,328 166,280 166,252 C 166,230 167,215 168,214 Z" 
-        class="muscle-path" data-muscle="obliques" data-title="External Obliques & Serratus" />
-  <!-- Left Serratus anterior finger slips -->
-  <path d="M 148,220 L 164,228 M 146,238 L 164,245 M 146,256 L 164,262" stroke="#334155" stroke-width="1.2" fill="none" />
-
-  <!-- Right Obliques & Serratus -->
-  <path d="M 248,207 C 255,216 258,238 256,258 C 255,282 252,310 248,332 C 245,348 238,364 226,374 L 224,340 C 232,328 234,280 234,252 C 234,230 233,215 232,214 Z" 
-        class="muscle-path" data-muscle="obliques" data-title="External Obliques & Serratus" />
-  <!-- Right Serratus anterior finger slips -->
-  <path d="M 252,220 L 236,228 M 254,238 L 236,245 M 254,256 L 236,262" stroke="#334155" stroke-width="1.2" fill="none" />
-
-  <!-- Inguinal Ligament (Adonis Belt V-Line) -->
-  <path d="M 154,342 C 166,358 184,374 198,378 M 246,342 C 234,358 216,374 202,378" 
-        stroke="#64748b" stroke-width="1.5" fill="none" />
-
-  <!-- Pelvic Arch Base -->
-  <path d="M 196,378 C 196,392 198,406 200,410 C 202,406 204,392 204,378 Z" class="avatar-body-base" />
-
-  <!-- 10. QUADRICEPS (THIGHS - RECTUS FEMORIS, VASTUS LATERALIS & VASTUS MEDIALIS) -->
-  <!-- Left Quadriceps -->
-  <!-- Vastus Lateralis (Outer sweep) -->
-  <path d="M 152,348 C 136,372 130,412 132,450 C 134,482 144,515 152,534 L 160,528 C 152,492 148,452 152,415 C 154,385 160,365 166,352 Z" 
-        class="muscle-path" data-muscle="quads" data-title="Vastus Lateralis (Outer Quad Sweep)" />
-
-  <!-- Rectus Femoris (Central Quad Belly) -->
-  <path d="M 174,375 C 165,398 160,432 162,468 C 164,495 168,518 170,528 L 178,528 C 182,498 184,465 184,432 C 184,402 182,382 178,375 Z" 
-        class="muscle-path" data-muscle="quads" data-title="Rectus Femoris (Central Quad)" />
-
-  <!-- Vastus Medialis (Teardrop above inner knee) -->
-  <path d="M 180,458 C 184,482 192,504 192,518 C 190,530 182,536 174,534 C 172,525 174,498 178,472 Z" 
-        class="muscle-path" data-muscle="quads" data-title="Vastus Medialis (Teardrop Quad)" />
-
-  <!-- Sartorius & Inner Thigh Adductors (Left) -->
-  <path d="M 176,375 C 184,398 194,428 196,458 C 194,475 190,502 186,522 L 180,485 C 182,442 182,408 178,382 Z" 
-        class="muscle-path" data-muscle="quads" data-title="Adductors & Sartorius (Inner Thigh)" />
-
-  <!-- Right Quadriceps -->
-  <!-- Vastus Lateralis (Outer sweep) -->
-  <path d="M 248,348 C 264,372 270,412 268,450 C 266,482 256,515 248,534 L 240,528 C 248,492 252,452 248,415 C 246,385 240,365 234,352 Z" 
-        class="muscle-path" data-muscle="quads" data-title="Vastus Lateralis (Outer Quad Sweep)" />
-
-  <!-- Rectus Femoris (Central Quad Belly) -->
-  <path d="M 226,375 C 235,398 240,432 238,468 C 236,495 232,518 230,528 L 222,528 C 218,498 216,465 216,432 C 216,402 218,382 222,375 Z" 
-        class="muscle-path" data-muscle="quads" data-title="Rectus Femoris (Central Quad)" />
-
-  <!-- Vastus Medialis (Teardrop above inner knee) -->
-  <path d="M 220,458 C 216,482 208,504 208,518 C 210,530 218,536 226,534 C 228,525 226,498 222,472 Z" 
-        class="muscle-path" data-muscle="quads" data-title="Vastus Medialis (Teardrop Quad)" />
-
-  <!-- Sartorius & Inner Thigh Adductors (Right) -->
-  <path d="M 224,375 C 216,398 206,428 204,458 C 206,475 210,502 214,522 L 220,485 C 218,442 218,408 222,382 Z" 
-        class="muscle-path" data-muscle="quads" data-title="Adductors & Sartorius (Inner Thigh)" />
-
-  <!-- Knees (Patella Shield & Ligaments) -->
-  <!-- Left Knee -->
-  <ellipse cx="166" cy="542" rx="9" ry="11" class="avatar-body-base" />
-  <path d="M 166,553 L 166,568" stroke="#475569" stroke-width="2" />
-  <!-- Right Knee -->
-  <ellipse cx="234" cy="542" rx="9" ry="11" class="avatar-body-base" />
-  <path d="M 234,553 L 234,568" stroke="#475569" stroke-width="2" />
-
-  <!-- 11. CALVES & TIBIALIS ANTERIOR (SHINS & LOWER LEGS) -->
-  <!-- Left Shin & Calves -->
-  <path d="M 158,548 C 145,565 138,590 140,615 C 142,638 150,658 156,668 L 164,668 C 160,642 158,610 162,576 Z" 
-        class="muscle-path" data-muscle="calves" data-title="Tibialis & Outer Calf" />
-  <path d="M 166,568 C 172,592 182,610 182,624 C 180,642 174,658 168,668 L 164,668 C 164,635 162,598 164,570 Z" 
-        class="muscle-path" data-muscle="calves" data-title="Medial Gastrocnemius (Inner Calf)" />
-
-  <!-- Right Shin & Calves -->
-  <path d="M 242,548 C 255,565 262,590 260,615 C 258,638 250,658 244,668 L 236,668 C 240,642 242,610 238,576 Z" 
-        class="muscle-path" data-muscle="calves" data-title="Tibialis & Outer Calf" />
-  <path d="M 234,568 C 228,592 218,610 218,624 C 220,642 226,658 232,668 L 236,668 C 236,635 238,598 236,570 Z" 
-        class="muscle-path" data-muscle="calves" data-title="Medial Gastrocnemius (Inner Calf)" />
-
-  <!-- Ankles & Feet (Front) -->
-  <!-- Left Foot -->
-  <path d="M 156,668 L 146,692 C 146,696 154,698 168,698 C 176,698 180,695 180,690 L 168,668 Z" class="avatar-body-base" />
-  <!-- Left Toes lines -->
-  <path d="M 152,692 L 152,698 M 158,692 L 158,698 M 164,692 L 164,698 M 170,692 L 170,698" stroke="#334155" stroke-width="1" />
-
-  <!-- Right Foot -->
-  <path d="M 244,668 L 254,692 C 254,696 246,698 232,698 C 224,698 220,695 220,690 L 232,668 Z" class="avatar-body-base" />
-  <!-- Right Toes lines -->
-  <path d="M 248,692 L 248,698 M 242,692 L 242,698 M 236,692 L 236,698 M 230,692 L 230,698" stroke="#334155" stroke-width="1" />
-
-
-  <!-- ========================================================================= -->
-  <!-- BACK VIEW ANATOMY (Right Side: Center X = 600)                           -->
-  <!-- ========================================================================= -->
-
-  <!-- 1. HEAD & OCCIPITAL BASE (BACK) -->
-  <g class="avatar-head-back-group">
-    <path d="M 580,48 C 572,25 628,25 620,48 C 624,65 618,84 600,88 C 582,84 576,65 580,48 Z" class="avatar-body-base" />
-    <path d="M 574,48 C 570,45 570,62 575,64" stroke="#334155" stroke-width="1.5" fill="none" />
-    <path d="M 626,48 C 630,45 630,62 625,64" stroke="#334155" stroke-width="1.5" fill="none" />
-    <!-- Occipital nuchal lines -->
-    <path d="M 588,68 Q 600,64 612,68" stroke="#334155" stroke-width="1.2" fill="none" />
-  </g>
-
-  <!-- 2. TRAPEZIUS (UPPER, MIDDLE & LOWER DIAMOND) -->
-  <!-- Complete Trapezius Muscle Diamond -->
-  <path d="M 600,88 L 588,96 L 548,124 C 556,155 574,215 600,245 C 626,215 644,155 652,124 L 612,96 Z" 
-        class="muscle-path" data-muscle="traps" data-title="Trapezius (Diamond Upper/Mid Back)" />
-  <!-- Trapezius internal fiber divisions -->
-  <path d="M 600,88 L 600,245" stroke="#1e293b" stroke-width="1.5" />
-  <path d="M 582,120 Q 600,140 618,120" stroke="#334155" stroke-width="1.2" fill="none" />
-
-  <!-- 3. REAR DELTOIDS (POSTERIOR DELTOIDS) -->
-  <!-- Left Rear Deltoid -->
-  <path d="M 548,124 C 532,128 516,145 516,168 C 516,182 525,200 534,204 C 540,198 544,178 548,155 Z" 
-        class="muscle-path" data-muscle="shoulders" data-title="Posterior Deltoid (Rear Shoulder)" />
-  <!-- Right Rear Deltoid -->
-  <path d="M 652,124 C 668,128 684,145 684,168 C 684,182 675,200 666,204 C 660,198 656,178 652,155 Z" 
-        class="muscle-path" data-muscle="shoulders" data-title="Posterior Deltoid (Rear Shoulder)" />
-
-  <!-- 4. TRICEPS BRACHII (POSTERIOR ARMS - HORSESHOE FORM) -->
-  <!-- Left Tricep (Lateral & Long Heads + Tendon) -->
-  <path d="M 534,204 C 522,212 516,232 518,255 C 520,272 526,284 532,286 C 538,284 544,265 544,242 C 544,222 540,210 534,204 Z" 
-        class="muscle-path" data-muscle="triceps" data-title="Triceps Brachii (Horseshoe Complex)" />
-  <!-- Left Tricep horseshoe tendon outline -->
-  <path d="M 526,242 C 526,265 530,278 534,285" stroke="#334155" stroke-width="1.2" fill="none" />
-
-  <!-- Right Tricep -->
-  <path d="M 666,204 C 678,212 684,232 682,255 C 680,272 674,284 668,286 C 662,284 656,265 656,242 C 656,222 660,210 666,204 Z" 
-        class="muscle-path" data-muscle="triceps" data-title="Triceps Brachii (Horseshoe Complex)" />
-  <!-- Right Tricep horseshoe tendon outline -->
-  <path d="M 674,242 C 674,265 670,278 666,285" stroke="#334155" stroke-width="1.2" fill="none" />
-
-  <!-- Olecranon Elbow Points -->
-  <circle cx="530" cy="286" r="4" class="avatar-body-base" />
-  <circle cx="670" cy="286" r="4" class="avatar-body-base" />
-
-  <!-- 5. REAR FOREARMS & EXTENSORS -->
-  <!-- Left Rear Forearm -->
-  <path d="M 522,275 C 512,285 502,310 504,335 C 506,360 514,382 518,390 L 532,388 C 534,374 536,340 535,310 C 535,296 532,285 528,275 Z" 
-        class="muscle-path" data-muscle="forearms" data-title="Forearm Extensors (Posterior)" />
-  <!-- Forearm extensor lines -->
-  <path d="M 518,305 C 520,335 524,365 526,388" stroke="#334155" stroke-width="1" fill="none" />
-
-  <!-- Right Rear Forearm -->
-  <path d="M 678,275 C 688,285 698,310 696,335 C 694,360 686,382 682,390 L 668,388 C 666,374 664,340 665,310 C 665,296 668,285 672,275 Z" 
-        class="muscle-path" data-muscle="forearms" data-title="Forearm Extensors (Posterior)" />
-  <!-- Forearm extensor lines -->
-  <path d="M 682,305 C 680,335 676,365 674,388" stroke="#334155" stroke-width="1" fill="none" />
-
-  <!-- Rear Hands Base -->
-  <path d="M 518,390 C 515,402 510,425 510,438 C 510,450 514,458 516,458 C 518,458 522,442 524,432 L 526,452 L 528,450 L 532,425 C 536,412 535,398 532,388 Z" class="avatar-body-base" />
-  <path d="M 682,390 C 685,402 690,425 690,438 C 690,450 686,458 684,458 C 682,458 678,442 676,432 L 674,452 L 672,450 L 668,425 C 664,412 665,398 668,388 Z" class="avatar-body-base" />
-
-  <!-- 6. INFRASPINATUS & TERES MAJOR (SCAPULAR MUSCLES) -->
-  <path d="M 548,155 C 555,160 568,175 572,195 C 564,204 550,208 538,206 C 538,190 542,168 548,155 Z" 
-        class="muscle-path" data-muscle="lats" data-title="Infraspinatus & Teres Major" />
-  <path d="M 652,155 C 645,160 632,175 628,195 C 636,204 650,208 662,206 C 662,190 658,168 652,155 Z" 
-        class="muscle-path" data-muscle="lats" data-title="Infraspinatus & Teres Major" />
-
-  <!-- 7. LATISSIMUS DORSI (V-TAPER WINGS) -->
-  <!-- Left Lat Wing -->
-  <path d="M 542,202 C 555,206 572,215 588,235 C 588,270 584,310 574,338 C 560,332 546,310 544,285 C 542,255 540,225 542,202 Z" 
-        class="muscle-path" data-muscle="lats" data-title="Latissimus Dorsi (Left V-Taper)" />
-  <!-- Right Lat Wing -->
-  <path d="M 658,202 C 645,206 628,215 612,235 C 612,270 616,310 626,338 C 640,332 654,310 656,285 C 658,255 660,225 658,202 Z" 
-        class="muscle-path" data-muscle="lats" data-title="Latissimus Dorsi (Right V-Taper)" />
-
-  <!-- 8. LOWER BACK & ERECTOR SPINAE (THORACOLUMBAR FASCIA) -->
-  <!-- Spinal Column furrow -->
-  <line x1="600" y1="245" x2="600" y2="360" stroke="#090f1d" stroke-width="2" />
-  <!-- Left Erector Spinae Column -->
-  <path d="M 598,245 C 585,260 585,290 585,325 C 585,342 590,358 598,362 Z" 
-        class="muscle-path" data-muscle="lowerback" data-title="Erector Spinae & Lower Back" />
-  <!-- Right Erector Spinae Column -->
-  <path d="M 602,245 C 615,260 615,290 615,325 C 615,342 610,358 602,362 Z" 
-        class="muscle-path" data-muscle="lowerback" data-title="Erector Spinae & Lower Back" />
-
-  <!-- 9. GLUTES (GLUTEUS MAXIMUS & MEDIUS - BUTTOCKS COMPLEX) -->
-  <!-- Left Glute Cheek -->
-  <path d="M 598,362 C 580,358 554,360 545,378 C 536,398 538,426 550,442 C 564,446 585,446 598,442 Z" 
-        class="muscle-path" data-muscle="glutes" data-title="Gluteus Maximus (Left Glute)" />
-  <!-- Left Gluteus Medius shelf -->
-  <path d="M 552,360 C 565,365 580,366 598,365" stroke="#334155" stroke-width="1.2" fill="none" />
-
-  <!-- Right Glute Cheek -->
-  <path d="M 602,362 C 620,358 646,360 655,378 C 664,398 662,426 650,442 C 636,446 615,446 602,442 Z" 
-        class="muscle-path" data-muscle="glutes" data-title="Gluteus Maximus (Right Glute)" />
-  <!-- Right Gluteus Medius shelf -->
-  <path d="M 648,360 C 635,365 620,366 602,365" stroke="#334155" stroke-width="1.2" fill="none" />
-
-  <!-- Intergluteal Cleft center line -->
-  <line x1="600" y1="362" x2="600" y2="445" stroke="#090f1d" stroke-width="2" />
-
-  <!-- 10. HAMSTRINGS (POSTERIOR THIGHS - BICEPS FEMORIS & SEMITENDINOSUS) -->
-  <!-- Left Hamstring -->
-  <path d="M 548,442 C 542,465 540,495 546,525 L 565,528 C 564,500 566,470 572,445 Z" 
-        class="muscle-path" data-muscle="hamstrings" data-title="Biceps Femoris (Outer Hamstring)" />
-  <path d="M 572,445 C 574,472 576,505 578,528 L 594,525 C 596,495 596,465 594,442 Z" 
-        class="muscle-path" data-muscle="hamstrings" data-title="Semitendinosus (Inner Hamstring)" />
-
-  <!-- Right Hamstring -->
-  <path d="M 652,442 C 658,465 660,495 654,525 L 635,528 C 636,500 634,470 628,445 Z" 
-        class="muscle-path" data-muscle="hamstrings" data-title="Biceps Femoris (Outer Hamstring)" />
-  <path d="M 628,445 C 626,472 624,505 622,528 L 606,525 C 604,495 604,465 606,442 Z" 
-        class="muscle-path" data-muscle="hamstrings" data-title="Semitendinosus (Inner Hamstring)" />
-
-  <!-- Popliteal Fossa (Behind the Knee) -->
-  <polygon points="565,528 578,528 574,550 568,550" class="avatar-body-base" />
-  <polygon points="635,528 622,528 626,550 632,550" class="avatar-body-base" />
-
-  <!-- 11. CALVES (POSTERIOR LOWER LEGS - GASTROCNEMIUS & SOLEUS) -->
-  <!-- Left Calf Complex -->
-  <!-- Lateral Gastrocnemius (Outer belly) -->
-  <path d="M 552,540 C 540,555 536,578 540,605 C 544,625 550,642 556,654 L 564,650 C 560,622 558,585 562,550 Z" 
-        class="muscle-path" data-muscle="calves" data-title="Lateral Gastrocnemius (Outer Calf)" />
-  <!-- Medial Gastrocnemius (Inner belly - lower & fuller) -->
-  <path d="M 568,550 C 572,575 584,595 584,612 C 582,630 575,645 568,655 L 564,650 C 566,615 564,580 566,550 Z" 
-        class="muscle-path" data-muscle="calves" data-title="Medial Gastrocnemius (Inner Calf)" />
-  <!-- Left Achilles Tendon -->
-  <path d="M 562,648 L 568,648 L 568,675 L 562,675 Z" class="avatar-body-base" />
-
-  <!-- Right Calf Complex -->
-  <!-- Lateral Gastrocnemius (Outer belly) -->
-  <path d="M 648,540 C 660,555 664,578 660,605 C 656,625 650,642 644,654 L 636,650 C 640,622 642,585 638,550 Z" 
-        class="muscle-path" data-muscle="calves" data-title="Lateral Gastrocnemius (Outer Calf)" />
-  <!-- Medial Gastrocnemius (Inner belly) -->
-  <path d="M 632,550 C 628,575 616,595 616,612 C 618,630 625,645 632,655 L 636,650 C 634,615 636,580 634,550 Z" 
-        class="muscle-path" data-muscle="calves" data-title="Medial Gastrocnemius (Inner Calf)" />
-  <!-- Right Achilles Tendon -->
-  <path d="M 638,648 L 632,648 L 632,675 L 638,675 Z" class="avatar-body-base" />
-
-  <!-- Calcaneus (Heel Bones) & Feet (Back) -->
-  <path d="M 556,670 L 550,695 L 576,695 L 570,670 Z" class="avatar-body-base" />
-  <path d="M 644,670 L 650,695 L 624,695 L 630,670 Z" class="avatar-body-base" />
-
-</svg>
           </div>
 
           <!-- Quick Muscle Chips Bar Below Avatar -->
@@ -760,6 +400,7 @@
 
   <!-- Three.js 3D Library & 3D Anatomy Avatar Script -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="GLTFLoader.js"></script>
   <script src="avatar3d.js"></script>
 
   <!-- Client Application Script -->

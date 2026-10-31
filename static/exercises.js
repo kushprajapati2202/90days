@@ -155,8 +155,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       window.avatar3D.init('avatar-3d-viewport');
     } catch (err) {
-      console.warn("Could not initialize 3D avatar viewport, falling back to 2D heatmap:", err);
-      switchAvatarView('2d');
+      console.warn("Could not initialize 3D avatar viewport:", err);
     }
   }
 
