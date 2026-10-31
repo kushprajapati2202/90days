@@ -45,6 +45,12 @@ const PLAN_GROUPS = [
 document.addEventListener('DOMContentLoaded', async () => {
   setupEventListeners();
   await loadInitialData();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const modeParam = urlParams.get('mode');
+  if (modeParam === '876' || modeParam === 'catalog') {
+    switchLibraryMode(modeParam);
+  }
 });
 
 function setupEventListeners() {
