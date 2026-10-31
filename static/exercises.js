@@ -276,7 +276,6 @@ let activeEquipment = 'All';
 let activePattern = 'All';
 let customRoutine = JSON.parse(localStorage.getItem('user_custom_routine') || '[]');
 let searchQuery = '';
-let searchQuery = '';
 
 const PLAN_GROUPS = [
   'All',
