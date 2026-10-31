@@ -39,13 +39,18 @@ def classify_exercise_group(ex: dict) -> str:
 def get_health():
     """Health check including MongoDB Atlas connectivity."""
     status = check_connection()
-    db = get_db()
-    counts = {
-        "days": db.workout_days.count_documents({}),
-        "completed_days": db.workout_days.count_documents({"completed": True}),
-        "weight_logs": db.weight_logs.count_documents({}),
-        "coaching_notes": db.coaching_notes.count_documents({})
-    }
+    counts = {}
+    if status.get("status") == "connected":
+        try:
+            db = get_db()
+            counts = {
+                "days": db.workout_days.count_documents({}),
+                "completed_days": db.workout_days.count_documents({"completed": True}),
+                "weight_logs": db.weight_logs.count_documents({}),
+                "coaching_notes": db.coaching_notes.count_documents({})
+            }
+        except Exception as e:
+            logger.warning(f"Error fetching counts for health check: {e}")
     return {
         **status,
         "counts": counts,
@@ -220,12 +225,19 @@ def get_catalog_876_filters():
 @router.get("/profile")
 def get_profile():
     """Get the user profile, goals, and intensity guide."""
-    db = get_db()
-    profile = db.profile.find_one({"_id": "user_profile"}, {"_id": 0})
-    if not profile:
-        seed_database()
+    try:
+        db = get_db()
         profile = db.profile.find_one({"_id": "user_profile"}, {"_id": 0})
-    return profile
+        if not profile:
+            seed_database()
+            profile = db.profile.find_one({"_id": "user_profile"}, {"_id": 0})
+        return profile
+    except Exception as e:
+        logger.error(f"Error loading profile from MongoDB: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"MongoDB connection failed: {str(e)}. If this is hosted on Vercel, please ensure 0.0.0.0/0 is whitelisted under Network Access in MongoDB Atlas."
+        )
 
 @router.put("/profile")
 def update_profile(data: ProfileUpdateModel):
@@ -273,8 +285,20 @@ def get_days(
             {"date_display": {"$regex": search, "$options": "i"}}
         ]
 
-    days = list(db.workout_days.find(query, {"_id": 0}).sort("day_number", 1))
-    return {"total": len(days), "days": days}
+    try:
+        days = list(db.workout_days.find(query, {"_id": 0}).sort("day_number", 1))
+        if not days and not query:
+            seed_database()
+            days = list(db.workout_days.find({}, {"_id": 0}).sort("day_number", 1))
+        return {"total": len(days), "days": days}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching workout days from MongoDB: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"MongoDB connection failed: {str(e)}. If this is hosted on Vercel, please ensure 0.0.0.0/0 is whitelisted under Network Access in MongoDB Atlas."
+        )
 
 @router.get("/days/{day_number}")
 def get_day(day_number: int):

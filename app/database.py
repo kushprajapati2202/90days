@@ -12,11 +12,11 @@ def get_client() -> MongoClient:
     if _client is None:
         _client = MongoClient(
             MONGODB_URI,
-            serverSelectionTimeoutMS=8000,
-            connectTimeoutMS=8000,
-            socketTimeoutMS=10000,
-            maxPoolSize=50,
-            minPoolSize=5
+            serverSelectionTimeoutMS=5000,
+            connectTimeoutMS=5000,
+            socketTimeoutMS=7000,
+            maxPoolSize=25,
+            retryWrites=True
         )
     return _client
 
@@ -40,7 +40,7 @@ def check_connection() -> dict:
             "collections": collections,
             "error": None
         }
-    except (ConnectionFailure, ServerSelectionTimeoutError) as e:
+    except Exception as e:
         logger.error(f"MongoDB connection failed: {e}")
         return {
             "status": "disconnected",

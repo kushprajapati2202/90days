@@ -180,16 +180,36 @@ function renderStats(s) {
 async function loadDays() {
   try {
     const res = await fetch('/api/days');
+    if (!res.ok) {
+      let msg = "Failed to load workout days from MongoDB.";
+      try {
+        const errJson = await res.json();
+        if (errJson && errJson.detail) msg = errJson.detail;
+      } catch (e) {}
+      throw new Error(msg);
+    }
     const data = await res.json();
     allDays = data.days || [];
     renderWorkoutGrid();
   } catch (err) {
     console.error("Error loading days:", err);
     document.getElementById('workout-grid').innerHTML = `
-      <div class="col-span-full py-12 text-center text-rose-400">
-        <p>Failed to load workout days from MongoDB. Please check connection.</p>
+      <div class="col-span-full py-10 px-4 text-center bg-dark-900/80 rounded-2xl border border-rose-500/30 max-w-xl mx-auto my-6">
+        <i data-lucide="alert-triangle" class="w-10 h-10 text-rose-500 mx-auto mb-3"></i>
+        <h3 class="text-base font-bold text-white mb-2">MongoDB Connection Required</h3>
+        <p class="text-xs text-rose-300 mb-4 leading-relaxed">${err.message || 'Unable to connect to MongoDB Atlas.'}</p>
+        <div class="bg-dark-950 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-300 text-left mb-4 space-y-1">
+          <p class="font-bold text-amber-400">💡 If hosted on Vercel:</p>
+          <p>1. Open <a href="https://cloud.mongodb.com" target="_blank" class="text-cyan-400 underline font-semibold">MongoDB Atlas</a> &gt; Security &gt; <b>Network Access</b>.</p>
+          <p>2. Click <b>+ Add IP Address</b> and choose <b>Allow Access from Anywhere (0.0.0.0/0)</b>.</p>
+          <p>3. Wait 30 seconds for it to become Active, then tap Retry below.</p>
+        </div>
+        <button onclick="loadDays()" class="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-dark-950 font-bold text-xs transition shadow-lg shadow-cyan-500/20">
+          Retry Connection
+        </button>
       </div>
     `;
+    lucide.createIcons();
   }
 }
 
