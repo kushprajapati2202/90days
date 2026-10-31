@@ -394,102 +394,106 @@
     // =========================================================================
     // ANATOMICALLY ACCURATE MALE PHYSIQUE SCULPTURE
     // Modeled with natural athletic proportions (1.82m tall, 12-15% body fat)
+    // Curvilinear, organically contoured athletic muscle bellies matching anatomical reference
     // =========================================================================
     buildRealisticAnatomyModel() {
       // 1. HEAD & CRANIUM (Realistic athletic male skull & jawline)
-      const craniumGeo = new THREE.SphereGeometry(0.125, 28, 22);
-      craniumGeo.scale(0.85, 1.08, 0.95);
+      const craniumGeo = new THREE.SphereGeometry(0.125, 32, 26);
+      craniumGeo.scale(0.86, 1.08, 0.96);
       const cranium = new THREE.Mesh(craniumGeo, this.skinMaterial);
       cranium.position.set(0, 1.76, 0.01);
       this.addBodyBaseMesh(cranium);
 
       // Athletic Jawline & Chin
-      const jawGeo = new THREE.ConeGeometry(0.088, 0.11, 20);
+      const jawGeo = new THREE.ConeGeometry(0.086, 0.11, 24);
       jawGeo.scale(0.82, 1.0, 0.75);
       const jaw = new THREE.Mesh(jawGeo, this.skinMaterial);
       jaw.rotation.x = Math.PI;
       jaw.position.set(0, 1.67, 0.04);
       this.addBodyBaseMesh(jaw);
 
-      // Muscular Neck Core
-      const neckGeo = new THREE.CylinderGeometry(0.068, 0.082, 0.14, 20);
+      // Muscular Neck Core (Sternocleidomastoid wrap)
+      const neckGeo = new THREE.CylinderGeometry(0.070, 0.084, 0.14, 24);
       const neck = new THREE.Mesh(neckGeo, this.skinMaterial);
       neck.position.set(0, 1.62, 0);
       this.addBodyBaseMesh(neck);
 
       // 2. TRAPEZIUS MUSCLES (Diamond-shaped neck & upper back wrap)
       // Upper Traps (Neck slope)
-      const trapsUpperGeo = new THREE.ConeGeometry(0.155, 0.16, 16);
-      trapsUpperGeo.scale(1.4, 0.85, 0.85);
+      const trapsUpperGeo = new THREE.SphereGeometry(0.14, 28, 22);
+      trapsUpperGeo.scale(1.45, 0.72, 0.88);
       const trapsUpper = new THREE.Mesh(trapsUpperGeo, this.skinMaterial);
-      trapsUpper.position.set(0, 1.58, -0.015);
+      trapsUpper.position.set(0, 1.57, -0.018);
       this.registerMuscleMesh(trapsUpper, 'traps');
 
-      // Mid & Lower Trapezius (Spans between scapulae)
-      const trapsMidGeo = new THREE.BoxGeometry(0.19, 0.22, 0.05);
+      // Mid & Lower Trapezius (Diamond contour between scapulae)
+      const trapsMidGeo = new THREE.SphereGeometry(0.125, 28, 22);
+      trapsMidGeo.scale(1.15, 1.45, 0.42);
       const trapsMid = new THREE.Mesh(trapsMidGeo, this.skinMaterial);
-      trapsMid.position.set(0, 1.43, -0.095);
+      trapsMid.position.set(0, 1.43, -0.092);
       this.registerMuscleMesh(trapsMid, 'traps');
 
       // 3. PECTORALIS MAJOR (CHEST)
-      // Sculpted left and right sternal/clavicular pectoral slabs with sternal cleft
-      const pecGeoLeft = new THREE.BoxGeometry(0.15, 0.14, 0.075);
-      pecGeoLeft.scale(1.0, 0.95, 1.0);
+      // Natural, rounded, full athletic pectoral bellies with clavicular & sternal curvature
+      const pecGeoLeft = new THREE.SphereGeometry(0.125, 32, 24);
+      pecGeoLeft.scale(1.24, 0.88, 0.52);
       const pecLeft = new THREE.Mesh(pecGeoLeft, this.skinMaterial);
-      pecLeft.position.set(-0.085, 1.41, 0.088);
-      pecLeft.rotation.z = -0.07;
-      pecLeft.rotation.y = 0.12;
+      pecLeft.position.set(-0.088, 1.41, 0.076);
+      pecLeft.rotation.z = -0.08;
+      pecLeft.rotation.y = 0.14;
       this.registerMuscleMesh(pecLeft, 'chest');
 
-      const pecGeoRight = new THREE.BoxGeometry(0.15, 0.14, 0.075);
-      pecGeoRight.scale(1.0, 0.95, 1.0);
+      const pecGeoRight = new THREE.SphereGeometry(0.125, 32, 24);
+      pecGeoRight.scale(1.24, 0.88, 0.52);
       const pecRight = new THREE.Mesh(pecGeoRight, this.skinMaterial);
-      pecRight.position.set(0.085, 1.41, 0.088);
-      pecRight.rotation.z = 0.07;
-      pecRight.rotation.y = -0.12;
+      pecRight.position.set(0.088, 1.41, 0.076);
+      pecRight.rotation.z = 0.08;
+      pecRight.rotation.y = -0.14;
       this.registerMuscleMesh(pecRight, 'chest');
 
-      // Clavicles (Collar bones structural highlight)
-      const clavicleGeo = new THREE.CylinderGeometry(0.018, 0.018, 0.36, 12);
+      // Clavicles (Collar bones structural landmark)
+      const clavicleGeo = new THREE.CylinderGeometry(0.016, 0.016, 0.36, 16);
       clavicleGeo.rotateZ(Math.PI / 2);
       const clavicles = new THREE.Mesh(clavicleGeo, this.jointMaterial);
       clavicles.position.set(0, 1.505, 0.065);
       this.addBodyBaseMesh(clavicles);
 
-      // 4. SHOULDERS (DELTOIDS - Anterior, Lateral & Posterior)
+      // 4. SHOULDERS (DELTOIDS - Rounded epaulette capping anterior, lateral & posterior heads)
       // Left Shoulder (Deltoid Cap)
-      const deltGeoLeft = new THREE.SphereGeometry(0.095, 20, 18);
-      deltGeoLeft.scale(0.85, 1.35, 1.05);
+      const deltGeoLeft = new THREE.SphereGeometry(0.098, 28, 24);
+      deltGeoLeft.scale(0.88, 1.35, 1.05);
       const deltLeft = new THREE.Mesh(deltGeoLeft, this.skinMaterial);
       deltLeft.position.set(-0.245, 1.44, 0.005);
-      deltLeft.rotation.z = -0.15;
+      deltLeft.rotation.z = -0.14;
       this.registerMuscleMesh(deltLeft, 'shoulders');
 
       // Right Shoulder (Deltoid Cap)
-      const deltGeoRight = new THREE.SphereGeometry(0.095, 20, 18);
-      deltGeoRight.scale(0.85, 1.35, 1.05);
+      const deltGeoRight = new THREE.SphereGeometry(0.098, 28, 24);
+      deltGeoRight.scale(0.88, 1.35, 1.05);
       const deltRight = new THREE.Mesh(deltGeoRight, this.skinMaterial);
       deltRight.position.set(0.245, 1.44, 0.005);
-      deltRight.rotation.z = 0.15;
+      deltRight.rotation.z = 0.14;
       this.registerMuscleMesh(deltRight, 'shoulders');
 
       // 5. SIX-PACK ABDOMINALS (RECTUS ABDOMINIS)
-      // Sculpted in 3 anatomical tiers with Linea Alba and Tendinous Inscriptions
+      // Sculpted in 3 convex anatomical cushion tiers with Linea Alba & Tendinous Inscriptions
       const absTierPositions = [
-        { y: 1.285, w: 0.065, h: 0.062, d: 0.05 }, // Upper Abs
-        { y: 1.205, w: 0.062, h: 0.065, d: 0.05 }, // Mid Abs (Umbilical)
-        { y: 1.120, w: 0.058, h: 0.070, d: 0.048 } // Lower Abs (Suprapubic)
+        { y: 1.285, sx: 1.10, sy: 0.85, sz: 0.38, r: 0.046 }, // Upper Abs
+        { y: 1.205, sx: 1.08, sy: 0.88, sz: 0.38, r: 0.046 }, // Mid Abs (Umbilical)
+        { y: 1.120, sx: 1.05, sy: 0.92, sz: 0.36, r: 0.044 }  // Lower Abs (Suprapubic)
       ];
 
       absTierPositions.forEach(tier => {
-        // Left Abdominal Pad
-        const padGeoL = new THREE.BoxGeometry(tier.w, tier.h, tier.d);
+        // Left Abdominal Pad (Smooth convex cushion)
+        const padGeoL = new THREE.SphereGeometry(tier.r, 22, 18);
+        padGeoL.scale(tier.sx, tier.sy, tier.sz);
         const padL = new THREE.Mesh(padGeoL, this.skinMaterial);
         padL.position.set(-0.042, tier.y, 0.082);
         this.registerMuscleMesh(padL, 'abs');
 
         // Right Abdominal Pad
-        const padGeoR = new THREE.BoxGeometry(tier.w, tier.h, tier.d);
+        const padGeoR = new THREE.SphereGeometry(tier.r, 22, 18);
+        padGeoR.scale(tier.sx, tier.sy, tier.sz);
         const padR = new THREE.Mesh(padGeoR, this.skinMaterial);
         padR.position.set(0.042, tier.y, 0.082);
         this.registerMuscleMesh(padR, 'abs');
@@ -497,97 +501,96 @@
 
       // 6. EXTERNAL OBLIQUES (Flanks & V-Line Adonis Belt)
       // Left Oblique
-      const obliqueGeoL = new THREE.BoxGeometry(0.065, 0.22, 0.085);
+      const obliqueGeoL = new THREE.SphereGeometry(0.062, 24, 20);
+      obliqueGeoL.scale(0.82, 2.25, 0.88);
       const obliqueL = new THREE.Mesh(obliqueGeoL, this.skinMaterial);
-      obliqueL.position.set(-0.125, 1.18, 0.045);
+      obliqueL.position.set(-0.128, 1.18, 0.042);
       obliqueL.rotation.z = -0.10;
       this.registerMuscleMesh(obliqueL, 'obliques');
 
       // Right Oblique
-      const obliqueGeoR = new THREE.BoxGeometry(0.065, 0.22, 0.085);
+      const obliqueGeoR = new THREE.SphereGeometry(0.062, 24, 20);
+      obliqueGeoR.scale(0.82, 2.25, 0.88);
       const obliqueR = new THREE.Mesh(obliqueGeoR, this.skinMaterial);
-      obliqueR.position.set(0.125, 1.18, 0.045);
+      obliqueR.position.set(0.128, 1.18, 0.042);
       obliqueR.rotation.z = 0.10;
       this.registerMuscleMesh(obliqueR, 'obliques');
 
       // 7. LATISSIMUS DORSI (LATS / V-TAPER BACK WINGS)
-      // Left Latissimus Wing
-      const latGeoL = new THREE.BoxGeometry(0.09, 0.24, 0.095);
-      latGeoL.scale(1.0, 1.0, 0.85);
+      // Smooth, fanned latissimus wings creating classic athletic V-taper
+      const latGeoL = new THREE.SphereGeometry(0.092, 26, 22);
+      latGeoL.scale(1.18, 1.95, 0.72);
       const latL = new THREE.Mesh(latGeoL, this.skinMaterial);
-      latL.position.set(-0.165, 1.32, -0.055);
+      latL.position.set(-0.165, 1.32, -0.052);
       latL.rotation.z = -0.18;
-      latL.rotation.y = 0.25;
+      latL.rotation.y = 0.28;
       this.registerMuscleMesh(latL, 'lats');
 
-      // Right Latissimus Wing
-      const latGeoR = new THREE.BoxGeometry(0.09, 0.24, 0.095);
-      latGeoR.scale(1.0, 1.0, 0.85);
+      const latGeoR = new THREE.SphereGeometry(0.092, 26, 22);
+      latGeoR.scale(1.18, 1.95, 0.72);
       const latR = new THREE.Mesh(latGeoR, this.skinMaterial);
-      latR.position.set(0.165, 1.32, -0.055);
+      latR.position.set(0.165, 1.32, -0.052);
       latR.rotation.z = 0.18;
-      latR.rotation.y = -0.25;
+      latR.rotation.y = -0.28;
       this.registerMuscleMesh(latR, 'lats');
 
       // 8. LOWER BACK (ERECTOR SPINAE & LUMBAR COLUMNS)
-      const lbackGeoL = new THREE.CylinderGeometry(0.038, 0.042, 0.20, 14);
+      const lbackGeoL = new THREE.CylinderGeometry(0.034, 0.040, 0.22, 18);
       const lbackL = new THREE.Mesh(lbackGeoL, this.skinMaterial);
-      lbackL.position.set(-0.048, 1.17, -0.082);
+      lbackL.position.set(-0.046, 1.17, -0.080);
       this.registerMuscleMesh(lbackL, 'lowerback');
 
-      const lbackGeoR = new THREE.CylinderGeometry(0.038, 0.042, 0.20, 14);
+      const lbackGeoR = new THREE.CylinderGeometry(0.034, 0.040, 0.22, 18);
       const lbackR = new THREE.Mesh(lbackGeoR, this.skinMaterial);
-      lbackR.position.set(0.048, 1.17, -0.082);
+      lbackR.position.set(0.046, 1.17, -0.080);
       this.registerMuscleMesh(lbackR, 'lowerback');
 
-      // Internal Torso Anatomical Core (Connects all muscles naturally)
-      const coreGeo = new THREE.CylinderGeometry(0.155, 0.130, 0.46, 20);
+      // Internal Torso Anatomical Core (Smooth organically contoured oval connector)
+      const coreGeo = new THREE.SphereGeometry(0.162, 32, 24);
+      coreGeo.scale(0.96, 1.55, 0.82);
       const core = new THREE.Mesh(coreGeo, this.skinMaterial);
       core.position.set(0, 1.28, 0.005);
       this.addBodyBaseMesh(core);
 
-      // Pelvis / Waist Base
-      const pelvisGeo = new THREE.CylinderGeometry(0.138, 0.145, 0.16, 20);
+      // Pelvis / Waist Athletic Base
+      const pelvisGeo = new THREE.CylinderGeometry(0.132, 0.144, 0.16, 24);
       const pelvis = new THREE.Mesh(pelvisGeo, this.skinMaterial);
       pelvis.position.set(0, 1.01, 0.01);
       this.addBodyBaseMesh(pelvis);
 
       // 9. BICEPS (ANTERIOR ARMS)
-      // Left Bicep (Sculpted peak & bicep belly)
-      const bicepGeoL = new THREE.SphereGeometry(0.058, 18, 16);
-      bicepGeoL.scale(0.88, 1.75, 0.95);
+      // Athletic peaked bicep bellies
+      const bicepGeoL = new THREE.SphereGeometry(0.058, 22, 18);
+      bicepGeoL.scale(0.86, 1.75, 0.92);
       const bicepL = new THREE.Mesh(bicepGeoL, this.skinMaterial);
-      bicepL.position.set(-0.255, 1.28, 0.025);
+      bicepL.position.set(-0.255, 1.28, 0.024);
       bicepL.rotation.z = -0.12;
       this.registerMuscleMesh(bicepL, 'biceps');
 
-      // Right Bicep
-      const bicepGeoR = new THREE.SphereGeometry(0.058, 18, 16);
-      bicepGeoR.scale(0.88, 1.75, 0.95);
+      const bicepGeoR = new THREE.SphereGeometry(0.058, 22, 18);
+      bicepGeoR.scale(0.86, 1.75, 0.92);
       const bicepR = new THREE.Mesh(bicepGeoR, this.skinMaterial);
-      bicepR.position.set(0.255, 1.28, 0.025);
+      bicepR.position.set(0.255, 1.28, 0.024);
       bicepR.rotation.z = 0.12;
       this.registerMuscleMesh(bicepR, 'biceps');
 
       // 10. TRICEPS (POSTERIOR ARMS - HORSESHOE FORM)
-      // Left Tricep
-      const tricepGeoL = new THREE.SphereGeometry(0.062, 18, 16);
-      tricepGeoL.scale(0.92, 1.85, 1.05);
+      const tricepGeoL = new THREE.SphereGeometry(0.064, 22, 18);
+      tricepGeoL.scale(0.90, 1.85, 1.02);
       const tricepL = new THREE.Mesh(tricepGeoL, this.skinMaterial);
       tricepL.position.set(-0.258, 1.28, -0.032);
       tricepL.rotation.z = -0.12;
       this.registerMuscleMesh(tricepL, 'triceps');
 
-      // Right Tricep
-      const tricepGeoR = new THREE.SphereGeometry(0.062, 18, 16);
-      tricepGeoR.scale(0.92, 1.85, 1.05);
+      const tricepGeoR = new THREE.SphereGeometry(0.064, 22, 18);
+      tricepGeoR.scale(0.90, 1.85, 1.02);
       const tricepR = new THREE.Mesh(tricepGeoR, this.skinMaterial);
       tricepR.position.set(0.258, 1.28, -0.032);
       tricepR.rotation.z = 0.12;
       this.registerMuscleMesh(tricepR, 'triceps');
 
       // Elbows (Olecranon joint landmarks)
-      const elbowGeo = new THREE.SphereGeometry(0.042, 14, 12);
+      const elbowGeo = new THREE.SphereGeometry(0.040, 16, 14);
       const elbowL = new THREE.Mesh(elbowGeo, this.jointMaterial);
       elbowL.position.set(-0.275, 1.155, -0.025);
       this.addBodyBaseMesh(elbowL);
@@ -597,133 +600,188 @@
       this.addBodyBaseMesh(elbowR);
 
       // 11. FOREARMS (BRACHIORADIALIS & FLEXOR/EXTENSOR GROUPS)
-      // Left Forearm
-      const forearmGeoL = new THREE.CylinderGeometry(0.034, 0.052, 0.22, 16);
+      // Left Forearm with Brachioradialis muscular sweep
+      const forearmGeoL = new THREE.CylinderGeometry(0.033, 0.052, 0.22, 20);
       const forearmL = new THREE.Mesh(forearmGeoL, this.skinMaterial);
       forearmL.position.set(-0.285, 1.025, 0.015);
       forearmL.rotation.z = -0.14;
       this.registerMuscleMesh(forearmL, 'forearms');
 
-      // Right Forearm
-      const forearmGeoR = new THREE.CylinderGeometry(0.034, 0.052, 0.22, 16);
+      const brachioGeoL = new THREE.SphereGeometry(0.042, 18, 16);
+      brachioGeoL.scale(0.88, 1.45, 0.88);
+      const brachioL = new THREE.Mesh(brachioGeoL, this.skinMaterial);
+      brachioL.position.set(-0.292, 1.06, 0.022);
+      brachioL.rotation.z = -0.14;
+      this.registerMuscleMesh(brachioL, 'forearms');
+
+      // Right Forearm with Brachioradialis sweep
+      const forearmGeoR = new THREE.CylinderGeometry(0.033, 0.052, 0.22, 20);
       const forearmR = new THREE.Mesh(forearmGeoR, this.skinMaterial);
       forearmR.position.set(0.285, 1.025, 0.015);
       forearmR.rotation.z = 0.14;
       this.registerMuscleMesh(forearmR, 'forearms');
 
-      // Wrists & Hands
-      const handGeo = new THREE.BoxGeometry(0.045, 0.11, 0.032);
-      const handL = new THREE.Mesh(handGeo, this.jointMaterial);
+      const brachioGeoR = new THREE.SphereGeometry(0.042, 18, 16);
+      brachioGeoR.scale(0.88, 1.45, 0.88);
+      const brachioR = new THREE.Mesh(brachioGeoR, this.skinMaterial);
+      brachioR.position.set(0.292, 1.06, 0.022);
+      brachioR.rotation.z = 0.14;
+      this.registerMuscleMesh(brachioR, 'forearms');
+
+      // Wrists & Natural Sculpted Hands
+      const handGeoL = new THREE.SphereGeometry(0.038, 18, 14);
+      handGeoL.scale(0.85, 1.45, 0.55);
+      const handL = new THREE.Mesh(handGeoL, this.jointMaterial);
       handL.position.set(-0.315, 0.865, 0.02);
       this.addBodyBaseMesh(handL);
 
-      const handR = new THREE.Mesh(handGeo, this.jointMaterial);
+      const handGeoR = new THREE.SphereGeometry(0.038, 18, 14);
+      handGeoR.scale(0.85, 1.45, 0.55);
+      const handR = new THREE.Mesh(handGeoR, this.jointMaterial);
       handR.position.set(0.315, 0.865, 0.02);
       this.addBodyBaseMesh(handR);
 
       // 12. GLUTES (GLUTEAL COMPLEX - GLUTEUS MAXIMUS & MEDIUS)
-      // Left Glute Cheek
-      const gluteGeoL = new THREE.SphereGeometry(0.118, 22, 18);
+      const gluteGeoL = new THREE.SphereGeometry(0.118, 26, 22);
       gluteGeoL.scale(0.95, 1.15, 1.05);
       const gluteL = new THREE.Mesh(gluteGeoL, this.skinMaterial);
       gluteL.position.set(-0.088, 0.94, -0.082);
       this.registerMuscleMesh(gluteL, 'glutes');
 
-      // Right Glute Cheek
-      const gluteGeoR = new THREE.SphereGeometry(0.118, 22, 18);
+      const gluteGeoR = new THREE.SphereGeometry(0.118, 26, 22);
       gluteGeoR.scale(0.95, 1.15, 1.05);
       const gluteR = new THREE.Mesh(gluteGeoR, this.skinMaterial);
       gluteR.position.set(0.088, 0.94, -0.082);
       this.registerMuscleMesh(gluteR, 'glutes');
 
-      // 13. QUADRICEPS (FRONT THIGHS - VASTUS LATERALIS, MEDIALIS & RECTUS FEMORIS)
-      // Left Quad Group
-      const quadGeoL = new THREE.CylinderGeometry(0.078, 0.108, 0.38, 20);
-      const quadL = new THREE.Mesh(quadGeoL, this.skinMaterial);
-      quadL.position.set(-0.112, 0.725, 0.032);
-      quadL.rotation.z = 0.06;
-      this.registerMuscleMesh(quadL, 'quads');
+      // 13. QUADRICEPS (FRONT THIGHS - VASTUS LATERALIS, MEDIALIS TEARDROP & RECTUS FEMORIS)
+      // Left Quad Complex
+      // Outer Vastus Lateralis (Quad Sweep)
+      const latQuadGeoL = new THREE.SphereGeometry(0.080, 24, 20);
+      latQuadGeoL.scale(0.92, 2.25, 0.88);
+      const latQuadL = new THREE.Mesh(latQuadGeoL, this.skinMaterial);
+      latQuadL.position.set(-0.135, 0.725, 0.015);
+      latQuadL.rotation.z = 0.08;
+      this.registerMuscleMesh(latQuadL, 'quads');
 
-      // Left Vastus Medialis (Teardrop just above knee)
-      const teardropGeoL = new THREE.SphereGeometry(0.052, 16, 14);
-      teardropGeoL.scale(0.9, 1.35, 0.85);
+      // Central Rectus Femoris (Quad Front Peak)
+      const rectusQuadGeoL = new THREE.SphereGeometry(0.076, 24, 20);
+      rectusQuadGeoL.scale(0.88, 2.35, 0.92);
+      const rectusQuadL = new THREE.Mesh(rectusQuadGeoL, this.skinMaterial);
+      rectusQuadL.position.set(-0.108, 0.725, 0.042);
+      this.registerMuscleMesh(rectusQuadL, 'quads');
+
+      // Inner Vastus Medialis (Teardrop above inner knee)
+      const teardropGeoL = new THREE.SphereGeometry(0.052, 20, 18);
+      teardropGeoL.scale(1.05, 1.40, 0.88);
       const teardropL = new THREE.Mesh(teardropGeoL, this.skinMaterial);
-      teardropL.position.set(-0.085, 0.575, 0.055);
+      teardropL.position.set(-0.082, 0.575, 0.052);
       this.registerMuscleMesh(teardropL, 'quads');
 
-      // Right Quad Group
-      const quadGeoR = new THREE.CylinderGeometry(0.078, 0.108, 0.38, 20);
-      const quadR = new THREE.Mesh(quadGeoR, this.skinMaterial);
-      quadR.position.set(0.112, 0.725, 0.032);
-      quadR.rotation.z = -0.06;
-      this.registerMuscleMesh(quadR, 'quads');
+      // Right Quad Complex
+      // Outer Vastus Lateralis (Quad Sweep)
+      const latQuadGeoR = new THREE.SphereGeometry(0.080, 24, 20);
+      latQuadGeoR.scale(0.92, 2.25, 0.88);
+      const latQuadR = new THREE.Mesh(latQuadGeoR, this.skinMaterial);
+      latQuadR.position.set(0.135, 0.725, 0.015);
+      latQuadR.rotation.z = -0.08;
+      this.registerMuscleMesh(latQuadR, 'quads');
 
-      // Right Vastus Medialis
-      const teardropGeoR = new THREE.SphereGeometry(0.052, 16, 14);
-      teardropGeoR.scale(0.9, 1.35, 0.85);
+      // Central Rectus Femoris (Quad Front Peak)
+      const rectusQuadGeoR = new THREE.SphereGeometry(0.076, 24, 20);
+      rectusQuadGeoR.scale(0.88, 2.35, 0.92);
+      const rectusQuadR = new THREE.Mesh(rectusQuadGeoR, this.skinMaterial);
+      rectusQuadR.position.set(0.108, 0.725, 0.042);
+      this.registerMuscleMesh(rectusQuadR, 'quads');
+
+      // Inner Vastus Medialis (Teardrop above inner knee)
+      const teardropGeoR = new THREE.SphereGeometry(0.052, 20, 18);
+      teardropGeoR.scale(1.05, 1.40, 0.88);
       const teardropR = new THREE.Mesh(teardropGeoR, this.skinMaterial);
-      teardropR.position.set(0.085, 0.575, 0.055);
+      teardropR.position.set(0.082, 0.575, 0.052);
       this.registerMuscleMesh(teardropR, 'quads');
 
-      // 14. HAMSTRINGS (POSTERIOR THIGHS)
+      // 14. HAMSTRINGS (POSTERIOR THIGHS - BICEPS FEMORIS & SEMITENDINOSUS)
       // Left Hamstring
-      const hamGeoL = new THREE.CylinderGeometry(0.068, 0.092, 0.34, 18);
+      const hamGeoL = new THREE.SphereGeometry(0.082, 24, 20);
+      hamGeoL.scale(0.92, 2.15, 0.95);
       const hamL = new THREE.Mesh(hamGeoL, this.skinMaterial);
       hamL.position.set(-0.112, 0.725, -0.048);
       hamL.rotation.z = 0.06;
       this.registerMuscleMesh(hamL, 'hamstrings');
 
       // Right Hamstring
-      const hamGeoR = new THREE.CylinderGeometry(0.068, 0.092, 0.34, 18);
+      const hamGeoR = new THREE.SphereGeometry(0.082, 24, 20);
+      hamGeoR.scale(0.92, 2.15, 0.95);
       const hamR = new THREE.Mesh(hamGeoR, this.skinMaterial);
       hamR.position.set(0.112, 0.725, -0.048);
       hamR.rotation.z = -0.06;
       this.registerMuscleMesh(hamR, 'hamstrings');
 
-      // Knees (Patella & Tendon Anatomy)
-      const kneeGeo = new THREE.SphereGeometry(0.052, 16, 14);
+      // Knees (Patella Shield Landmarks)
+      const kneeGeo = new THREE.SphereGeometry(0.046, 20, 16);
+      kneeGeo.scale(0.95, 1.15, 0.65);
       const kneeL = new THREE.Mesh(kneeGeo, this.jointMaterial);
-      kneeL.position.set(-0.102, 0.510, 0.038);
+      kneeL.position.set(-0.102, 0.510, 0.040);
       this.addBodyBaseMesh(kneeL);
 
       const kneeR = new THREE.Mesh(kneeGeo, this.jointMaterial);
-      kneeR.position.set(0.102, 0.510, 0.038);
+      kneeR.position.set(0.102, 0.510, 0.040);
       this.addBodyBaseMesh(kneeR);
 
       // 15. CALVES & TIBIALIS (LOWER LEGS - GASTROCNEMIUS & SOLEUS)
-      // Left Calf (Dual-bellied diamond sweep)
-      const calfGeoL = new THREE.SphereGeometry(0.075, 18, 16);
-      calfGeoL.scale(0.90, 1.75, 1.15);
-      const calfL = new THREE.Mesh(calfGeoL, this.skinMaterial);
-      calfL.position.set(-0.105, 0.355, -0.022);
-      this.registerMuscleMesh(calfL, 'calves');
+      // Left Calf Complex
+      // Outer Lateral Gastrocnemius
+      const calfLatGeoL = new THREE.SphereGeometry(0.056, 22, 18);
+      calfLatGeoL.scale(0.90, 1.85, 0.92);
+      const calfLatL = new THREE.Mesh(calfLatGeoL, this.skinMaterial);
+      calfLatL.position.set(-0.118, 0.365, -0.024);
+      this.registerMuscleMesh(calfLatL, 'calves');
 
-      // Left Shin (Tibialis Anterior ridge)
-      const shinGeoL = new THREE.CylinderGeometry(0.036, 0.044, 0.35, 14);
+      // Inner Medial Gastrocnemius (Fuller & lower anatomical sweep)
+      const calfMedGeoL = new THREE.SphereGeometry(0.062, 22, 18);
+      calfMedGeoL.scale(0.92, 1.95, 0.95);
+      const calfMedL = new THREE.Mesh(calfMedGeoL, this.skinMaterial);
+      calfMedL.position.set(-0.092, 0.345, -0.022);
+      this.registerMuscleMesh(calfMedL, 'calves');
+
+      // Left Shin & Achilles Tendon (Tibialis Anterior ridge)
+      const shinGeoL = new THREE.CylinderGeometry(0.034, 0.042, 0.35, 18);
       const shinL = new THREE.Mesh(shinGeoL, this.skinMaterial);
       shinL.position.set(-0.102, 0.285, 0.015);
       this.registerMuscleMesh(shinL, 'calves');
 
-      // Right Calf
-      const calfGeoR = new THREE.SphereGeometry(0.075, 18, 16);
-      calfGeoR.scale(0.90, 1.75, 1.15);
-      const calfR = new THREE.Mesh(calfGeoR, this.skinMaterial);
-      calfR.position.set(0.105, 0.355, -0.022);
-      this.registerMuscleMesh(calfR, 'calves');
+      // Right Calf Complex
+      // Outer Lateral Gastrocnemius
+      const calfLatGeoR = new THREE.SphereGeometry(0.056, 22, 18);
+      calfLatGeoR.scale(0.90, 1.85, 0.92);
+      const calfLatR = new THREE.Mesh(calfLatGeoR, this.skinMaterial);
+      calfLatR.position.set(0.118, 0.365, -0.024);
+      this.registerMuscleMesh(calfLatR, 'calves');
 
-      // Right Shin
-      const shinGeoR = new THREE.CylinderGeometry(0.036, 0.044, 0.35, 14);
+      // Inner Medial Gastrocnemius
+      const calfMedGeoR = new THREE.SphereGeometry(0.062, 22, 18);
+      calfMedGeoR.scale(0.92, 1.95, 0.95);
+      const calfMedR = new THREE.Mesh(calfMedGeoR, this.skinMaterial);
+      calfMedR.position.set(0.092, 0.345, -0.022);
+      this.registerMuscleMesh(calfMedR, 'calves');
+
+      // Right Shin & Achilles Tendon
+      const shinGeoR = new THREE.CylinderGeometry(0.034, 0.042, 0.35, 18);
       const shinR = new THREE.Mesh(shinGeoR, this.skinMaterial);
       shinR.position.set(0.102, 0.285, 0.015);
       this.registerMuscleMesh(shinR, 'calves');
 
-      // Ankles & Athletic Feet
-      const ankleGeo = new THREE.BoxGeometry(0.062, 0.082, 0.17);
-      const footL = new THREE.Mesh(ankleGeo, this.jointMaterial);
+      // Ankles & Sculpted Feet
+      const footGeoL = new THREE.SphereGeometry(0.055, 18, 14);
+      footGeoL.scale(0.85, 0.62, 1.75);
+      const footL = new THREE.Mesh(footGeoL, this.jointMaterial);
       footL.position.set(-0.102, 0.045, 0.045);
       this.addBodyBaseMesh(footL);
 
-      const footR = new THREE.Mesh(ankleGeo, this.jointMaterial);
+      const footGeoR = new THREE.SphereGeometry(0.055, 18, 14);
+      footGeoR.scale(0.85, 0.62, 1.75);
+      const footR = new THREE.Mesh(footGeoR, this.jointMaterial);
       footR.position.set(0.102, 0.045, 0.045);
       this.addBodyBaseMesh(footR);
     }
@@ -967,10 +1025,11 @@
       const data = ANATOMY_DATA[muscleKey];
       if (!data) return;
 
-      const card = document.getElementById('avatar-3d-hud-card');
-      if (!card) return;
+      const card3d = document.getElementById('avatar-3d-hud-card');
+      const card2d = document.getElementById('avatar-2d-hud-card');
+      if (!card3d && !card2d) return;
 
-      card.innerHTML = `
+      const html = `
         <div class="flex items-start justify-between gap-2 mb-1.5">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -979,28 +1038,38 @@
             </div>
             <p class="text-[10px] text-cyan-300 font-serif italic">${data.latinName}</p>
           </div>
-          <button type="button" onclick="window.avatar3D.clearSelection()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+          <button type="button" onclick="window.clearMuscleFilter ? window.clearMuscleFilter() : window.avatar3D.clearSelection()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition" title="Clear selection">
             <i data-lucide="x" class="w-3.5 h-3.5"></i>
           </button>
         </div>
         <div class="space-y-1.5 text-[11px] text-slate-300 border-t border-slate-800/80 pt-1.5">
           <div>
-            <span class="font-bold text-slate-400 text-[10px] uppercase tracking-wide block">Primary Function:</span>
-            <p class="leading-tight text-slate-200">${data.function}</p>
+            <span class="font-bold text-cyan-400 text-[10px] uppercase tracking-wide block">Primary Biomechanical Function:</span>
+            <p class="leading-tight text-slate-200 mt-0.5">${data.function}</p>
           </div>
           <div>
             <span class="font-bold text-slate-400 text-[10px] uppercase tracking-wide block">Anatomical Location:</span>
-            <p class="leading-tight text-slate-300">${data.location}</p>
+            <p class="leading-tight text-slate-300 mt-0.5">${data.location}</p>
           </div>
         </div>
       `;
-      card.classList.remove('hidden');
+
+      if (card3d) {
+        card3d.innerHTML = html;
+        card3d.classList.remove('hidden');
+      }
+      if (card2d) {
+        card2d.innerHTML = html;
+        card2d.classList.remove('hidden');
+      }
       if (window.lucide) window.lucide.createIcons();
     }
 
     hideAnatomicalCard() {
-      const card = document.getElementById('avatar-3d-hud-card');
-      if (card) card.classList.add('hidden');
+      const card3d = document.getElementById('avatar-3d-hud-card');
+      const card2d = document.getElementById('avatar-2d-hud-card');
+      if (card3d) card3d.classList.add('hidden');
+      if (card2d) card2d.classList.add('hidden');
     }
 
     // =========================================================================
@@ -1079,6 +1148,7 @@
 
   // Expose global instance
   window.RealisticAnatomyAvatar3D = RealisticAnatomyAvatar3D;
+  window.ANATOMY_DATA = ANATOMY_DATA;
   window.avatar3D = new RealisticAnatomyAvatar3D();
 
   // Helper function for external SVG / UI sync
@@ -1087,3 +1157,4 @@
     if (tooltip) tooltip.textContent = text;
   };
 })();
+

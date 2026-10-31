@@ -283,9 +283,13 @@ function selectMuscle(muscleKey) {
   const mInfo = MUSCLE_MAP[muscleKey];
   if (!mInfo) return;
 
-  // Sync with 3D Realistic Anatomy Avatar
-  if (window.avatar3D && window.avatar3D.selectedMuscleKey !== muscleKey) {
-    window.avatar3D.selectMuscle(muscleKey, false);
+  // Sync with 3D Realistic Anatomy Avatar & HUD Card
+  if (window.avatar3D) {
+    if (window.avatar3D.selectedMuscleKey !== muscleKey) {
+      window.avatar3D.selectMuscle(muscleKey, false);
+    } else if (typeof window.avatar3D.renderAnatomicalCard === 'function') {
+      window.avatar3D.renderAnatomicalCard(muscleKey);
+    }
   }
 
   // Update SVG active paths on both front and back
@@ -335,9 +339,14 @@ function selectMuscle(muscleKey) {
 function clearMuscleFilter() {
   selectedMuscle = null;
 
-  // Sync with 3D avatar
-  if (window.avatar3D && window.avatar3D.selectedMuscleKey !== null) {
-    window.avatar3D.clearSelection(false);
+  // Sync with 3D avatar & HUD Card
+  if (window.avatar3D) {
+    if (window.avatar3D.selectedMuscleKey !== null) {
+      window.avatar3D.clearSelection(false);
+    }
+    if (typeof window.avatar3D.hideAnatomicalCard === 'function') {
+      window.avatar3D.hideAnatomicalCard();
+    }
   }
 
   document.querySelectorAll('.muscle-path').forEach(p => p.classList.remove('active'));
