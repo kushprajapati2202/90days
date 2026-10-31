@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#070b14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  
+  <title>90-Day Fat-Loss + Strength | Gym Tracker</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              400: '#22d3ee',
+              500: '#06b6d4',
+              600: '#0891b2',
+            },
+            dark: {
+              950: '#050810',
+              900: '#070b14',
+              850: '#0b1120',
+              800: '#0f172a',
+              750: '#151f35',
+              700: '#1e293b',
+              600: '#334155'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-dark-900 text-slate-100 min-h-screen selection:bg-cyan-500 selection:text-white">
+
+  <!-- TOP HEADER (FULLY RESPONSIVE: DESKTOP & MOBILE) -->
+  <header class="sticky top-0 z-40 bg-dark-900/95 backdrop-blur-md border-b border-slate-800/80 px-3 sm:px-6 py-2.5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      
+      <!-- Logo & Atlas Status -->
+      <div class="flex items-center space-x-2.5 cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-emerald-400 flex items-center justify-center shadow-md shadow-cyan-500/20 shrink-0">
+          <i data-lucide="dumbbell" class="w-4 h-4 text-white"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-1.5">
+            <h1 class="text-sm sm:text-base font-extrabold tracking-tight text-white font-heading">90-DAY TRACKER</h1>
+            <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-cyan-950 text-cyan-300 border border-cyan-800">
+              ATLAS
+            </span>
+          </div>
+          <div class="flex items-center space-x-1.5 text-[11px] text-slate-400">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 pulsing-dot"></span>
+            <span id="db-status-text">Atlas: Connected</span>
+            <span class="text-slate-600">•</span>
+            <span>92.5 → 82 kg</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Header Actions (Full on Desktop, Compact on Mobile) -->
+      <div class="flex items-center space-x-1 sm:space-x-2">
+        
+        <!-- Jump to Today Button -->
+        <button id="btn-jump-today" class="flex items-center space-x-1 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-bold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 active:scale-95 transition">
+          <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
+          <span>Today</span>
+        </button>
+
+        <!-- Exercise Library Link -->
+        <a href="exercises.html" class="flex items-center space-x-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/25 active:scale-95 transition">
+          <i data-lucide="book-marked" class="w-3.5 h-3.5"></i>
+          <span>Library</span>
+        </a>
+
+        <!-- Desktop Only Actions -->
+        <button id="btn-open-weight" class="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-dark-800 text-emerald-400 border border-emerald-500/30 hover:bg-slate-700 transition">
+          <i data-lucide="scale" class="w-3.5 h-3.5"></i>
+          <span>Weight Graph</span>
+        </button>
+
+        <button id="btn-toggle-timer" class="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-dark-800 text-rose-400 border border-rose-500/30 hover:bg-slate-700 transition">
+          <i data-lucide="timer" class="w-3.5 h-3.5"></i>
+          <span>Rest Timer</span>
+        </button>
+
+        <button id="btn-open-rules" class="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-dark-800 text-amber-400 border border-amber-500/30 hover:bg-slate-700 transition">
+          <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+          <span>Coaching Rules</span>
+        </button>
+
+        <!-- Mobile Wi-Fi Link Button -->
+        <button onclick="copyMobileUrl()" title="Open on Mobile Wi-Fi" class="hidden sm:flex items-center space-x-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-dark-800 hover:bg-slate-700 text-cyan-400 border border-cyan-500/20 transition">
+          <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+          <span class="hidden lg:inline">Mobile Wi-Fi</span>
+        </button>
+
+        <!-- Export JSON Button -->
+        <button id="btn-export-json" title="Download MongoDB Atlas Backup" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <i data-lucide="download" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MOBILE CONNECT BANNER (Dismissible) -->
+  <div id="mobile-url-banner" class="bg-gradient-to-r from-cyan-950/80 via-dark-850 to-indigo-950/80 border-b border-cyan-500/20 px-3 py-2 text-xs flex items-center justify-between text-slate-300">
+    <div class="flex items-center space-x-2 overflow-hidden">
+      <i data-lucide="wifi" class="w-4 h-4 text-cyan-400 shrink-0"></i>
+      <span class="truncate">Mobile Wi-Fi URL: <strong class="text-cyan-300 font-mono" id="mobile-ip-display">http://192.168.29.202:8000</strong></span>
+    </div>
+    <div class="flex items-center space-x-1.5 shrink-0 ml-2">
+      <button onclick="copyMobileUrl()" class="px-2 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-[11px] font-bold">Copy</button>
+      <button onclick="document.getElementById('mobile-url-banner').remove()" class="p-0.5 text-slate-500 hover:text-slate-300"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-5 space-y-4 sm:space-y-6">
+
+    <!-- ATHLETE PROFILE & HERO STATS -->
+    <section class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-800 relative overflow-hidden">
+      <div class="absolute -right-20 -top-20 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      
+      <!-- Athlete Info Row -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 relative z-10">
+        <div>
+          <div class="flex flex-wrap items-center gap-1.5 mb-1 text-[11px]">
+            <span class="px-2 py-0.5 rounded-full font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+              Kush Prajapati
+            </span>
+            <span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
+              26y • 180cm
+            </span>
+            <span class="px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300">
+              Gym 8–10 PM
+            </span>
+            <span class="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300">
+              6 Training + 1 Recovery
+            </span>
+          </div>
+          <h2 class="text-lg sm:text-2xl font-extrabold text-white">
+            Goal: 92.5 kg <span class="text-cyan-400">➔ 82.0 kg</span> (-10.5 kg in 90 Days)
+          </h2>
+        </div>
+
+        <div class="text-[11px] text-slate-400 sm:text-right max-w-sm">
+          "Sweat is not the goal—consistent effort, safe form and recovery are."
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="grid grid-cols-3 gap-2 sm:gap-4 pt-3 border-t border-slate-800/80 relative z-10">
+        <div class="bg-dark-900/70 border border-slate-800 rounded-xl p-2.5 sm:p-3 text-center">
+          <span class="text-[11px] sm:text-xs text-slate-400 block font-medium">Days Completed</span>
+          <div class="flex items-baseline justify-center space-x-1">
+            <span id="hero-days-completed" class="text-xl sm:text-3xl font-black text-cyan-400 font-heading">0</span>
+            <span class="text-xs text-slate-500 font-semibold">/90</span>
+          </div>
+        </div>
+
+        <div class="bg-dark-900/70 border border-slate-800 rounded-xl p-2.5 sm:p-3 text-center cursor-pointer active:scale-95 hover:border-emerald-500/40 transition" onclick="openWeightModal()" title="View Weight Chart">
+          <span class="text-[11px] sm:text-xs text-slate-400 block font-medium">Current Weight</span>
+          <div class="flex items-baseline justify-center space-x-1">
+            <span id="hero-current-weight" class="text-xl sm:text-3xl font-black text-emerald-400 font-heading">92.5</span>
+            <span class="text-xs text-slate-500 font-semibold">kg</span>
+          </div>
+        </div>
+
+        <div class="bg-dark-900/70 border border-slate-800 rounded-xl p-2.5 sm:p-3 text-center">
+          <span class="text-[11px] sm:text-xs text-slate-400 block font-medium">Active Streak</span>
+          <div class="flex items-center justify-center space-x-1">
+            <i data-lucide="flame" class="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 fill-amber-400"></i>
+            <span id="hero-streak-count" class="text-xl sm:text-3xl font-black text-amber-400 font-heading">0</span>
+            <span class="text-xs text-slate-500 font-semibold hidden sm:inline">days</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 90-Day Progress Bar -->
+      <div class="mt-3.5 relative z-10">
+        <div class="flex justify-between items-center text-xs mb-1 font-semibold">
+          <span class="text-slate-400 flex items-center space-x-1.5">
+            <i data-lucide="activity" class="w-3.5 h-3.5 text-cyan-400"></i>
+            <span>Overall Plan Progress</span>
+          </span>
+          <span id="overall-progress-pct" class="text-cyan-400 font-bold">0.0%</span>
+        </div>
+        <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+          <div id="overall-progress-bar" class="bg-gradient-to-r from-cyan-500 via-indigo-500 to-emerald-400 h-2.5 rounded-full transition-all duration-500 w-0"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HORIZONTAL TOUCH WEEK SELECTOR -->
+    <section class="space-y-2">
+      <div class="flex justify-between items-center px-1">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center space-x-1.5">
+          <i data-lucide="calendar" class="w-3.5 h-3.5 text-cyan-400"></i>
+          <span>Select Week (1–13)</span>
+        </span>
+        <button onclick="resetFilters()" class="text-xs text-cyan-400 hover:text-cyan-300 font-semibold transition">
+          Reset Filter
+        </button>
+      </div>
+
+      <div class="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1 px-0.5">
+        <button class="week-pill active px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 bg-cyan-500 text-dark-900 border border-cyan-400" data-week="">
+          All (90 Days)
+        </button>
+        <button class="week-pill px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-dark-800 text-slate-300 border border-slate-700/80 hover:bg-slate-700" data-week="1">
+          W1
+        </button>
+        <button class="week-pill px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-dark-800 text-slate-300 border border-slate-700/80 hover:bg-slate-700" data-week="2">
+          W2
+        </button>
+        <button class="week-pill px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-dark-800 text-slate-300 border border-slate-700/80 hover:bg-slate-700" data-week="3">
+          W3
+        </button>
+        <button class="week-pill px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 bg-amber-500/15 text-amber-300 border border-amber-500/40 hover:bg-amber-500/25" data-week="4">
+          W4 ⚡ DELOAD
+        </button>
+        <button class="week-pill px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-dark-800 text-slate-300 border border-slate-700/80 hover:bg-slate-700" data-week="5">
+          W5 (Progress)
+        </button>
+        <button class="week-pill px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-dark-800 text-slate-300 border border-slate-700/80 hover:bg-slate-700" data-week="6">
+          W6
+        </button>
+        <button class="week-pill px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-dark-800 text-slate-300 border border-slate-700/80 hover:bg-slate-700" data-week="7">
+          W7
+        </button>
+        <button class="week-pill px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 bg-amber-500/15 text-amber-300 border border-amber-500/40 hover:bg-amber-500/25" data-week="8">
+          W8 ⚡ DELOAD
+        </button>
+        <button class="week-pill px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-dark-800 text-slate-300 border border-slate-700/80 hover:bg-slate-700" data-week="9">
+          W9
+        </button>
+        <button class="week-pill px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-dark-800 text-slate-300 border border-slate-700/80 hover:bg-slate-700" data-week="10">
+          W10 (Consolidate)
+        </button>
+        <button class="week-pill px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-dark-800 text-slate-300 border border-slate-700/80 hover:bg-slate-700" data-week="11">
+          W11
+        </button>
+        <button class="week-pill px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 bg-amber-500/15 text-amber-300 border border-amber-500/40 hover:bg-amber-500/25" data-week="12">
+          W12 ⚡ DELOAD
+        </button>
+        <button class="week-pill px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-dark-800 text-slate-300 border border-slate-700/80 hover:bg-slate-700" data-week="13">
+          W13 (Peak)
+        </button>
+      </div>
+    </section>
+
+    <!-- SEARCH & CATEGORY PILLS -->
+    <section class="space-y-2">
+      <div class="relative">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+        <input type="text" id="search-input" placeholder="Search exercises, stretches (e.g. bench, squat, lats, quad stretch)..."
+          class="w-full bg-dark-850 border border-slate-700/80 rounded-xl pl-9 pr-8 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition">
+        <button id="search-clear-btn" onclick="clearSearch()" class="hidden absolute right-3 top-3 text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar text-xs pb-1">
+        <button class="filter-pill active px-3 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shrink-0 font-semibold" data-filter="all">All (90)</button>
+        <button class="filter-pill px-3 py-1.5 rounded-lg bg-dark-800 text-slate-400 border border-slate-700 shrink-0 font-semibold" data-filter="push">Push Lifts</button>
+        <button class="filter-pill px-3 py-1.5 rounded-lg bg-dark-800 text-slate-400 border border-slate-700 shrink-0 font-semibold" data-filter="pull">Pull Lifts</button>
+        <button class="filter-pill px-3 py-1.5 rounded-lg bg-dark-800 text-slate-400 border border-slate-700 shrink-0 font-semibold" data-filter="legs">Legs + Core</button>
+        <button class="filter-pill px-3 py-1.5 rounded-lg bg-dark-800 text-slate-400 border border-slate-700 shrink-0 font-semibold" data-filter="recovery">Recovery</button>
+        <button class="filter-pill px-3 py-1.5 rounded-lg bg-dark-800 text-slate-400 border border-slate-700 shrink-0 font-semibold" data-filter="pending">Pending</button>
+        <button class="filter-pill px-3 py-1.5 rounded-lg bg-dark-800 text-slate-400 border border-slate-700 shrink-0 font-semibold" data-filter="completed">Completed</button>
+      </div>
+    </section>
+
+    <!-- 3 PHASES BREAKDOWN CARDS -->
+    <section class="grid grid-cols-3 gap-2 sm:gap-4 text-center text-xs">
+      <div class="bg-dark-850 p-2.5 sm:p-3 rounded-xl border border-slate-800">
+        <span class="text-[10px] text-slate-500 uppercase font-bold block">Phase 1</span>
+        <span class="text-cyan-400 font-bold block text-xs sm:text-sm">Foundation</span>
+        <span class="text-[10px] text-slate-400" id="p1-count">0/28 Done</span>
+      </div>
+      <div class="bg-dark-850 p-2.5 sm:p-3 rounded-xl border border-slate-800">
+        <span class="text-[10px] text-slate-500 uppercase font-bold block">Phase 2</span>
+        <span class="text-indigo-400 font-bold block text-xs sm:text-sm">Progress</span>
+        <span class="text-[10px] text-slate-400" id="p2-count">0/32 Done</span>
+      </div>
+      <div class="bg-dark-850 p-2.5 sm:p-3 rounded-xl border border-slate-800">
+        <span class="text-[10px] text-slate-500 uppercase font-bold block">Phase 3</span>
+        <span class="text-emerald-400 font-bold block text-xs sm:text-sm">Consolidate</span>
+        <span class="text-[10px] text-slate-400" id="p3-count">0/30 Done</span>
+      </div>
+    </section>
+
+    <!-- WORKOUT CARDS GRID -->
+    <section>
+      <div class="flex justify-between items-center mb-2 px-1">
+        <span id="filtered-count" class="text-xs text-slate-400 font-medium">Showing 90 days</span>
+        <span class="text-xs text-cyan-400 font-semibold">Includes Warm-up ➔ Lifting ➔ Cooldown</span>
+      </div>
+
+      <div id="workout-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+        <!-- Rendered dynamically -->
+        <div class="col-span-full py-12 text-center text-slate-500">
+          <div class="inline-block w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+          <p>Connecting to MongoDB Atlas...</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MOBILE BOTTOM NAVIGATION BAR -->
+  <nav class="mobile-nav-bar md:hidden">
+    <button class="mobile-nav-item active" id="mob-nav-schedule" onclick="navToSchedule()">
+      <i data-lucide="calendar" class="w-5 h-5 mb-1"></i>
+      <span>Schedule</span>
+    </button>
+    <a href="exercises.html" class="mobile-nav-item" id="mob-nav-library">
+      <i data-lucide="book-marked" class="w-5 h-5 mb-1 text-indigo-400"></i>
+      <span class="text-indigo-400 font-bold">Library</span>
+    </a>
+    <button class="mobile-nav-item" id="mob-nav-today" onclick="jumpToToday()">
+      <i data-lucide="crosshair" class="w-5 h-5 mb-1 text-cyan-400"></i>
+      <span class="text-cyan-400 font-bold">Today</span>
+    </button>
+    <button class="mobile-nav-item" id="mob-nav-timer" onclick="toggleFloatingTimer()">
+      <i data-lucide="timer" class="w-5 h-5 mb-1 text-rose-400"></i>
+      <span>Timer</span>
+    </button>
+    <button class="mobile-nav-item" id="mob-nav-weight" onclick="openWeightModal()">
+      <i data-lucide="scale" class="w-5 h-5 mb-1 text-emerald-400"></i>
+      <span>Weight</span>
+    </button>
+    <button class="mobile-nav-item" id="mob-nav-rules" onclick="openCoachingModal()">
+      <i data-lucide="book-open" class="w-5 h-5 mb-1 text-amber-400"></i>
+      <span>Rules</span>
+    </button>
+  </nav>
+
+  <!-- WORKOUT DETAIL MODAL (COMPLETE SESSION FLOW: STRETCHES -> EXERCISES -> COOLDOWN) -->
+  <div id="workout-modal" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-sm overflow-hidden" onclick="handleBackdropClick(event, 'workout-modal')">
+    <div class="mobile-sheet-modal glass-panel bg-dark-850 max-w-3xl w-full flex flex-col border border-slate-700 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+      
+      <!-- Mobile Sheet Drag Handle -->
+      <div class="sm:hidden pt-2.5 pb-1 cursor-grab" onclick="closeWorkoutModal()">
+        <div class="w-12 h-1.5 bg-slate-600 rounded-full mx-auto"></div>
+      </div>
+
+      <!-- Modal Header -->
+      <div class="px-4 py-3 sm:px-5 sm:py-4 border-b border-slate-800 flex items-start justify-between bg-dark-900/80 shrink-0">
+        <div class="flex-1 pr-2">
+          <div class="flex flex-wrap items-center gap-1.5 mb-1">
+            <span id="modal-day-badge" class="px-2 py-0.5 rounded text-xs font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">DAY 1</span>
+            <span id="modal-date-badge" class="px-2 py-0.5 rounded text-xs font-semibold bg-slate-800 text-slate-300">31 Oct</span>
+            <span id="modal-week-badge" class="px-2 py-0.5 rounded text-xs font-semibold bg-indigo-500/20 text-indigo-300">W1</span>
+            <span id="modal-deload-badge" class="hidden px-2 py-0.5 rounded text-xs font-extrabold bg-amber-500/25 text-amber-300 border border-amber-500/50">⚡ DELOAD</span>
+          </div>
+          <h2 id="modal-workout-title" class="text-base sm:text-xl font-bold text-white font-heading truncate">Push A – chest/triceps</h2>
+        </div>
+        <button onclick="closeWorkoutModal()" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition shrink-0">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable Complete Session Timeline) -->
+      <div class="p-4 sm:p-5 overflow-y-auto space-y-4 text-sm flex-1">
+        
+        <!-- Target Chips Bar -->
+        <div class="grid grid-cols-3 gap-2 text-xs">
+          <div class="bg-dark-900 p-2 sm:p-2.5 rounded-lg border border-slate-800 text-center">
+            <span class="text-slate-500 block text-[10px]">Session Time</span>
+            <span id="modal-duration-target" class="font-bold text-slate-200">55–75 min</span>
+          </div>
+          <div class="bg-dark-900 p-2 sm:p-2.5 rounded-lg border border-slate-800 text-center">
+            <span class="text-slate-500 block text-[10px]">Effort Target</span>
+            <span id="modal-effort-target" class="font-bold text-slate-200">RPE 6–7</span>
+          </div>
+          <div class="bg-dark-900 p-2 sm:p-2.5 rounded-lg border border-slate-800 text-center">
+            <span class="text-slate-500 block text-[10px]">Daily Steps</span>
+            <span id="modal-steps-target" class="font-bold text-slate-200">7k–8k</span>
+          </div>
+        </div>
+
+        <!-- In-Modal Rest Timer Bar -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-2">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="timer" class="w-4 h-4 text-rose-400"></i>
+            <span id="modal-timer-digits" class="text-xl sm:text-2xl font-black font-mono text-cyan-400 timer-display">01:30</span>
+          </div>
+          <div class="flex items-center space-x-1.5">
+            <button onclick="setTimerSeconds(60)" class="px-2 py-1 text-xs rounded-lg bg-dark-800 text-slate-300 hover:bg-slate-700">60s</button>
+            <button onclick="setTimerSeconds(90)" class="px-2 py-1 text-xs rounded-lg bg-cyan-600/30 text-cyan-300 font-bold hover:bg-cyan-600/50">90s</button>
+            <button onclick="setTimerSeconds(120)" class="px-2 py-1 text-xs rounded-lg bg-dark-800 text-slate-300 hover:bg-slate-700">120s</button>
+            <button id="modal-timer-start-btn" onclick="toggleTimer()" class="px-3 py-1 text-xs rounded-lg font-bold bg-emerald-500 hover:bg-emerald-400 text-dark-900 transition">Start</button>
+            <button onclick="resetTimer()" class="p-1 text-slate-400 hover:text-white"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
+          </div>
+        </div>
+
+        <!-- STAGE 1: DYNAMIC WARM-UP & STRETCHES (PRE-WORKOUT) -->
+        <div class="space-y-2 bg-cyan-950/20 p-3.5 rounded-2xl border border-cyan-500/30">
+          <div class="flex justify-between items-center">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-300 flex items-center space-x-1.5">
+              <span class="w-5 h-5 rounded-md bg-cyan-500/20 text-cyan-400 font-black flex items-center justify-center text-[10px]">1</span>
+              <span>Dynamic Warm-Up & Stretches (Pre-Workout)</span>
+            </h3>
+            <span id="warmup-count-badge" class="text-[10px] font-bold text-cyan-400">5 Stretches</span>
+          </div>
+          <p class="text-[11px] text-slate-400">Perform before touching weights to lubricate joints and activate stabilizers.</p>
+          
+          <div id="modal-warmup-stretches-list" class="space-y-2 pt-1">
+            <!-- Dynamic Warmup Stretches Checkboxes -->
+          </div>
+        </div>
+
+        <!-- STAGE 2: MAIN STRENGTH TRAINING EXERCISES & SET LOGGER -->
+        <div class="space-y-2.5 bg-emerald-950/20 p-3.5 rounded-2xl border border-emerald-500/30">
+          <div class="flex justify-between items-center">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-300 flex items-center space-x-1.5">
+              <span class="w-5 h-5 rounded-md bg-emerald-500/20 text-emerald-400 font-black flex items-center justify-center text-[10px]">2</span>
+              <span>Strength Training (Main Lifts)</span>
+            </h3>
+            <span class="text-[10px] text-emerald-400 font-semibold">Touch to log sets</span>
+          </div>
+
+          <div id="modal-exercises-list" class="space-y-2.5">
+            <!-- Dynamic Mobile Set Logger -->
+          </div>
+        </div>
+
+        <!-- STAGE 3: BODYWEIGHT & CONDITIONING CIRCUIT -->
+        <div class="space-y-2 bg-amber-950/20 p-3.5 rounded-2xl border border-amber-500/30">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center space-x-1.5">
+            <span class="w-5 h-5 rounded-md bg-amber-500/20 text-amber-400 font-black flex items-center justify-center text-[10px]">3</span>
+            <span>Bodyweight & Conditioning</span>
+          </h3>
+          <div id="modal-conditioning-content" class="text-xs text-slate-300 leading-relaxed font-medium"></div>
+        </div>
+
+        <!-- STAGE 4: CARDIO PROTOCOL -->
+        <div class="space-y-2 bg-rose-950/20 p-3.5 rounded-2xl border border-rose-500/30">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-rose-300 flex items-center space-x-1.5">
+            <span class="w-5 h-5 rounded-md bg-rose-500/20 text-rose-400 font-black flex items-center justify-center text-[10px]">4</span>
+            <span>Cardio Protocol</span>
+          </h3>
+          <div id="modal-cardio-content" class="text-xs text-slate-300 leading-relaxed font-medium"></div>
+        </div>
+
+        <!-- STAGE 5: POST-WORKOUT COOL-DOWN & STATIC STRETCHES -->
+        <div class="space-y-2 bg-indigo-950/20 p-3.5 rounded-2xl border border-indigo-500/30">
+          <div class="flex justify-between items-center">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-300 flex items-center space-x-1.5">
+              <span class="w-5 h-5 rounded-md bg-indigo-500/20 text-indigo-400 font-black flex items-center justify-center text-[10px]">5</span>
+              <span>Cool-Down & Static Stretches (Post-Workout)</span>
+            </h3>
+            <span id="cooldown-count-badge" class="text-[10px] font-bold text-indigo-400">5 Stretches</span>
+          </div>
+          <p class="text-[11px] text-slate-400">Targeted static stretching to restore muscle length and accelerate recovery.</p>
+          
+          <div id="modal-cooldown-stretches-list" class="space-y-2 pt-1">
+            <!-- Dynamic Cooldown Stretches Checkboxes -->
+          </div>
+        </div>
+
+        <!-- STAGE 6: DAILY METRICS & LOGGING -->
+        <div class="space-y-3 pt-3 border-t border-slate-800">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center space-x-1.5">
+            <span class="w-5 h-5 rounded-md bg-slate-800 text-slate-400 font-black flex items-center justify-center text-[10px]">6</span>
+            <span>Daily Tracking & Metrics</span>
+          </h3>
+
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Weight (kg)</label>
+              <input type="number" step="0.1" id="input-modal-weight" placeholder="92.1"
+                class="w-full bg-dark-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-cyan-500 font-bold">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Steps Walked</label>
+              <input type="number" id="input-modal-steps" placeholder="7800"
+                class="w-full bg-dark-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-cyan-500 font-bold">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Duration (min)</label>
+              <input type="number" id="input-modal-duration" placeholder="65"
+                class="w-full bg-dark-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-cyan-500 font-bold">
+            </div>
+          </div>
+
+          <!-- RPE Slider -->
+          <div>
+            <div class="flex justify-between items-center text-xs mb-1">
+              <span class="text-slate-400">Effort (RPE 1–10):</span>
+              <span id="modal-rpe-value" class="font-bold text-cyan-400">RPE 7</span>
+            </div>
+            <input type="range" id="input-modal-rpe" min="1" max="10" step="0.5" value="7"
+              class="w-full accent-cyan-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+          </div>
+
+          <!-- Notes -->
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Energy, Joint Comfort & Loads Used</label>
+            <textarea id="input-modal-notes" rows="2" placeholder="e.g. Slept 7.5 hrs, joints felt great, increased incline DB press..."
+              class="w-full bg-dark-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-cyan-500"></textarea>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer (Sticky) -->
+      <div class="p-3 sm:p-4 border-t border-slate-800 bg-dark-900 shrink-0 flex items-center justify-between gap-3">
+        <label class="flex items-center space-x-2 cursor-pointer">
+          <input type="checkbox" id="modal-completed-checkbox" class="custom-checkbox">
+          <span class="text-xs font-bold text-slate-200">Completed</span>
+        </label>
+
+        <div class="flex items-center space-x-2">
+          <button onclick="closeWorkoutModal()" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-dark-800 hover:bg-slate-700 text-slate-300 transition">
+            Close
+          </button>
+          <button id="modal-save-btn" onclick="saveWorkoutModalData()" class="px-4 sm:px-5 py-2 rounded-xl text-xs font-extrabold bg-cyan-500 hover:bg-cyan-400 text-dark-900 shadow-lg shadow-cyan-500/20 active:scale-95 transition flex items-center space-x-1.5">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>Save to Atlas</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- EXERCISE FORM, PHOTOS & VIDEO DEMO MODAL -->
+  <div id="exercise-guide-modal" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/90 backdrop-blur-md overflow-hidden" onclick="handleBackdropClick(event, 'exercise-guide-modal')">
+    <div class="mobile-sheet-modal glass-panel bg-dark-850 max-w-2xl w-full flex flex-col border border-cyan-500/30 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+      
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-dark-900/80 shrink-0">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+            <i data-lucide="eye" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h2 id="guide-modal-title" class="text-base sm:text-lg font-bold text-white font-heading truncate">Barbell Bench Press</h2>
+            <div class="flex items-center space-x-1.5 text-[11px] text-slate-400">
+              <span id="guide-modal-equipment" class="text-cyan-400 font-semibold">Barbell</span>
+              <span>•</span>
+              <span id="guide-modal-muscles">Chest</span>
+            </div>
+          </div>
+        </div>
+        <button onclick="closeExerciseGuideModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+
+      <div class="p-4 overflow-y-auto space-y-4 flex-1">
+        
+        <!-- Demonstration Photos (Start vs Finish Contraction) -->
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Demonstration Photos</span>
+            <span class="text-[10px] text-slate-400">Start ➔ Peak Contraction</span>
+          </div>
+
+          <div id="guide-modal-photos-grid" class="grid grid-cols-2 gap-2">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Video Demonstration Button -->
+        <div class="bg-gradient-to-r from-rose-950/40 via-dark-850 to-dark-850 border border-rose-500/30 rounded-xl p-3 flex items-center justify-between gap-3">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+              <i data-lucide="play" class="w-4 h-4 fill-rose-400"></i>
+            </div>
+            <div>
+              <span class="text-xs font-bold text-white block">Video Demonstration</span>
+              <span class="text-[10px] text-slate-400">Watch certified coaches demonstrate proper form</span>
+            </div>
+          </div>
+          <a id="guide-modal-video-link" href="#" target="_blank" rel="noopener noreferrer" 
+            class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white flex items-center space-x-1 shrink-0 transition">
+            <span>Watch</span>
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          </a>
+        </div>
+
+        <!-- Target Muscles Badges -->
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Muscles Targeted</span>
+          <div id="guide-modal-muscles-tags" class="flex flex-wrap gap-1.5">
+            <!-- Muscle badges -->
+          </div>
+        </div>
+
+        <!-- Step-by-Step Form Cues -->
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2 block">Step-by-Step Execution Guide</span>
+          <div id="guide-modal-cues-list" class="space-y-2 text-xs text-slate-300">
+            <!-- Form cues list -->
+          </div>
+        </div>
+
+      </div>
+
+      <div class="p-3 border-t border-slate-800 bg-dark-900 flex justify-end shrink-0">
+        <button onclick="closeExerciseGuideModal()" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-dark-800 hover:bg-slate-700 text-slate-300">
+          Done
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- WEIGHT HISTORY & GRAPH MODAL -->
+  <div id="weight-modal" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-sm overflow-hidden" onclick="handleBackdropClick(event, 'weight-modal')">
+    <div class="mobile-sheet-modal glass-panel bg-dark-850 max-w-3xl w-full flex flex-col border border-slate-700 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+      
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-dark-900/80 shrink-0">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="scale" class="w-5 h-5 text-emerald-400"></i>
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-white font-heading">Weight Tracker (92.5 ➔ 82.0 kg)</h2>
+            <p class="text-[11px] text-slate-400">Aim for steady 0.4–0.8 kg/week loss</p>
+          </div>
+        </div>
+        <button onclick="closeWeightModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+
+      <div class="p-4 overflow-y-auto space-y-4 flex-1">
+        <!-- Chart Canvas -->
+        <div class="bg-dark-900 p-3 rounded-xl border border-slate-800 h-56 sm:h-72">
+          <canvas id="weightChart"></canvas>
+        </div>
+
+        <!-- Quick Log Form -->
+        <div class="bg-dark-900/70 p-3 rounded-xl border border-slate-800 space-y-2.5">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-300 block">Record Weigh-in</span>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-1">Day # (1–90)</label>
+              <input type="number" id="quick-weight-day" min="1" max="90" value="1"
+                class="w-full bg-dark-850 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-1">Weight (kg)</label>
+              <input type="number" step="0.1" id="quick-weight-value" placeholder="91.8"
+                class="w-full bg-dark-850 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+            </div>
+            <div class="col-span-2 flex space-x-2 items-end">
+              <div class="flex-1">
+                <label class="block text-[10px] text-slate-400 mb-1">Note (optional)</label>
+                <input type="text" id="quick-weight-note" placeholder="Morning empty stomach..."
+                  class="w-full bg-dark-850 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+              </div>
+              <button onclick="submitQuickWeight()" class="px-4 py-2 rounded-lg text-xs font-extrabold bg-emerald-500 hover:bg-emerald-400 text-dark-900 shrink-0 transition">
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weigh-in History -->
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Weigh-in History</span>
+          <div id="weight-history-list" class="space-y-1.5 max-h-40 overflow-y-auto text-xs"></div>
+        </div>
+      </div>
+
+      <div class="p-3 border-t border-slate-800 bg-dark-900 flex justify-end shrink-0">
+        <button onclick="closeWeightModal()" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-dark-800 text-slate-300">
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- COACHING RULES MODAL -->
+  <div id="rules-modal" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-sm overflow-hidden" onclick="handleBackdropClick(event, 'rules-modal')">
+    <div class="mobile-sheet-modal glass-panel bg-dark-850 max-w-2xl w-full flex flex-col border border-slate-700 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+      
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-dark-900/80 shrink-0">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="book-open" class="w-5 h-5 text-amber-400"></i>
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-white font-heading">8 Essential Coaching Rules</h2>
+            <p class="text-[11px] text-slate-400">Form, RPE, recovery & 8–10 PM nutrition</p>
+          </div>
+        </div>
+        <button onclick="closeCoachingModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+
+      <div id="coaching-notes-container" class="p-4 overflow-y-auto space-y-2.5 text-xs sm:text-sm flex-1"></div>
+
+      <div class="p-3 border-t border-slate-800 bg-dark-900 flex justify-end shrink-0">
+        <button onclick="closeCoachingModal()" class="px-5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-dark-900 transition">
+          Understood, Let's Train
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FLOATING REST TIMER WIDGET (MINIMIZABLE) -->
+  <div id="floating-timer" class="fixed z-40 bg-dark-850/95 border border-slate-700 shadow-2xl rounded-2xl p-3 w-60 backdrop-blur-md hidden transition-all">
+    <div class="flex items-center justify-between pb-1.5 border-b border-slate-800 mb-2">
+      <div class="flex items-center space-x-1.5 text-xs font-bold text-white">
+        <i data-lucide="timer" class="w-4 h-4 text-rose-400"></i>
+        <span>Rest Timer</span>
+      </div>
+      <button onclick="toggleFloatingTimer()" class="text-slate-400 hover:text-white p-0.5">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <div class="text-center py-1">
+      <div id="floating-timer-display" class="text-3xl font-black font-mono text-cyan-400 timer-display">01:30</div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-1 mb-2">
+      <button onclick="setTimerSeconds(60)" class="py-1 text-xs rounded-lg bg-dark-800 text-slate-300 hover:bg-slate-700">60s</button>
+      <button onclick="setTimerSeconds(90)" class="py-1 text-xs rounded-lg bg-cyan-600/30 text-cyan-300 font-bold hover:bg-cyan-600/50">90s</button>
+      <button onclick="setTimerSeconds(120)" class="py-1 text-xs rounded-lg bg-dark-800 text-slate-300 hover:bg-slate-700">120s</button>
+    </div>
+
+    <div class="flex space-x-1.5">
+      <button id="floating-timer-btn" onclick="toggleTimer()" class="flex-1 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-dark-900 transition">
+        Start Rest
+      </button>
+      <button onclick="resetTimer()" class="px-2.5 py-1.5 rounded-xl text-xs bg-dark-800 hover:bg-slate-700 text-slate-300 transition">
+        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="fixed bottom-20 sm:bottom-6 left-3 right-3 sm:left-6 sm:right-auto z-50 space-y-2 pointer-events-none"></div>
+
+  <!-- Client Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Exercise Library & Form Guide | 90-Day Plan</title>
+  <meta name="description" content="Complete 64-exercise library with demonstration photos, target muscles, execution cues, and video tutorials for the 90-day fat-loss & strength plan.">
+
+  <!-- Favicon & PWA -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#070b14">
+
+  <!-- Google Fonts & Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dark: {
+              950: '#040711',
+              900: '#070b14',
+              850: '#0f172a',
+              800: '#1e293b',
+              700: '#334155'
+            }
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            heading: ['Outfit', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Custom Mobile-First Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-dark-900 text-slate-100 min-h-screen flex flex-col antialiased">
+
+  <!-- TOP STICKY APP HEADER -->
+  <header class="sticky top-0 z-40 bg-dark-950/90 backdrop-blur-md border-b border-slate-800/80 px-3 sm:px-6 py-2.5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
+      
+      <!-- Brand & Back Button -->
+      <div class="flex items-center space-x-2.5">
+        <a href="index.html" class="p-2 rounded-xl bg-dark-850 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 active:scale-95 transition" title="Back to Workout Schedule">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        </a>
+        <div class="flex items-center space-x-2 cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center shadow-md shadow-indigo-500/20 shrink-0">
+            <i data-lucide="book-marked" class="w-4 h-4 text-white"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-1.5">
+              <h1 class="text-sm sm:text-base font-extrabold tracking-tight text-white font-heading">EXERCISE LIBRARY</h1>
+              <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-800">
+                64 MOVES
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-400 hidden sm:block">Demonstration photos, muscle anatomy & video cues</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center space-x-2">
+        <a href="index.html" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/25 active:scale-95 transition">
+          <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">Workout Schedule</span>
+          <span class="sm:hidden">Workouts</span>
+        </a>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-5 flex-1 w-full space-y-4">
+    
+    <!-- SEARCH & FILTER BAR -->
+    <section class="glass-panel rounded-2xl p-3 sm:p-4 border border-slate-800 space-y-3">
+      
+      <!-- DUAL MODE SWITCHER: 90-DAY PLAN (64) VS GLOBAL EXERCISEDB (1,324 ANIMATED GIFS) -->
+      <div class="flex items-center p-1 bg-dark-950/90 rounded-xl border border-slate-800">
+        <button 
+          id="btn-mode-plan" 
+          onclick="switchLibraryMode('plan')" 
+          class="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-indigo-600 text-white shadow-md shadow-indigo-600/30">
+          <i data-lucide="dumbbell" class="w-3.5 h-3.5"></i>
+          <span>90-Day Plan Routine (64 Moves)</span>
+        </button>
+        <button 
+          id="btn-mode-catalog" 
+          onclick="switchLibraryMode('catalog')" 
+          class="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 text-slate-400 hover:text-white">
+          <i data-lucide="database" class="w-3.5 h-3.5"></i>
+          <span>ExerciseDB Global (1,324 GIFs)</span>
+        </button>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+        
+        <!-- Live Search Input -->
+        <div class="relative flex-1">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+          <input 
+            type="text" 
+            id="exercise-search-input"
+            placeholder="Search exercises by name, muscle (e.g. chest, lats, quads), or equipment..." 
+            class="w-full bg-dark-900 border border-slate-700/80 rounded-xl pl-9 pr-9 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition">
+          <button 
+            type="button" 
+            id="search-clear-btn" 
+            onclick="clearSearch()" 
+            class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Equipment Filter Dropdown -->
+        <div class="sm:w-56 shrink-0">
+          <select id="equipment-filter-select" class="w-full bg-dark-900 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
+            <option value="All">All Equipment</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- Horizontal Scrollable Category / Body Part Tabs -->
+      <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 pt-1 no-scrollbar text-xs" id="category-tabs-container">
+        <!-- Rendered by JS with counts -->
+      </div>
+
+      <!-- Status / Count Bar -->
+      <div class="flex items-center justify-between text-[11px] text-slate-400 px-1 pt-1 border-t border-slate-800/80">
+        <span id="result-count-badge" class="font-bold text-slate-300">Loading exercises...</span>
+        <span class="text-slate-500 hidden sm:inline">Tap any card to view HD start/finish photos & YouTube tutorial</span>
+      </div>
+
+    </section>
+
+    <!-- EXERCISES CARDS GRID -->
+    <section id="exercises-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+      <!-- Rendered dynamically by exercises.js -->
+    </section>
+
+  </main>
+
+  <!-- MOBILE BOTTOM NAVIGATION BAR -->
+  <nav class="mobile-nav-bar md:hidden">
+    <a href="index.html" class="mobile-nav-item">
+      <i data-lucide="calendar" class="w-5 h-5 mb-1"></i>
+      <span>Schedule</span>
+    </a>
+    <a href="exercises.html" class="mobile-nav-item active text-indigo-400">
+      <i data-lucide="book-marked" class="w-5 h-5 mb-1 text-indigo-400"></i>
+      <span class="font-bold">Library</span>
+    </a>
+    <a href="index.html?jump=today" class="mobile-nav-item">
+      <i data-lucide="crosshair" class="w-5 h-5 mb-1 text-cyan-400"></i>
+      <span class="text-cyan-400">Today</span>
+    </a>
+  </nav>
+
+  <!-- EXERCISE FORM, PHOTOS & VIDEO DEMO MODAL -->
+  <div id="exercise-guide-modal" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/90 backdrop-blur-md overflow-hidden" onclick="handleBackdropClick(event, 'exercise-guide-modal')">
+    <div class="mobile-sheet-modal glass-panel bg-dark-850 max-w-2xl w-full flex flex-col border border-cyan-500/30 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+      
+      <!-- Modal Header -->
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-dark-900/80 shrink-0">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+            <i data-lucide="eye" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h2 id="guide-modal-title" class="text-base sm:text-lg font-bold text-white font-heading truncate">Barbell Bench Press</h2>
+            <div class="flex items-center space-x-1.5 text-[11px] text-slate-400">
+              <span id="guide-modal-equipment" class="text-cyan-400 font-semibold">Barbell</span>
+              <span>•</span>
+              <span id="guide-modal-muscles">Chest</span>
+            </div>
+          </div>
+        </div>
+        <button onclick="closeExerciseGuideModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-4 overflow-y-auto space-y-4 flex-1">
+        
+        <!-- Demonstration Photos (Start vs Peak Contraction) -->
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Demonstration Photos</span>
+            <span class="text-[10px] text-slate-400">Start ➔ Peak Contraction</span>
+          </div>
+
+          <div id="guide-modal-photos-grid" class="grid grid-cols-2 gap-2">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Video Demonstration Button -->
+        <div class="bg-gradient-to-r from-rose-950/40 via-dark-850 to-dark-850 border border-rose-500/30 rounded-xl p-3 flex items-center justify-between gap-3">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+              <i data-lucide="play" class="w-4 h-4 fill-rose-400"></i>
+            </div>
+            <div>
+              <span class="text-xs font-bold text-white block">Video Demonstration</span>
+              <span class="text-[10px] text-slate-400">Watch certified coaches demonstrate proper execution</span>
+            </div>
+          </div>
+          <a id="guide-modal-video-link" href="#" target="_blank" rel="noopener noreferrer" 
+            class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white flex items-center space-x-1 shrink-0 transition">
+            <span>Watch</span>
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          </a>
+        </div>
+
+        <!-- Target Muscles Badges -->
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Muscles Targeted</span>
+          <div id="guide-modal-muscles-tags" class="flex flex-wrap gap-1.5">
+            <!-- Muscle badges -->
+          </div>
+        </div>
+
+        <!-- Step-by-Step Form Cues -->
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2 block">Step-by-Step Execution Guide</span>
+          <div id="guide-modal-cues-list" class="space-y-2 text-xs text-slate-300">
+            <!-- Form cues list -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3 border-t border-slate-800 bg-dark-900 flex justify-end shrink-0">
+        <button onclick="closeExerciseGuideModal()" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-dark-800 hover:bg-slate-700 text-slate-300">
+          Done
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Client Application Script -->
+  <script src="exercises.js"></script>
+</body>
+</html>
+
