@@ -88,6 +88,13 @@ const MUSCLE_MAP = {
     catalogTarget: 'Abs',
     catalogBodyPart: 'Waist'
   },
+  obliques: {
+    label: 'External Obliques (Side Core)',
+    keywords: ['oblique', 'side', 'twist', 'rotational', 'core', 'waist'],
+    fedbCategory: 'Abdominals',
+    catalogTarget: 'Abs',
+    catalogBodyPart: 'Waist'
+  },
   quads: {
     label: 'Quadriceps (Quads)',
     keywords: ['quad', 'quadriceps', 'squat', 'leg press'],
@@ -142,6 +149,17 @@ const MUSCLE_MAP = {
 document.addEventListener('DOMContentLoaded', async () => {
   setupEventListeners();
   setupMuscleAvatarListeners();
+
+  // Initialize Ultra-Realistic 3D Muscular Anatomy Avatar
+  if (window.avatar3D && typeof window.avatar3D.init === 'function') {
+    try {
+      window.avatar3D.init('avatar-3d-viewport');
+    } catch (err) {
+      console.warn("Could not initialize 3D avatar viewport, falling back to 2D heatmap:", err);
+      switchAvatarView('2d');
+    }
+  }
+
   await loadInitialData();
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -265,6 +283,11 @@ function selectMuscle(muscleKey) {
   const mInfo = MUSCLE_MAP[muscleKey];
   if (!mInfo) return;
 
+  // Sync with 3D Realistic Anatomy Avatar
+  if (window.avatar3D && window.avatar3D.selectedMuscleKey !== muscleKey) {
+    window.avatar3D.selectMuscle(muscleKey, false);
+  }
+
   // Update SVG active paths on both front and back
   document.querySelectorAll('.muscle-path').forEach(p => {
     if (p.getAttribute('data-muscle') === muscleKey) {
@@ -312,6 +335,11 @@ function selectMuscle(muscleKey) {
 function clearMuscleFilter() {
   selectedMuscle = null;
 
+  // Sync with 3D avatar
+  if (window.avatar3D && window.avatar3D.selectedMuscleKey !== null) {
+    window.avatar3D.clearSelection(false);
+  }
+
   document.querySelectorAll('.muscle-path').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.muscle-chip').forEach(c => {
     c.className = "muscle-chip px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition";
@@ -349,12 +377,35 @@ function toggleAvatarVisibility() {
     wrapper.classList.remove('hidden');
     label.innerText = 'Hide';
     if (icon) icon.setAttribute('data-lucide', 'chevron-up');
+    if (window.avatar3D) window.avatar3D.onResize();
   } else {
     wrapper.classList.add('hidden');
     label.innerText = 'Show Avatar';
     if (icon) icon.setAttribute('data-lucide', 'chevron-down');
   }
   lucide.createIcons();
+}
+
+function switchAvatarView(viewType) {
+  const wrapper3D = document.getElementById('avatar-3d-wrapper');
+  const wrapper2D = document.getElementById('avatar-2d-wrapper');
+  const btn3D = document.getElementById('btn-avatar-mode-3d');
+  const btn2D = document.getElementById('btn-avatar-mode-2d');
+
+  if (viewType === '3d') {
+    if (wrapper3D) wrapper3D.classList.remove('hidden');
+    if (wrapper2D) wrapper2D.classList.add('hidden');
+    if (btn3D) btn3D.className = "px-2.5 py-1 rounded-md text-[11px] font-bold bg-cyan-500 text-dark-900 border border-cyan-400 shadow-sm transition";
+    if (btn2D) btn2D.className = "px-2.5 py-1 rounded-md text-[11px] font-bold text-slate-400 hover:text-white bg-transparent transition";
+    if (window.avatar3D) {
+      setTimeout(() => window.avatar3D.onResize(), 60);
+    }
+  } else {
+    if (wrapper3D) wrapper3D.classList.add('hidden');
+    if (wrapper2D) wrapper2D.classList.remove('hidden');
+    if (btn2D) btn2D.className = "px-2.5 py-1 rounded-md text-[11px] font-bold bg-cyan-500 text-dark-900 border border-cyan-400 shadow-sm transition";
+    if (btn3D) btn3D.className = "px-2.5 py-1 rounded-md text-[11px] font-bold text-slate-400 hover:text-white bg-transparent transition";
+  }
 }
 
 async function loadInitialData() {

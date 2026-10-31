@@ -318,3 +318,28 @@ input, select, textarea {
   stroke: #1e293b;
   stroke-width: 1;
 }
+
+/* 3D Realistic Muscular Anatomy Viewport */
+#avatar-3d-viewport canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+#avatar-3d-hud-card {
+  animation: hudFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes hudFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
