@@ -158,8 +158,8 @@
             
             <!-- 3D Camera Controls Toolbar -->
             <div class="w-full max-w-4xl flex flex-wrap items-center justify-between gap-1.5 mb-2 px-1">
-              <div class="flex items-center space-x-1 text-[11px]">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1 hidden sm:inline">Orbit Presets:</span>
+              <div class="flex items-center flex-wrap gap-1 text-[11px]">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1 hidden sm:inline">Views:</span>
                 <button type="button" onclick="window.avatar3D.setView('front')" class="px-2 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-semibold transition" title="Front View">Front</button>
                 <button type="button" onclick="window.avatar3D.setView('back')" class="px-2 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-semibold transition" title="Back View">Back</button>
                 <button type="button" onclick="window.avatar3D.setView('left')" class="px-2 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-semibold transition" title="Left Profile">Left</button>
@@ -167,10 +167,32 @@
                 <button type="button" onclick="window.avatar3D.setView('reset')" class="px-2 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-semibold transition" title="Reset Camera">Reset</button>
               </div>
 
-              <div class="flex items-center space-x-1.5">
+              <div class="flex items-center flex-wrap gap-1.5">
+                <!-- Ghost Mode Toggle -->
+                <button type="button" id="btn-3d-ghostmode" onclick="window.avatar3D.toggleGhostMode()" class="px-2 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-semibold flex items-center space-x-1 transition" title="Toggle Muscle Isolation Ghost Mode">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-400"></i>
+                  <span>Ghost Mode</span>
+                </button>
+
+                <!-- Lighting Preset Selector -->
+                <div class="flex items-center space-x-1 bg-dark-900 border border-slate-800 rounded-lg px-2 py-0.5">
+                  <i data-lucide="sun" class="w-3 h-3 text-amber-400"></i>
+                  <select id="select-3d-lighting" onchange="window.avatar3D.setLightingPreset(this.value)" class="bg-transparent text-slate-300 hover:text-white text-[11px] font-semibold outline-none cursor-pointer">
+                    <option value="cyber" class="bg-dark-900 text-slate-200">Cyber Glow</option>
+                    <option value="medical" class="bg-dark-900 text-slate-200">Medical Studio</option>
+                    <option value="golden" class="bg-dark-900 text-slate-200">Golden Gym</option>
+                  </select>
+                </div>
+
+                <!-- 360 Spin -->
                 <button type="button" id="btn-3d-autorotate" onclick="window.avatar3D.toggleAutoRotate()" class="px-2 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-semibold flex items-center space-x-1 transition" title="Toggle 360° Continuous Turntable Rotation">
                   <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
                   <span>360° Spin</span>
+                </button>
+
+                <!-- Fullscreen Toggle -->
+                <button type="button" id="btn-3d-fullscreen" onclick="window.avatar3D.toggleFullscreen()" class="px-2 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-semibold flex items-center space-x-1 transition" title="Toggle Fullscreen 3D View">
+                  <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
                 </button>
               </div>
             </div>
@@ -247,6 +269,46 @@
 
         </div>
 
+      </div>
+
+      
+      <!-- SMART MULTI-FILTER BAR: EQUIPMENT & MOVEMENT PATTERNS -->
+      <div class="bg-dark-900/80 rounded-2xl p-3 border border-slate-800/80 space-y-2.5">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+          
+          <!-- Equipment Filter Chips -->
+          <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1 flex items-center space-x-1">
+              <i data-lucide="dumbbell" class="w-3 h-3 text-cyan-400"></i>
+              <span>Equipment:</span>
+            </span>
+            <div id="equipment-chips" class="flex items-center space-x-1">
+              <button type="button" onclick="setEquipmentFilter('All')" class="eq-chip px-2.5 py-1 rounded-lg text-xs font-bold bg-cyan-500 text-dark-900 border border-cyan-400 shadow-sm transition" data-eq="All">All</button>
+              <button type="button" onclick="setEquipmentFilter('Dumbbell')" class="eq-chip px-2.5 py-1 rounded-lg text-xs font-semibold bg-dark-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-eq="Dumbbell">Dumbbell</button>
+              <button type="button" onclick="setEquipmentFilter('Barbell')" class="eq-chip px-2.5 py-1 rounded-lg text-xs font-semibold bg-dark-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-eq="Barbell">Barbell</button>
+              <button type="button" onclick="setEquipmentFilter('Cable')" class="eq-chip px-2.5 py-1 rounded-lg text-xs font-semibold bg-dark-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-eq="Cable">Cable</button>
+              <button type="button" onclick="setEquipmentFilter('Bodyweight')" class="eq-chip px-2.5 py-1 rounded-lg text-xs font-semibold bg-dark-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-eq="Bodyweight">Bodyweight</button>
+              <button type="button" onclick="setEquipmentFilter('Machine')" class="eq-chip px-2.5 py-1 rounded-lg text-xs font-semibold bg-dark-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-eq="Machine">Machine</button>
+              <button type="button" onclick="setEquipmentFilter('Kettlebell')" class="eq-chip px-2.5 py-1 rounded-lg text-xs font-semibold bg-dark-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-eq="Kettlebell">Kettlebell</button>
+            </div>
+          </div>
+
+          <!-- Movement Pattern Chips -->
+          <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1 flex items-center space-x-1">
+              <i data-lucide="activity" class="w-3 h-3 text-indigo-400"></i>
+              <span>Pattern:</span>
+            </span>
+            <div id="pattern-chips" class="flex items-center space-x-1">
+              <button type="button" onclick="setPatternFilter('All')" class="pat-chip px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white border border-indigo-500 shadow-sm transition" data-pat="All">All</button>
+              <button type="button" onclick="setPatternFilter('Push')" class="pat-chip px-2.5 py-1 rounded-lg text-xs font-semibold bg-dark-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-pat="Push">Push</button>
+              <button type="button" onclick="setPatternFilter('Pull')" class="pat-chip px-2.5 py-1 rounded-lg text-xs font-semibold bg-dark-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-pat="Pull">Pull</button>
+              <button type="button" onclick="setPatternFilter('Legs')" class="pat-chip px-2.5 py-1 rounded-lg text-xs font-semibold bg-dark-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-pat="Legs">Legs</button>
+              <button type="button" onclick="setPatternFilter('Core')" class="pat-chip px-2.5 py-1 rounded-lg text-xs font-semibold bg-dark-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" data-pat="Core">Core</button>
+            </div>
+          </div>
+
+        </div>
       </div>
 
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
@@ -405,6 +467,58 @@
 
   <!-- Client Application Script -->
   <script src="exercises.js"></script>
+
+  <!-- Floating Custom Routine Tray Pill -->
+  <div id="routine-tray-pill" class="hidden fixed bottom-6 right-6 z-40 bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 text-white px-4 py-3 rounded-full shadow-2xl shadow-indigo-500/40 flex items-center space-x-3 cursor-pointer hover:scale-105 active:scale-95 transition border border-white/20" onclick="openRoutineDrawer()">
+    <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+    <span class="text-xs font-black tracking-wide font-heading">Custom Routine</span>
+    <span id="routine-count-badge" class="px-2 py-0.5 rounded-full bg-dark-950 text-cyan-300 text-xs font-black">0</span>
+  </div>
+
+  <!-- Custom Routine Slide-Over Drawer Modal -->
+  <div id="routine-drawer-modal" class="hidden fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm flex justify-end">
+    <div class="relative w-full max-w-md bg-dark-900 border-l border-slate-800 h-full flex flex-col justify-between shadow-2xl">
+      <!-- Header -->
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-lg bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+            <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-black text-white uppercase tracking-wider font-heading">Custom Workout Routine</h3>
+            <p id="routine-drawer-subtitle" class="text-[10px] text-slate-400">0 exercises added</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeRoutineDrawer()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Routine Items Container -->
+      <div id="routine-items-list" class="flex-1 overflow-y-auto p-4 space-y-2.5">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="p-4 border-t border-slate-800 bg-dark-950/80 space-y-2">
+        <button type="button" onclick="highlightRoutineOnAvatar()" class="w-full py-2.5 px-3 rounded-xl text-xs font-black bg-cyan-500 hover:bg-cyan-400 text-dark-900 flex items-center justify-center space-x-2 shadow-lg shadow-cyan-500/20 transition active:scale-95">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          <span>Highlight Routine on 3D Body</span>
+        </button>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" onclick="exportRoutineMarkdown()" class="py-2 px-3 rounded-xl text-xs font-bold bg-dark-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center justify-center space-x-1.5 transition">
+            <i data-lucide="copy" class="w-3.5 h-3.5 text-indigo-400"></i>
+            <span>Copy Markdown</span>
+          </button>
+          <button type="button" onclick="clearRoutine()" class="py-2 px-3 rounded-xl text-xs font-bold bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 flex items-center justify-center space-x-1.5 transition">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            <span>Clear All</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
 

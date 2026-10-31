@@ -1,3 +1,247 @@
+
+// -------------------------------------------------------------
+// REVERSE SELECTION & EXERCISE TARGET 3D MAPPING
+// -------------------------------------------------------------
+function extractMuscleKeys(primaryMuscles = [], secondaryMuscles = [], fallbackText = '') {
+  const allPrimaries = (Array.isArray(primaryMuscles) ? primaryMuscles : [primaryMuscles]).map(m => String(m).toLowerCase());
+  const allSecondaries = (Array.isArray(secondaryMuscles) ? secondaryMuscles : [secondaryMuscles]).map(m => String(m).toLowerCase());
+  const fallback = String(fallbackText || '').toLowerCase();
+
+  const primaryKeys = [];
+  const secondaryKeys = [];
+
+  Object.keys(MUSCLE_MAP).forEach(key => {
+    const kws = MUSCLE_MAP[key].keywords;
+    const isPrim = allPrimaries.some(pm => kws.some(k => pm.includes(k))) || (primaryKeys.length === 0 && kws.some(k => fallback.includes(k)));
+    if (isPrim) {
+      if (!primaryKeys.includes(key)) primaryKeys.push(key);
+    } else {
+      const isSec = allSecondaries.some(sm => kws.some(k => sm.includes(k)));
+      if (isSec && !secondaryKeys.includes(key)) secondaryKeys.push(key);
+    }
+  });
+
+  return { primaryKeys, secondaryKeys };
+}
+
+function previewExerciseOnAvatar(name, pMuscles = [], sMuscles = [], category = '') {
+  const { primaryKeys, secondaryKeys } = extractMuscleKeys(pMuscles, sMuscles, `${name} ${category}`);
+  if (window.avatar3D && typeof window.avatar3D.highlightExerciseMuscles === 'function') {
+    window.avatar3D.highlightExerciseMuscles(primaryKeys, secondaryKeys, name);
+  }
+}
+
+// -------------------------------------------------------------
+// SMART MULTI-FILTER CONTROLLERS (EQUIPMENT & PATTERN)
+// -------------------------------------------------------------
+function setEquipmentFilter(eq) {
+  activeEquipment = eq;
+  document.querySelectorAll('.eq-chip').forEach(c => {
+    if (c.getAttribute('data-eq') === eq) {
+      c.className = "eq-chip px-2.5 py-1 rounded-lg text-xs font-bold bg-cyan-500 text-dark-900 border border-cyan-400 shadow-sm transition";
+    } else {
+      c.className = "eq-chip px-2.5 py-1 rounded-lg text-xs font-semibold bg-dark-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition";
+    }
+  });
+  applyActiveModeFilters();
+}
+
+function setPatternFilter(pat) {
+  activePattern = pat;
+  document.querySelectorAll('.pat-chip').forEach(c => {
+    if (c.getAttribute('data-pat') === pat) {
+      c.className = "pat-chip px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white border border-indigo-500 shadow-sm transition";
+    } else {
+      c.className = "pat-chip px-2.5 py-1 rounded-lg text-xs font-semibold bg-dark-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition";
+    }
+  });
+  applyActiveModeFilters();
+}
+
+function applyActiveModeFilters() {
+  if (currentMode === 'plan') {
+    applyPlanFilters();
+  } else if (currentMode === '876') {
+    fedbSkip = 0;
+    fedbExercises = [];
+    loadFedbExercises();
+  } else {
+    catalogSkip = 0;
+    catalogExercises = [];
+    loadCatalogExercises();
+  }
+}
+
+// -------------------------------------------------------------
+// CUSTOM ROUTINE BUILDER & WORKOUT TRAY
+// -------------------------------------------------------------
+function addToRoutine(item) {
+  const exists = customRoutine.some(r => r.name === item.name);
+  if (exists) {
+    showToast(`"${item.name}" is already in your routine!`);
+    return;
+  }
+  customRoutine.push(item);
+  saveRoutine();
+  updateRoutineBadge();
+  showToast(`Added "${item.name}" to custom routine!`);
+  highlightRoutineOnAvatar();
+}
+
+function removeFromRoutine(idx) {
+  customRoutine.splice(idx, 1);
+  saveRoutine();
+  updateRoutineBadge();
+  renderRoutineDrawer();
+  highlightRoutineOnAvatar();
+}
+
+function clearRoutine() {
+  customRoutine = [];
+  saveRoutine();
+  updateRoutineBadge();
+  renderRoutineDrawer();
+  if (window.avatar3D) window.avatar3D.clearSelection();
+  showToast('Routine cleared');
+}
+
+function saveRoutine() {
+  localStorage.setItem('user_custom_routine', JSON.stringify(customRoutine));
+}
+
+function updateRoutineBadge() {
+  const pill = document.getElementById('routine-tray-pill');
+  const badge = document.getElementById('routine-count-badge');
+  const count = customRoutine.length;
+
+  if (pill) {
+    if (count > 0) {
+      pill.classList.remove('hidden');
+      pill.classList.add('flex');
+    } else {
+      pill.classList.add('hidden');
+      pill.classList.remove('flex');
+    }
+  }
+  if (badge) badge.innerText = count;
+}
+
+function openRoutineDrawer() {
+  const modal = document.getElementById('routine-drawer-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    renderRoutineDrawer();
+    if (window.lucide) window.lucide.createIcons();
+  }
+}
+
+function closeRoutineDrawer() {
+  const modal = document.getElementById('routine-drawer-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+function renderRoutineDrawer() {
+  const container = document.getElementById('routine-items-list');
+  const subtitle = document.getElementById('routine-drawer-subtitle');
+  if (!container) return;
+
+  if (subtitle) {
+    subtitle.innerText = `${customRoutine.length} exercise${customRoutine.length === 1 ? '' : 's'} in workout routine`;
+  }
+
+  if (customRoutine.length === 0) {
+    container.innerHTML = `
+      <div class="py-12 text-center text-slate-400">
+        <i data-lucide="clipboard-x" class="w-10 h-10 mx-auto mb-2 text-slate-600"></i>
+        <p class="text-xs font-semibold text-slate-300">Your custom routine is currently empty.</p>
+        <p class="text-[10px] text-slate-500 mt-1">Click "+ Routine" on any exercise card to build your workout!</p>
+      </div>
+    `;
+    if (window.lucide) window.lucide.createIcons();
+    return;
+  }
+
+  container.innerHTML = customRoutine.map((item, idx) => `
+    <div class="p-3 rounded-xl bg-dark-950 border border-slate-800 flex items-center justify-between gap-2 hover:border-slate-700 transition">
+      <div class="flex items-center space-x-2.5 overflow-hidden">
+        <span class="w-6 h-6 rounded-lg bg-indigo-600/30 text-indigo-300 text-xs font-black flex items-center justify-center shrink-0">
+          ${idx + 1}
+        </span>
+        <div class="truncate">
+          <h4 class="text-xs font-bold text-white truncate">${escapeHtml(item.name)}</h4>
+          <p class="text-[10px] text-slate-400 truncate">${escapeHtml(item.category)} • ${escapeHtml(item.equipment || 'Equipment')}</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-1 shrink-0">
+        <button type="button" onclick="previewExerciseOnAvatar('${escapeHtml(item.name)}', ${JSON.stringify(item.primary || [])}, ${JSON.stringify(item.secondary || [])}, '${escapeHtml(item.category || '')}')" class="p-1.5 rounded-lg hover:bg-slate-800 text-cyan-400 hover:text-cyan-300 transition" title="Preview on 3D Body">
+          <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
+        </button>
+        <button type="button" onclick="removeFromRoutine(${idx})" class="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-rose-400 transition" title="Remove">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+    </div>
+  `).join('');
+
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function highlightRoutineOnAvatar() {
+  if (customRoutine.length === 0) return;
+  const allPrimaries = new Set();
+  const allSecondaries = new Set();
+
+  customRoutine.forEach(item => {
+    const { primaryKeys, secondaryKeys } = extractMuscleKeys(item.primary, item.secondary, `${item.name} ${item.category}`);
+    primaryKeys.forEach(k => allPrimaries.add(k));
+    secondaryKeys.forEach(k => allSecondaries.add(k));
+  });
+
+  if (window.avatar3D && typeof window.avatar3D.highlightExerciseMuscles === 'function') {
+    window.avatar3D.highlightExerciseMuscles(Array.from(allPrimaries), Array.from(allSecondaries), `Routine (${customRoutine.length} exercises)`);
+    showToast(`Visualizing recruitment heatmap for all ${customRoutine.length} exercises!`);
+  }
+}
+
+function exportRoutineMarkdown() {
+  if (customRoutine.length === 0) {
+    showToast('Add exercises first to export!');
+    return;
+  }
+  let md = `# Custom Workout Routine (${customRoutine.length} Exercises)\n\n`;
+  md += `| # | Exercise | Target Group | Equipment |\n`;
+  md += `|---|---|---|---|\n`;
+  customRoutine.forEach((ex, i) => {
+    md += `| ${i+1} | ${ex.name} | ${ex.category} | ${ex.equipment || 'Gym'} |\n`;
+  });
+  md += `\n*Generated via 90Days 3D Muscular Anatomy Platform*`;
+
+  navigator.clipboard.writeText(md).then(() => {
+    showToast('Workout routine copied to clipboard in Markdown format!');
+  });
+}
+
+function showToast(msg) {
+  let toast = document.getElementById('global-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'global-toast';
+    toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-dark-900 border border-cyan-500/50 text-cyan-300 text-xs font-bold shadow-2xl transition-all duration-300 pointer-events-none opacity-0';
+    document.body.appendChild(toast);
+  }
+  toast.innerText = msg;
+  toast.style.opacity = '1';
+  toast.style.transform = 'translate(-50%, -10px)';
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translate(-50%, 0)';
+  }, 2500);
+}
+
 // Tri-Mode Exercise Library Client Script with Interactive Front & Back Muscle Avatar:
 // 1. 90-Day Plan Routine (64 Moves)
 // 2. Free-Exercise-DB (876 Photos, Mechanics & Levels)
@@ -29,6 +273,9 @@ let catalogBodyParts = [];
 let activeCatalogPart = 'All';
 
 let activeEquipment = 'All';
+let activePattern = 'All';
+let customRoutine = JSON.parse(localStorage.getItem('user_custom_routine') || '[]');
+let searchQuery = '';
 let searchQuery = '';
 
 const PLAN_GROUPS = [
@@ -561,6 +808,15 @@ function applyPlanFilters() {
       }
     }
 
+    // 4. Movement Pattern Filter (Push / Pull / Legs / Core)
+    if (activePattern !== 'All') {
+      const allText = `${ex.category} ${ex.body_group} ${(ex.primary_muscles || []).join(' ')} ${ex.name}`.toLowerCase();
+      if (activePattern === 'Push' && !['chest', 'shoulder', 'tricep', 'push'].some(k => allText.includes(k))) return false;
+      if (activePattern === 'Pull' && !['back', 'lat', 'bicep', 'pull', 'row'].some(k => allText.includes(k))) return false;
+      if (activePattern === 'Legs' && !['leg', 'quad', 'hamstring', 'glute', 'calf', 'squat', 'lunge'].some(k => allText.includes(k))) return false;
+      if (activePattern === 'Core' && !['core', 'ab', 'plank', 'crunch'].some(k => allText.includes(k))) return false;
+    }
+
     // 4. Search Filter
     if (searchQuery) {
       const name = (ex.display_name || '').toLowerCase();
@@ -670,9 +926,26 @@ function renderPlanGrid() {
           <button 
             type="button" 
             onclick="openExerciseGuideModal('${ex.display_name || ex.key}')" 
-            class="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 flex items-center justify-center space-x-1.5 transition active:scale-95">
+            class="flex-1 py-1.5 px-2.5 rounded-xl text-xs font-bold bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 flex items-center justify-center space-x-1 transition active:scale-95">
             <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-            <span>Photos & Form</span>
+            <span>Guide</span>
+          </button>
+
+          <button 
+            type="button" 
+            onclick="previewExerciseOnAvatar('${(ex.display_name || ex.name || '').replace(/'/g, "\\'")}', ${JSON.stringify(ex.primary_muscles || [])}, ${JSON.stringify(ex.secondary_muscles || [])}, '${(ex.category || '').replace(/'/g, "\\'")}')" 
+            class="py-1.5 px-2.5 rounded-xl text-xs font-bold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 flex items-center justify-center space-x-1 transition active:scale-95" 
+            title="Highlight Muscles on 3D Body">
+            <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">3D</span>
+          </button>
+
+          <button 
+            type="button" 
+            onclick="addToRoutine({ id: '${ex.key}', name: '${(ex.display_name || ex.name || '').replace(/'/g, "\\'")}', category: '${(ex.body_group || ex.category || '').replace(/'/g, "\\'")}', equipment: '${(ex.equipment || 'Gym').replace(/'/g, "\\'")}', primary: ${JSON.stringify(ex.primary_muscles || [])}, secondary: ${JSON.stringify(ex.secondary_muscles || [])} })" 
+            class="py-1.5 px-2.5 rounded-xl text-xs font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 flex items-center justify-center space-x-1 transition active:scale-95" 
+            title="Add to Custom Routine">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
           </button>
 
           <a 
@@ -885,9 +1158,26 @@ function renderFedbGrid() {
           <button 
             type="button" 
             onclick="openFedbModal(${idx})" 
-            class="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 flex items-center justify-center space-x-1.5 transition active:scale-95">
+            class="flex-1 py-1.5 px-2.5 rounded-xl text-xs font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 flex items-center justify-center space-x-1 transition active:scale-95">
             <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-            <span>Photos & Guide</span>
+            <span>Guide</span>
+          </button>
+
+          <button 
+            type="button" 
+            onclick="previewExerciseOnAvatar('${(ex.name || '').replace(/'/g, "\\'")}', ${JSON.stringify(ex.primary_muscles || [])}, ${JSON.stringify(ex.secondary_muscles || [])}, '${(ex.category || '').replace(/'/g, "\\'")}')" 
+            class="py-1.5 px-2.5 rounded-xl text-xs font-bold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 flex items-center justify-center space-x-1 transition active:scale-95" 
+            title="Highlight Muscles on 3D Body">
+            <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">3D</span>
+          </button>
+
+          <button 
+            type="button" 
+            onclick="addToRoutine({ id: '${ex.id || idx}', name: '${(ex.name || '').replace(/'/g, "\\'")}', category: '${(ex.category || '').replace(/'/g, "\\'")}', equipment: '${(ex.equipment || 'Gym').replace(/'/g, "\\'")}', primary: ${JSON.stringify(ex.primary_muscles || [])}, secondary: ${JSON.stringify(ex.secondary_muscles || [])} })" 
+            class="py-1.5 px-2.5 rounded-xl text-xs font-bold bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 flex items-center justify-center space-x-1 transition active:scale-95" 
+            title="Add to Custom Routine">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
           </button>
 
           <a 
@@ -1166,9 +1456,26 @@ function renderCatalogGrid() {
           <button 
             type="button" 
             onclick="openCatalogModal(${idx})" 
-            class="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 flex items-center justify-center space-x-1.5 transition active:scale-95">
+            class="flex-1 py-1.5 px-2.5 rounded-xl text-xs font-bold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 flex items-center justify-center space-x-1 transition active:scale-95">
             <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-            <span>View Full GIF & Guide</span>
+            <span>GIF</span>
+          </button>
+
+          <button 
+            type="button" 
+            onclick="previewExerciseOnAvatar('${(ex.name || '').replace(/'/g, "\\'")}', ['${(ex.target_muscle || '').replace(/'/g, "\\'")}'], ${JSON.stringify(ex.secondary_muscles || [])}, '${(ex.body_part || '').replace(/'/g, "\\'")}')" 
+            class="py-1.5 px-2.5 rounded-xl text-xs font-bold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 flex items-center justify-center space-x-1 transition active:scale-95" 
+            title="Highlight Muscles on 3D Body">
+            <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">3D</span>
+          </button>
+
+          <button 
+            type="button" 
+            onclick="addToRoutine({ id: '${ex.id || idx}', name: '${(ex.name || '').replace(/'/g, "\\'")}', category: '${(ex.body_part || '').replace(/'/g, "\\'")}', equipment: '${(ex.equipment || 'Gym').replace(/'/g, "\\'")}', primary: ['${(ex.target_muscle || '').replace(/'/g, "\\'")}'], secondary: ${JSON.stringify(ex.secondary_muscles || [])} })" 
+            class="py-1.5 px-2.5 rounded-xl text-xs font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 flex items-center justify-center space-x-1 transition active:scale-95" 
+            title="Add to Custom Routine">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
           </button>
 
           <a 

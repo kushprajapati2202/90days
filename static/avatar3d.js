@@ -2,15 +2,19 @@
  * Ultra-Realistic 3D Human Male Muscular Anatomy Model
  * Developed with Three.js (r128) & GLTFLoader
  *
- * Features:
- * - Real 3D Anatomical Human Male Model (177 segmented muscular meshes from Z-Anatomy / BodyParts3D)
+ * Advanced Features:
+ * - Real 3D Anatomical Human Male Model (177 segmented meshes from Z-Anatomy / BodyParts3D)
  * - Dual-Viewport 3D Rendering: FRONT VIEW & BACK VIEW rendered side-by-side in real-time WebGL
- * - Dual-Camera interactive Raycasting (Left viewport raycasts Anterior, Right viewport raycasts Posterior)
- * - Physically Based Materials (MeshPhysicalMaterial) with authentic muscle tone, tendon fascia, and hydration sheen
- * - 3-Point Studio Lighting rig with anterior/posterior key lights, cool fill, and cyan rim definition
- * - 360° Synchronized Turntable Orbit drag, pinch-to-zoom, and view preset animations
- * - Floating Anatomical HUD Card displaying Scientific Latin Name, Biomechanical Function, and Location
- * - Two-Way Synchronized filtering across all 3 Exercise Databases (Plan 64, Free-Exercise-DB 876, ExerciseDB 1,324)
+ * - Dual-Camera interactive Raycasting (Anterior & Posterior picking)
+ * - Muscle Isolation / "Ghost Mode": Dims non-target muscles to translucent glass (14% opacity)
+ * - Primary vs Synergist Dual-Color Heatmap: Electric Cyan (Primary) & Electric Amber (Synergists)
+ * - Reverse Selection: Hovering/clicking any exercise card automatically lights up its kinetic chain
+ * - 3 Lighting Presets: Cyber Gym (Cyan Rim), Clinical Medical (High-Key White), Golden Hour (Dramatic Warm)
+ * - Fullscreen 3D Inspection Mode with high-DPI canvas resizing
+ * - Audio Pronunciation & Biomechanical Form Cues using Web Speech API
+ * - Synchronized 360° Turntable Orbit, zoom damping, and view preset animations
+ * - Floating Medical HUD Card displaying Latin names, origin/insertion locations, and functions
+ * - Integrated two-way filtering across all 3 Exercise Databases (Plan 64, Free-Exercise-DB 876, ExerciseDB 1,324)
  */
 
 (function () {
@@ -131,6 +135,15 @@
       this.cameraBack = null;
       this.viewMode = 'dual'; // 'dual' | 'single'
 
+      // Lighting Presets
+      this.lightingPreset = 'cyber'; // 'cyber' | 'medical' | 'golden'
+      this.lights = {};
+
+      // Muscle Isolation & Synergist Heatmap State
+      this.ghostMode = false;
+      this.activePrimaries = [];
+      this.activeSecondaries = [];
+
       // Interaction State
       this.raycaster = new THREE.Raycaster();
       this.mouse = new THREE.Vector2();
@@ -139,6 +152,7 @@
       this.autoRotate = false;
       this.autoRotateSpeed = 0.006;
       this.animationFrameId = null;
+      this.isFullscreen = false;
 
       // Camera Distance / Zoom
       this.defaultDistance = 8.6;
@@ -157,7 +171,6 @@
       // Meshes Registry
       this.muscleMeshes = {};       // muscleKey -> Array of Mesh
       this.allMeshes = [];          // Array of all Mesh objects for raycasting
-      this.meshMap = {};            // meshName -> muscleKey
       this.selectedMuscleKey = null;
       this.hoveredMuscleKey = null;
 
@@ -165,7 +178,9 @@
       this.muscleMaterial = null;
       this.tendonMaterial = null;
       this.highlightMaterial = null;
+      this.synergistMaterial = null;
       this.hoverMaterial = null;
+      this.ghostMaterial = null;
       this.originalMaterials = new Map();
     }
 
@@ -232,35 +247,37 @@
 
     setupLighting() {
       // 1. Anterior Key Light (Front Warm)
-      const keyLightFront = new THREE.DirectionalLight('#fff8f0', 1.35);
-      keyLightFront.position.set(2.5, 4.0, 5.5);
-      keyLightFront.castShadow = true;
-      this.scene.add(keyLightFront);
+      const keyFront = new THREE.DirectionalLight('#fff8f0', 1.35);
+      keyFront.position.set(2.5, 4.0, 5.5);
+      keyFront.castShadow = true;
+      this.scene.add(keyFront);
 
       // 2. Posterior Key Light (Back Warm)
-      const keyLightBack = new THREE.DirectionalLight('#fff8f0', 1.35);
-      keyLightBack.position.set(-2.5, 4.0, -5.5);
-      keyLightBack.castShadow = true;
-      this.scene.add(keyLightBack);
+      const keyBack = new THREE.DirectionalLight('#fff8f0', 1.35);
+      keyBack.position.set(-2.5, 4.0, -5.5);
+      keyBack.castShadow = true;
+      this.scene.add(keyBack);
 
       // 3. Cool Lateral Fill Light (Left flank)
-      const fillLightLeft = new THREE.DirectionalLight('#93c5fd', 0.65);
-      fillLightLeft.position.set(-4.0, 1.5, 3.0);
-      this.scene.add(fillLightLeft);
+      const fillLeft = new THREE.DirectionalLight('#93c5fd', 0.65);
+      fillLeft.position.set(-4.0, 1.5, 3.0);
+      this.scene.add(fillLeft);
 
       // 4. Cool Lateral Fill Light (Right flank)
-      const fillLightRight = new THREE.DirectionalLight('#93c5fd', 0.65);
-      fillLightRight.position.set(4.0, 1.5, -3.0);
-      this.scene.add(fillLightRight);
+      const fillRight = new THREE.DirectionalLight('#93c5fd', 0.65);
+      fillRight.position.set(4.0, 1.5, -3.0);
+      this.scene.add(fillRight);
 
       // 5. Overhead Anatomical Rim Light (Azure)
-      const topLight = new THREE.DirectionalLight('#38bdf8', 1.1);
-      topLight.position.set(0, 6.5, 0);
-      this.scene.add(topLight);
+      const topRim = new THREE.DirectionalLight('#38bdf8', 1.1);
+      topRim.position.set(0, 6.5, 0);
+      this.scene.add(topRim);
 
       // 6. Ambient Shadow Fill
-      const ambientLight = new THREE.AmbientLight('#1e293b', 0.85);
-      this.scene.add(ambientLight);
+      const ambient = new THREE.AmbientLight('#1e293b', 0.85);
+      this.scene.add(ambient);
+
+      this.lights = { keyFront, keyBack, fillLeft, fillRight, topRim, ambient };
 
       // 7. Ground Contact Shadow
       const shadowCanvas = document.createElement('canvas');
@@ -283,12 +300,61 @@
       });
       const shadowPlane = new THREE.Mesh(shadowGeo, shadowMat);
       shadowPlane.rotation.x = -Math.PI / 2;
-      shadowPlane.position.y = -3.32; // Just below the feet
+      shadowPlane.position.y = -3.32;
       this.scene.add(shadowPlane);
     }
 
+    setLightingPreset(presetName) {
+      if (!this.lights.keyFront) return;
+      this.lightingPreset = presetName;
+
+      if (presetName === 'medical') {
+        // Clinical High-Key Studio (Pure white neutral lighting)
+        this.lights.keyFront.color.set('#ffffff');
+        this.lights.keyFront.intensity = 1.45;
+        this.lights.keyBack.color.set('#ffffff');
+        this.lights.keyBack.intensity = 1.45;
+        this.lights.fillLeft.color.set('#e2e8f0');
+        this.lights.fillLeft.intensity = 0.8;
+        this.lights.fillRight.color.set('#e2e8f0');
+        this.lights.fillRight.intensity = 0.8;
+        this.lights.topRim.color.set('#ffffff');
+        this.lights.topRim.intensity = 0.9;
+        this.lights.ambient.color.set('#334155');
+        this.lights.ambient.intensity = 1.1;
+      } else if (presetName === 'golden') {
+        // Dramatic Golden Hour Gym (Warm amber rim & shadows)
+        this.lights.keyFront.color.set('#ffedd5');
+        this.lights.keyFront.intensity = 1.5;
+        this.lights.keyBack.color.set('#fde68a');
+        this.lights.keyBack.intensity = 1.5;
+        this.lights.fillLeft.color.set('#fed7aa');
+        this.lights.fillLeft.intensity = 0.65;
+        this.lights.fillRight.color.set('#fca5a5');
+        this.lights.fillRight.intensity = 0.65;
+        this.lights.topRim.color.set('#f59e0b');
+        this.lights.topRim.intensity = 1.35;
+        this.lights.ambient.color.set('#451a03');
+        this.lights.ambient.intensity = 0.8;
+      } else {
+        // Cyber Gym (Default)
+        this.lights.keyFront.color.set('#fff8f0');
+        this.lights.keyFront.intensity = 1.35;
+        this.lights.keyBack.color.set('#fff8f0');
+        this.lights.keyBack.intensity = 1.35;
+        this.lights.fillLeft.color.set('#93c5fd');
+        this.lights.fillLeft.intensity = 0.65;
+        this.lights.fillRight.color.set('#93c5fd');
+        this.lights.fillRight.intensity = 0.65;
+        this.lights.topRim.color.set('#38bdf8');
+        this.lights.topRim.intensity = 1.1;
+        this.lights.ambient.color.set('#1e293b');
+        this.lights.ambient.intensity = 0.85;
+      }
+    }
+
     setupMaterials() {
-      // Authentic anatomical muscular red-bronze tissue with clearcoat hydration
+      // Authentic anatomical muscular red-bronze tissue
       this.muscleMaterial = new THREE.MeshPhysicalMaterial({
         color: new THREE.Color('#9e3636'),
         roughness: 0.46,
@@ -309,7 +375,7 @@
         side: THREE.DoubleSide
       });
 
-      // Luminous Electric Cyan Active Selection Material
+      // Luminous Electric Cyan Active Selection (Primary Muscle)
       this.highlightMaterial = new THREE.MeshPhysicalMaterial({
         color: new THREE.Color('#06b6d4'),
         emissive: new THREE.Color('#00f0ff'),
@@ -321,6 +387,18 @@
         side: THREE.DoubleSide
       });
 
+      // Luminous Electric Amber Active Selection (Synergist / Secondary Muscle)
+      this.synergistMaterial = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color('#f59e0b'),
+        emissive: new THREE.Color('#d97706'),
+        emissiveIntensity: 0.75,
+        roughness: 0.18,
+        metalness: 0.06,
+        clearcoat: 0.80,
+        clearcoatRoughness: 0.20,
+        side: THREE.DoubleSide
+      });
+
       // Subtle Cyan Phosphor Hover Material
       this.hoverMaterial = new THREE.MeshPhysicalMaterial({
         color: new THREE.Color('#38bdf8'),
@@ -329,6 +407,17 @@
         roughness: 0.25,
         metalness: 0.05,
         clearcoat: 0.60,
+        side: THREE.DoubleSide
+      });
+
+      // Muscle Isolation "Ghost Mode" Material (translucent dark glass)
+      this.ghostMaterial = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color('#334155'),
+        roughness: 0.75,
+        metalness: 0.05,
+        transparent: true,
+        opacity: 0.14,
+        depthWrite: false,
         side: THREE.DoubleSide
       });
     }
@@ -394,7 +483,6 @@
     }
 
     processLoadedModel(model) {
-      // Traverse all meshes in the authentic GLB model
       model.traverse((child) => {
         if (child.isMesh) {
           const nodeName = child.name || '';
@@ -403,7 +491,6 @@
           child.castShadow = true;
           child.receiveShadow = true;
 
-          // Determine material: aponeurosis/tendons get tendonMaterial, muscle bodies get muscleMaterial
           const isTendon = nodeName.includes('aponeurosis') || nodeName.includes('tendon') || nodeName.includes('linea-alba');
           const baseMat = isTendon ? this.tendonMaterial.clone() : this.muscleMaterial.clone();
           child.material = baseMat;
@@ -426,7 +513,6 @@
         }
       });
 
-      // Compute bounding box and center model at (0, 0, 0)
       const bbox = new THREE.Box3().setFromObject(model);
       const center = bbox.getCenter(new THREE.Vector3());
       model.position.sub(center);
@@ -437,7 +523,7 @@
     setupInteractionListeners() {
       const canvas = this.renderer.domElement;
 
-      // Pointer Down (Drag start)
+      // Pointer Down
       canvas.addEventListener('pointerdown', (e) => {
         this.isDragging = true;
         this.previousPointerPos = { x: e.clientX, y: e.clientY };
@@ -445,7 +531,7 @@
         canvas.style.cursor = 'grabbing';
       });
 
-      // Pointer Move (Hover raycasting & 360° orbit drag)
+      // Pointer Move
       window.addEventListener('pointermove', (e) => {
         const rect = canvas.getBoundingClientRect();
         if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
@@ -462,11 +548,9 @@
           const deltaY = e.clientY - this.previousPointerPos.y;
           this.previousPointerPos = { x: e.clientX, y: e.clientY };
 
-          // Rotate the 3D model in sync for both Front and Back views
           this.modelRotationY += deltaX * 0.008;
           this.targetRotationY = this.modelRotationY;
 
-          // Vertical tilt with clamped bounds
           this.modelRotationX = Math.max(-0.35, Math.min(0.35, this.modelRotationX + deltaY * 0.004));
           this.targetRotationX = this.modelRotationX;
 
@@ -477,7 +561,7 @@
         }
       });
 
-      // Pointer Up (Drag end)
+      // Pointer Up
       window.addEventListener('pointerup', () => {
         if (this.isDragging) {
           this.isDragging = false;
@@ -485,7 +569,7 @@
         }
       });
 
-      // Click (Select muscle)
+      // Click
       canvas.addEventListener('click', (e) => {
         const rect = canvas.getBoundingClientRect();
         this.handleClickRaycast(e.clientX, e.clientY, rect);
@@ -514,11 +598,9 @@
       if (this.viewMode === 'dual') {
         const halfWidth = width / 2;
         if (relX < halfWidth) {
-          // Left Viewport: Front Camera
           normX = (relX / halfWidth) * 2 - 1;
           activeCamera = this.cameraFront;
         } else {
-          // Right Viewport: Back Camera
           normX = ((relX - halfWidth) / halfWidth) * 2 - 1;
           activeCamera = this.cameraBack;
         }
@@ -605,6 +687,8 @@
       if (!hitMesh) {
         if (this.selectedMuscleKey && ANATOMY_DATA[this.selectedMuscleKey]) {
           tooltip.textContent = `Active: ${ANATOMY_DATA[this.selectedMuscleKey].label}`;
+        } else if (this.activePrimaries.length > 0) {
+          tooltip.textContent = `Targeting: ${this.activePrimaries.map(k => ANATOMY_DATA[k]?.label || k).join(', ')}`;
         } else {
           tooltip.textContent = 'Drag to rotate 360° • Click any muscle to inspect';
         }
@@ -624,6 +708,9 @@
       if (!ANATOMY_DATA[muscleKey]) return;
 
       this.selectedMuscleKey = muscleKey;
+      this.activePrimaries = [muscleKey];
+      this.activeSecondaries = [];
+
       this.refreshMeshMaterials();
       this.renderAnatomicalCard(muscleKey, specificNodeName);
 
@@ -637,6 +724,9 @@
 
     clearSelection(triggerExternalFilter = true) {
       this.selectedMuscleKey = null;
+      this.activePrimaries = [];
+      this.activeSecondaries = [];
+
       this.refreshMeshMaterials();
       this.hideAnatomicalCard();
 
@@ -648,33 +738,97 @@
       }
     }
 
+    // Reverse Selection: Highlight kinetic chain of an exercise (Primary in Cyan, Synergists in Amber)
+    highlightExerciseMuscles(primaryKeys = [], secondaryKeys = [], exerciseTitle = '') {
+      this.activePrimaries = primaryKeys.filter(k => !!ANATOMY_DATA[k]);
+      this.activeSecondaries = secondaryKeys.filter(k => !!ANATOMY_DATA[k] && !this.activePrimaries.includes(k));
+      this.selectedMuscleKey = this.activePrimaries.length > 0 ? this.activePrimaries[0] : null;
+
+      this.refreshMeshMaterials();
+
+      // Auto-orient model: if target is posterior, rotate towards Back View
+      const posteriorKeys = ['lats', 'traps', 'lowerback', 'glutes', 'hamstrings'];
+      const isPosterior = this.activePrimaries.some(k => posteriorKeys.includes(k));
+      if (isPosterior) {
+        this.targetRotationY = Math.PI;
+        this.isAnimatingView = true;
+      } else {
+        this.targetRotationY = 0;
+        this.isAnimatingView = true;
+      }
+
+      const tooltip = document.getElementById('avatar-3d-tooltip');
+      if (tooltip) {
+        const primLabels = this.activePrimaries.map(k => ANATOMY_DATA[k]?.label || k).join(', ');
+        const secLabels = this.activeSecondaries.map(k => ANATOMY_DATA[k]?.label || k).join(', ');
+        tooltip.innerHTML = `<span class="text-cyan-400 font-bold">${exerciseTitle || 'Exercise'}</span>: ${primLabels} ${secLabels ? '• Synergists: ' + secLabels : ''}`;
+      }
+
+      if (this.selectedMuscleKey) {
+        this.renderAnatomicalCard(this.selectedMuscleKey, exerciseTitle);
+      }
+    }
+
+    toggleGhostMode() {
+      this.ghostMode = !this.ghostMode;
+      const btn = document.getElementById('btn-3d-ghostmode');
+      if (btn) {
+        if (this.ghostMode) {
+          btn.classList.add('bg-cyan-500/20', 'text-cyan-300', 'border-cyan-500/50');
+        } else {
+          btn.classList.remove('bg-cyan-500/20', 'text-cyan-300', 'border-cyan-500/50');
+        }
+      }
+      this.refreshMeshMaterials();
+    }
+
     refreshMeshMaterials() {
-      // Loop all registered muscle groups
+      const hasActive = (this.activePrimaries.length > 0 || this.activeSecondaries.length > 0 || this.selectedMuscleKey);
+
+      // 1. Process all registered muscles
       Object.keys(this.muscleMeshes).forEach((key) => {
         const meshes = this.muscleMeshes[key];
-        const isSelected = (key === this.selectedMuscleKey);
+        const isPrimary = (this.activePrimaries.includes(key) || key === this.selectedMuscleKey);
+        const isSecondary = this.activeSecondaries.includes(key);
         const isHovered = (key === this.hoveredMuscleKey);
 
         meshes.forEach((mesh) => {
-          if (isSelected) {
+          if (isPrimary) {
             mesh.material = this.highlightMaterial;
+          } else if (isSecondary) {
+            mesh.material = this.synergistMaterial;
           } else if (isHovered) {
             mesh.material = this.hoverMaterial;
+          } else if (this.ghostMode && hasActive) {
+            mesh.material = this.ghostMaterial;
           } else {
             mesh.material = this.originalMaterials.get(mesh) || this.muscleMaterial;
           }
         });
       });
+
+      // 2. Head & non-muscle base meshes
+      this.allMeshes.forEach((mesh) => {
+        if (mesh.userData.muscleKey === 'head_base') {
+          if (this.ghostMode && hasActive) {
+            mesh.material = this.ghostMaterial;
+          } else {
+            mesh.material = this.originalMaterials.get(mesh) || this.muscleMaterial;
+          }
+        }
+      });
     }
 
-    renderAnatomicalCard(muscleKey, specificNodeName = '') {
+    renderAnatomicalCard(muscleKey, contextLabel = '') {
       const data = ANATOMY_DATA[muscleKey];
       if (!data) return;
 
       const card = document.getElementById('avatar-3d-hud-card');
       if (!card) return;
 
-      const subNameFormatted = specificNodeName ? specificNodeName.replace(/-/g, ' ') : '';
+      const synergistsText = this.activeSecondaries.length > 0
+        ? this.activeSecondaries.map(k => ANATOMY_DATA[k]?.label || k).join(', ')
+        : 'Assisting kinetic chains';
 
       card.innerHTML = `
         <div class="flex items-start justify-between gap-2 mb-2">
@@ -682,18 +836,29 @@
             <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
             <div>
               <h4 class="text-xs font-black text-white uppercase tracking-wider font-heading">${data.label}</h4>
-              <p class="text-[10px] text-cyan-300 font-serif italic">${data.latinName}${subNameFormatted ? ' • <span class="capitalize text-slate-300 font-sans font-medium">' + subNameFormatted + '</span>' : ''}</p>
+              <p class="text-[10px] text-cyan-300 font-serif italic">${data.latinName}${contextLabel ? ' • <span class="capitalize text-slate-300 font-sans font-medium">' + contextLabel + '</span>' : ''}</p>
             </div>
           </div>
-          <button type="button" onclick="window.clearMuscleFilter ? window.clearMuscleFilter() : window.avatar3D.clearSelection()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition" title="Clear selection">
-            <i data-lucide="x" class="w-3.5 h-3.5"></i>
-          </button>
+          <div class="flex items-center space-x-1">
+            <!-- Audio Pronunciation Button -->
+            <button type="button" onclick="window.avatar3D.speakAnatomy('${muscleKey}')" class="text-cyan-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition" title="Pronounce Anatomy & Cues">
+              <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+            </button>
+            <button type="button" onclick="window.clearMuscleFilter ? window.clearMuscleFilter() : window.avatar3D.clearSelection()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition" title="Clear selection">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
         </div>
         <div class="space-y-1.5 text-[11px] text-slate-300 border-t border-slate-800/80 pt-2">
           <div>
             <span class="font-bold text-cyan-400 text-[10px] uppercase tracking-wide block">Primary Biomechanical Function:</span>
             <p class="leading-tight text-slate-200 mt-0.5">${data.function}</p>
           </div>
+          ${this.activeSecondaries.length > 0 ? `
+          <div>
+            <span class="font-bold text-amber-400 text-[10px] uppercase tracking-wide block">Synergist Muscle Recruitment:</span>
+            <p class="leading-tight text-amber-200/90 mt-0.5">${synergistsText}</p>
+          </div>` : ''}
           <div>
             <span class="font-bold text-slate-400 text-[10px] uppercase tracking-wide block">Anatomical Location:</span>
             <p class="leading-tight text-slate-300 mt-0.5">${data.location}</p>
@@ -708,6 +873,19 @@
     hideAnatomicalCard() {
       const card = document.getElementById('avatar-3d-hud-card');
       if (card) card.classList.add('hidden');
+    }
+
+    speakAnatomy(muscleKey) {
+      if (!('speechSynthesis' in window)) return;
+      const data = ANATOMY_DATA[muscleKey];
+      if (!data) return;
+
+      window.speechSynthesis.cancel();
+      const text = `${data.label}. Scientific name: ${data.latinName}. Biomechanical function: ${data.function}`;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
     }
 
     setView(viewName) {
@@ -774,6 +952,23 @@
       this.onResize();
     }
 
+    toggleFullscreen() {
+      const wrapper = document.getElementById('avatar-3d-wrapper');
+      const btn = document.getElementById('btn-3d-fullscreen');
+      if (!wrapper) return;
+
+      this.isFullscreen = !this.isFullscreen;
+      if (this.isFullscreen) {
+        wrapper.classList.add('avatar-fullscreen-active');
+        if (btn) btn.innerHTML = '<i data-lucide="minimize-2" class="w-3.5 h-3.5"></i>';
+      } else {
+        wrapper.classList.remove('avatar-fullscreen-active');
+        if (btn) btn.innerHTML = '<i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>';
+      }
+      if (window.lucide) window.lucide.createIcons();
+      setTimeout(() => this.onResize(), 60);
+    }
+
     onResize() {
       if (!this.container || !this.renderer) return;
 
@@ -797,13 +992,11 @@
     animate() {
       this.animationFrameId = requestAnimationFrame(() => this.animate());
 
-      // Auto-rotation turntable
       if (this.autoRotate) {
         this.modelRotationY += this.autoRotateSpeed;
         this.targetRotationY = this.modelRotationY;
       }
 
-      // Smooth camera zoom damping
       this.currentDistance += (this.targetDistance - this.currentDistance) * 0.1;
       if (this.cameraFront) {
         this.cameraFront.position.z = this.currentDistance;
@@ -812,7 +1005,6 @@
         this.cameraBack.position.z = -this.currentDistance;
       }
 
-      // Smooth model rotation easing
       if (this.isAnimatingView || !this.isDragging) {
         this.modelRotationY += (this.targetRotationY - this.modelRotationY) * 0.085;
         this.modelRotationX += (this.targetRotationX - this.modelRotationX) * 0.085;

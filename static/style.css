@@ -343,3 +343,37 @@ input, select, textarea {
     transform: translateY(0) scale(1);
   }
 }
+
+/* Fullscreen 3D Anatomy Focus Mode */
+.avatar-fullscreen-active {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+  background: #030712 !important;
+  padding: 1rem !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+}
+
+.avatar-fullscreen-active > div:nth-child(2) {
+  height: calc(100vh - 80px) !important;
+  max-width: none !important;
+  border-radius: 1.5rem !important;
+}
+
+/* Custom Routine Floating Tray & Drawer */
+#routine-drawer-modal {
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
