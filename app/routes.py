@@ -164,6 +164,56 @@ def get_catalog_filters():
         "total_exercises": col.count_documents({})
     }
 
+@router.get("/catalog-876")
+def get_catalog_876(
+    category: Optional[str] = None,
+    level: Optional[str] = None,
+    equipment: Optional[str] = None,
+    search: Optional[str] = None,
+    limit: int = Query(50, ge=1, le=200),
+    skip: int = Query(0, ge=0)
+):
+    """Query the 876-exercise Free-Exercise-DB collection in MongoDB Atlas."""
+    db = get_db()
+    col = db["exercise_catalog_876"]
+    
+    query = {}
+    if category and category.lower() != "all":
+        query["category"] = {"$regex": f"^{category}$", "$options": "i"}
+    if level and level.lower() != "all":
+        query["level"] = {"$regex": f"^{level}$", "$options": "i"}
+    if equipment and equipment.lower() != "all":
+        query["equipment"] = {"$regex": equipment, "$options": "i"}
+    if search:
+        s = search.strip()
+        query["$or"] = [
+            {"name": {"$regex": s, "$options": "i"}},
+            {"equipment": {"$regex": s, "$options": "i"}},
+            {"category": {"$regex": s, "$options": "i"}},
+            {"primary_muscles": {"$regex": s, "$options": "i"}}
+        ]
+        
+    total = col.count_documents(query)
+    exercises = list(col.find(query, {"_id": 0}).skip(skip).limit(limit))
+    return {
+        "total": total,
+        "limit": limit,
+        "skip": skip,
+        "exercises": exercises
+    }
+
+@router.get("/catalog-876/filters")
+def get_catalog_876_filters():
+    """Return distinct categories, equipment, and levels for Free-Exercise-DB (876)."""
+    db = get_db()
+    col = db["exercise_catalog_876"]
+    return {
+        "categories": sorted(col.distinct("category")),
+        "levels": sorted(col.distinct("level")),
+        "equipment": sorted(col.distinct("equipment")),
+        "total_exercises": col.count_documents({})
+    }
+
 @router.get("/profile")
 def get_profile():
     """Get the user profile, goals, and intensity guide."""

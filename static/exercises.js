@@ -1,15 +1,26 @@
-// Dual-Mode Exercise Library Client Script: 90-Day Plan (64) + Global ExerciseDB (1,324 Animated GIFs)
+// Tri-Mode Exercise Library Client Script:
+// 1. 90-Day Plan Routine (64 Moves)
+// 2. Free-Exercise-DB (876 Photos, Mechanics & Levels)
+// 3. ExerciseDB Global (1,324 Animated GIFs & Instructions)
 
-let currentMode = 'plan'; // 'plan' or 'catalog'
+let currentMode = 'plan'; // 'plan', '876', or 'catalog'
 
 // State for 90-Day Plan Mode
 let planExercises = [];
 let filteredPlanExercises = [];
 let activePlanGroup = 'All';
 
+// State for 876 Free-Exercise-DB Mode
+let fedbExercises = [];
+let fedbTotal = 876;
+let fedbSkip = 0;
+const FEDB_PAGE_SIZE = 48;
+let fedbCategories = [];
+let activeFedbCategory = 'All';
+
 // State for ExerciseDB Catalog Mode (1,324 exercises)
 let catalogExercises = [];
-let catalogTotal = 0;
+let catalogTotal = 1324;
 let catalogSkip = 0;
 const CATALOG_PAGE_SIZE = 48;
 let catalogBodyParts = [];
@@ -49,8 +60,13 @@ function setupEventListeners() {
           if (searchQuery) clearBtn.classList.remove('hidden');
           else clearBtn.classList.add('hidden');
         }
+        
         if (currentMode === 'plan') {
           applyPlanFilters();
+        } else if (currentMode === '876') {
+          fedbSkip = 0;
+          fedbExercises = [];
+          loadFedbExercises();
         } else {
           catalogSkip = 0;
           catalogExercises = [];
@@ -66,6 +82,10 @@ function setupEventListeners() {
       activeEquipment = e.target.value;
       if (currentMode === 'plan') {
         applyPlanFilters();
+      } else if (currentMode === '876') {
+        fedbSkip = 0;
+        fedbExercises = [];
+        loadFedbExercises();
       } else {
         catalogSkip = 0;
         catalogExercises = [];
@@ -80,8 +100,13 @@ function clearSearch() {
   if (searchInput) searchInput.value = '';
   searchQuery = '';
   document.getElementById('search-clear-btn').classList.add('hidden');
+  
   if (currentMode === 'plan') {
     applyPlanFilters();
+  } else if (currentMode === '876') {
+    fedbSkip = 0;
+    fedbExercises = [];
+    loadFedbExercises();
   } else {
     catalogSkip = 0;
     catalogExercises = [];
@@ -92,31 +117,45 @@ function clearSearch() {
 async function loadInitialData() {
   await Promise.all([
     loadPlanExercises(),
+    loadFedbMetadata(),
     loadCatalogMetadata()
   ]);
 }
 
 // -------------------------------------------------------------
-// MODE SWITCHER: 'plan' vs 'catalog'
+// 3-WAY MODE SWITCHER: 'plan' | '876' | 'catalog'
 // -------------------------------------------------------------
 function switchLibraryMode(mode) {
   if (currentMode === mode) return;
   currentMode = mode;
 
   const btnPlan = document.getElementById('btn-mode-plan');
+  const btn876 = document.getElementById('btn-mode-876');
   const btnCatalog = document.getElementById('btn-mode-catalog');
 
+  const defaultBtn = "py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 text-slate-400 hover:text-white";
+
+  btnPlan.className = defaultBtn;
+  btn876.className = defaultBtn;
+  btnCatalog.className = defaultBtn;
+
   if (mode === 'plan') {
-    btnPlan.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-indigo-600 text-white shadow-md shadow-indigo-600/30";
-    btnCatalog.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 text-slate-400 hover:text-white";
-    
+    btnPlan.className = "py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-indigo-600 text-white shadow-md shadow-indigo-600/30";
     renderPlanCategoryTabs();
     populatePlanEquipment();
     applyPlanFilters();
-  } else {
-    btnCatalog.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-cyan-600 text-white shadow-md shadow-cyan-600/30";
-    btnPlan.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 text-slate-400 hover:text-white";
-
+  } else if (mode === '876') {
+    btn876.className = "py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-emerald-600 text-white shadow-md shadow-emerald-600/30";
+    renderFedbCategoryTabs();
+    populateFedbEquipment();
+    if (fedbExercises.length === 0) {
+      fedbSkip = 0;
+      loadFedbExercises();
+    } else {
+      renderFedbGrid();
+    }
+  } else if (mode === 'catalog') {
+    btnCatalog.className = "py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-cyan-600 text-white shadow-md shadow-cyan-600/30";
     renderCatalogCategoryTabs();
     populateCatalogEquipment();
     if (catalogExercises.length === 0) {
@@ -129,7 +168,7 @@ function switchLibraryMode(mode) {
 }
 
 // -------------------------------------------------------------
-// 1. 90-DAY PLAN ROUTINE (64 EXERCISES WITH 2-PHOTO DEMOS)
+// 1. 90-DAY PLAN ROUTINE (64 EXERCISES)
 // -------------------------------------------------------------
 async function loadPlanExercises() {
   try {
@@ -342,7 +381,282 @@ function renderPlanGrid() {
 }
 
 // -------------------------------------------------------------
-// 2. EXERCISEDB GLOBAL (1,324 ANIMATED GIFS & INSTRUCTIONS)
+// 2. FREE-EXERCISE-DB (876 EXERCISES WITH 2-PHOTO START & PEAK)
+// -------------------------------------------------------------
+async function loadFedbMetadata() {
+  try {
+    const res = await fetch('/api/catalog-876/filters');
+    const data = await res.json();
+    fedbCategories = ['All', ...(data.categories || [])];
+    fedbTotal = data.total_exercises || 876;
+  } catch (err) {
+    console.error("Error loading 876 metadata:", err);
+  }
+}
+
+function renderFedbCategoryTabs() {
+  const container = document.getElementById('category-tabs-container');
+  if (!container) return;
+
+  container.innerHTML = fedbCategories.map(cat => {
+    const isActive = activeFedbCategory.toLowerCase() === cat.toLowerCase();
+    return `
+      <button 
+        type="button" 
+        onclick="setFedbCategoryFilter('${cat}')"
+        class="tab-btn px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center space-x-1.5 shrink-0 ${
+          isActive 
+            ? 'bg-emerald-500 text-dark-900 shadow-md shadow-emerald-500/25 font-extrabold' 
+            : 'bg-dark-900/90 text-slate-300 hover:text-white border border-slate-800'
+        }">
+        <span>${cat}</span>
+      </button>
+    `;
+  }).join('');
+}
+
+function setFedbCategoryFilter(cat) {
+  activeFedbCategory = cat;
+  renderFedbCategoryTabs();
+  fedbSkip = 0;
+  fedbExercises = [];
+  loadFedbExercises();
+}
+
+async function populateFedbEquipment() {
+  const equipSelect = document.getElementById('equipment-filter-select');
+  if (!equipSelect) return;
+
+  try {
+    const res = await fetch('/api/catalog-876/filters');
+    const data = await res.json();
+    const sorted = data.equipment || [];
+    equipSelect.innerHTML = `<option value="All">All Equipment (876)</option>` + 
+      sorted.map(eq => `<option value="${eq}">${eq}</option>`).join('');
+  } catch (err) {
+    console.error("Error populating 876 equipment:", err);
+  }
+}
+
+async function loadFedbExercises(append = false) {
+  const container = document.getElementById('exercises-grid');
+
+  if (!append) {
+    container.innerHTML = `
+      <div class="col-span-full py-16 text-center text-slate-400">
+        <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-3 text-emerald-400"></i>
+        <p class="text-sm font-semibold">Querying Atlas Free-Exercise-DB (876 exercises)...</p>
+      </div>
+    `;
+    lucide.createIcons();
+  }
+
+  try {
+    const params = new URLSearchParams({
+      limit: FEDB_PAGE_SIZE,
+      skip: fedbSkip
+    });
+
+    if (activeFedbCategory !== 'All') params.set('category', activeFedbCategory);
+    if (activeEquipment !== 'All') params.set('equipment', activeEquipment);
+    if (searchQuery) params.set('search', searchQuery);
+
+    const res = await fetch(`/api/catalog-876?${params.toString()}`);
+    const data = await res.json();
+    
+    fedbTotal = data.total || 0;
+    const newItems = data.exercises || [];
+
+    if (append) {
+      fedbExercises = [...fedbExercises, ...newItems];
+    } else {
+      fedbExercises = newItems;
+    }
+
+    renderFedbGrid();
+  } catch (err) {
+    console.error("Error querying 876 dataset:", err);
+  }
+}
+
+function renderFedbGrid() {
+  const container = document.getElementById('exercises-grid');
+  const countBadge = document.getElementById('result-count-badge');
+  if (countBadge) {
+    countBadge.innerText = `Showing ${fedbExercises.length} of ${fedbTotal} exercises (Free-Exercise-DB 876)`;
+  }
+
+  if (fedbExercises.length === 0) {
+    container.innerHTML = `
+      <div class="col-span-full py-14 text-center text-slate-400 bg-dark-850/60 rounded-2xl border border-slate-800 p-8">
+        <i data-lucide="search-x" class="w-12 h-12 mx-auto mb-3 text-slate-600"></i>
+        <h3 class="text-base font-bold text-white mb-1">No exercises found in Free-Exercise-DB</h3>
+        <p class="text-xs text-slate-400 mb-4">Try clearing your search keyword or changing category.</p>
+        <button onclick="clearSearch(); setFedbCategoryFilter('All');" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-dark-900 hover:bg-emerald-400">
+          Reset Filters
+        </button>
+      </div>
+    `;
+    lucide.createIcons();
+    return;
+  }
+
+  container.innerHTML = fedbExercises.map((ex, idx) => {
+    const images = ex.images || [];
+    const cues = ex.instructions || [];
+    const firstCue = cues.length > 0 ? cues[0] : 'Perform with strict form and full control.';
+
+    return `
+      <div class="glass-panel bg-dark-850 rounded-2xl border border-slate-800 hover:border-slate-700 p-3.5 flex flex-col justify-between transition-all group hover:shadow-xl hover:shadow-emerald-950/20">
+        <div>
+          <!-- Badges -->
+          <div class="flex items-center justify-between gap-1.5 mb-2.5">
+            <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-bold border bg-emerald-950/40 text-emerald-300 border-emerald-500/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>${ex.category || 'Strength'}</span>
+            </span>
+            <div class="flex items-center space-x-1 text-[10px] text-slate-400">
+              <span class="px-1.5 py-0.2 rounded bg-dark-800 border border-slate-700 text-slate-300 font-semibold">${ex.level || 'Beginner'}</span>
+              <span class="truncate max-w-[80px]">${ex.equipment || 'Gym'}</span>
+            </div>
+          </div>
+
+          <!-- 2-Position Photos -->
+          <div class="grid grid-cols-2 gap-1.5 mb-3 rounded-xl overflow-hidden bg-dark-900 border border-slate-800/80 p-1">
+            ${images.map((img, i) => `
+              <div class="relative h-28 sm:h-32 rounded-lg overflow-hidden bg-dark-950 cursor-pointer group/img" onclick="openFedbModal(${idx})">
+                <img src="${img}" alt="${ex.name} position ${i+1}" 
+                  class="w-full h-full object-cover object-center group-hover/img:scale-105 transition duration-300"
+                  loading="lazy">
+                <span class="absolute bottom-1 left-1 px-1.5 py-0.2 rounded text-[9px] font-bold bg-dark-950/80 text-emerald-300 border border-slate-700">
+                  ${i === 0 ? '1. Start' : '2. Peak'}
+                </span>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Title -->
+          <h3 class="text-sm sm:text-base font-bold text-white font-heading group-hover:text-emerald-300 transition mb-1 leading-snug">
+            ${ex.name}
+          </h3>
+
+          <!-- Muscles -->
+          <div class="flex flex-wrap gap-1 mb-2.5">
+            ${(ex.primary_muscles || []).slice(0, 2).map(m => `
+              <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                ${m}
+              </span>
+            `).join('')}
+            ${(ex.secondary_muscles || []).slice(0, 1).map(m => `
+              <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-dark-800 text-slate-400 border border-slate-700">
+                ${m}
+              </span>
+            `).join('')}
+          </div>
+
+          <!-- Cue Snippet -->
+          <p class="text-[11px] text-slate-300 line-clamp-2 leading-relaxed bg-dark-900/60 p-2 rounded-lg border border-slate-800/60 mb-3">
+            ${firstCue}
+          </p>
+        </div>
+
+        <!-- Buttons -->
+        <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2">
+          <button 
+            type="button" 
+            onclick="openFedbModal(${idx})" 
+            class="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 flex items-center justify-center space-x-1.5 transition active:scale-95">
+            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+            <span>Photos & Guide</span>
+          </button>
+
+          <a 
+            href="https://www.youtube.com/results?search_query=${encodeURIComponent(ex.video_query || `how to do ${ex.name} exercise form`)}" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            class="py-1.5 px-2.5 rounded-xl text-xs font-bold bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 flex items-center justify-center space-x-1 transition active:scale-95">
+            <i data-lucide="play" class="w-3.5 h-3.5 fill-rose-300"></i>
+            <span class="hidden sm:inline">Video</span>
+          </a>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  if (fedbExercises.length < fedbTotal) {
+    const loadMoreHtml = `
+      <div class="col-span-full py-6 text-center">
+        <button 
+          type="button" 
+          onclick="loadMoreFedb()" 
+          class="px-6 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-dark-900 shadow-lg shadow-emerald-500/20 active:scale-95 transition">
+          Load More 876 Exercises (${fedbExercises.length} / ${fedbTotal})
+        </button>
+      </div>
+    `;
+    container.insertAdjacentHTML('beforeend', loadMoreHtml);
+  }
+
+  lucide.createIcons();
+}
+
+function loadMoreFedb() {
+  fedbSkip += FEDB_PAGE_SIZE;
+  loadFedbExercises(true);
+}
+
+function openFedbModal(idx) {
+  const ex = fedbExercises[idx];
+  if (!ex) return;
+
+  document.getElementById('guide-modal-title').innerText = ex.name;
+  document.getElementById('guide-modal-equipment').innerText = `${ex.equipment || 'Gym'} • ${ex.level || 'Beginner'} • ${ex.mechanic || 'Compound'}`;
+  
+  const muscles = (ex.primary_muscles || []).join(', ');
+  document.getElementById('guide-modal-muscles').innerText = muscles || 'Target Muscles';
+
+  const photosContainer = document.getElementById('guide-modal-photos-grid');
+  if (ex.images && ex.images.length > 0) {
+    photosContainer.innerHTML = ex.images.map((imgUrl, i) => `
+      <div class="rounded-xl overflow-hidden bg-dark-900 border border-slate-700 relative group">
+        <img src="${imgUrl}" alt="${ex.name} Position ${i+1}" class="w-full h-44 sm:h-56 object-cover object-center">
+        <div class="absolute bottom-2 left-2 bg-dark-900/90 px-2 py-0.5 rounded text-[10px] font-bold text-emerald-300 border border-slate-700">
+          ${i === 0 ? '1. Starting Position' : '2. Peak Contraction'}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  const videoBtn = document.getElementById('guide-modal-video-link');
+  const query = encodeURIComponent(ex.video_query || `how to do ${ex.name} exercise proper form`);
+  videoBtn.href = `https://www.youtube.com/results?search_query=${query}`;
+
+  const musclesContainer = document.getElementById('guide-modal-muscles-tags');
+  const allMuscles = [...(ex.primary_muscles || []), ...(ex.secondary_muscles || [])];
+  musclesContainer.innerHTML = allMuscles.map(m => `
+    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+      ${m}
+    </span>
+  `).join('');
+
+  const cuesContainer = document.getElementById('guide-modal-cues-list');
+  const cues = ex.instructions || [];
+  cuesContainer.innerHTML = cues.map((cue, i) => `
+    <div class="bg-dark-900/70 p-2.5 rounded-xl border border-slate-800 flex items-start space-x-2.5">
+      <span class="w-5 h-5 rounded-md bg-emerald-500/20 text-emerald-400 font-extrabold flex items-center justify-center shrink-0 text-[10px]">
+        ${i + 1}
+      </span>
+      <p class="leading-relaxed text-slate-200 text-xs">${cue}</p>
+    </div>
+  `).join('');
+
+  document.getElementById('exercise-guide-modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  lucide.createIcons();
+}
+
+// -------------------------------------------------------------
+// 3. EXERCISEDB GLOBAL (1,324 ANIMATED GIFS & INSTRUCTIONS)
 // -------------------------------------------------------------
 async function loadCatalogMetadata() {
   try {
@@ -401,13 +715,12 @@ async function populateCatalogEquipment() {
 
 async function loadCatalogExercises(append = false) {
   const container = document.getElementById('exercises-grid');
-  const countBadge = document.getElementById('result-count-badge');
 
   if (!append) {
     container.innerHTML = `
       <div class="col-span-full py-16 text-center text-slate-400">
         <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-3 text-cyan-400"></i>
-        <p class="text-sm font-semibold">Querying MongoDB Atlas ExerciseDB Collection (1,324 exercises)...</p>
+        <p class="text-sm font-semibold">Querying Atlas ExerciseDB Collection (1,324 exercises)...</p>
       </div>
     `;
     lucide.createIcons();
@@ -540,7 +853,6 @@ function renderCatalogGrid() {
     `;
   }).join('');
 
-  // Add "Load More" button if more items remain
   if (catalogExercises.length < catalogTotal) {
     const loadMoreHtml = `
       <div class="col-span-full py-6 text-center">
@@ -569,7 +881,7 @@ function openCatalogModal(idx) {
   if (!ex) return;
 
   document.getElementById('guide-modal-title').innerText = ex.name;
-  document.getElementById('guide-modal-equipment').innerText = ex.equipment || 'Gym Equipment';
+  document.getElementById('guide-modal-equipment').innerText = `${ex.body_part} • ${ex.equipment || 'Gym Equipment'}`;
   document.getElementById('guide-modal-muscles').innerText = `${ex.body_part} • ${ex.target_muscle}`;
 
   const photosContainer = document.getElementById('guide-modal-photos-grid');

@@ -61,10 +61,10 @@
             <div class="flex items-center space-x-1.5">
               <h1 class="text-sm sm:text-base font-extrabold tracking-tight text-white font-heading">EXERCISE LIBRARY</h1>
               <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-800">
-                64 MOVES
+                2,200+ MOVES
               </span>
             </div>
-            <p class="text-[11px] text-slate-400 hidden sm:block">Demonstration photos, muscle anatomy & video cues</p>
+            <p class="text-[11px] text-slate-400 hidden sm:block">Plan Routine, 876 Photo Library & 1,324 Animated GIFs</p>
           </div>
         </div>
       </div>
@@ -87,21 +87,28 @@
     <!-- SEARCH & FILTER BAR -->
     <section class="glass-panel rounded-2xl p-3 sm:p-4 border border-slate-800 space-y-3">
       
-      <!-- DUAL MODE SWITCHER: 90-DAY PLAN (64) VS GLOBAL EXERCISEDB (1,324 ANIMATED GIFS) -->
-      <div class="flex items-center p-1 bg-dark-950/90 rounded-xl border border-slate-800">
+      <!-- 3-WAY DATASET SWITCHER: PLAN (64) | FREE-EXERCISE-DB (876 PHOTOS) | EXERCISEDB (1,324 GIFS) -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 p-1 bg-dark-950/90 rounded-xl border border-slate-800">
         <button 
           id="btn-mode-plan" 
           onclick="switchLibraryMode('plan')" 
-          class="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-indigo-600 text-white shadow-md shadow-indigo-600/30">
+          class="py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-indigo-600 text-white shadow-md shadow-indigo-600/30">
           <i data-lucide="dumbbell" class="w-3.5 h-3.5"></i>
-          <span>90-Day Plan Routine (64 Moves)</span>
+          <span>90-Day Plan (64 Moves)</span>
+        </button>
+        <button 
+          id="btn-mode-876" 
+          onclick="switchLibraryMode('876')" 
+          class="py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 text-slate-400 hover:text-white">
+          <i data-lucide="image" class="w-3.5 h-3.5"></i>
+          <span>Free-Exercise-DB (876 Photos)</span>
         </button>
         <button 
           id="btn-mode-catalog" 
           onclick="switchLibraryMode('catalog')" 
-          class="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 text-slate-400 hover:text-white">
-          <i data-lucide="database" class="w-3.5 h-3.5"></i>
-          <span>ExerciseDB Global (1,324 GIFs)</span>
+          class="py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 text-slate-400 hover:text-white">
+          <i data-lucide="video" class="w-3.5 h-3.5"></i>
+          <span>ExerciseDB (1,324 GIFs)</span>
         </button>
       </div>
 
