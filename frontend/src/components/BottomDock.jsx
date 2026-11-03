@@ -10,7 +10,7 @@ export default function BottomDock({ activeTab, setActiveTab }) {
   ];
 
   return (
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#09090D]/95 backdrop-blur-xl border-t border-white/[0.08] px-2 py-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom,12px))]">
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#09090D]/95 backdrop-blur-xl border-t border-white/[0.08] px-2 pt-1.5 bottom-dock-safe-area">
       <div class="grid grid-cols-4 gap-1 max-w-md mx-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;

@@ -165,6 +165,9 @@ export default function WorkoutModal({
   return (
     <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
       <div class="w-full sm:max-w-2xl bg-dark-850 border border-white/[0.1] rounded-t-3xl sm:rounded-3xl max-h-[92vh] sm:max-h-[88vh] flex flex-col shadow-2xl overflow-hidden">
+        {/* Mobile Drag Pill */}
+        <div class="sm:hidden w-10 h-1 bg-white/25 rounded-full mx-auto mt-2.5 mb-1 shrink-0" />
+
         {/* Sticky Header */}
         <div class="p-3.5 sm:p-4 border-b border-white/[0.08] bg-dark-900 flex items-center justify-between shrink-0">
           <div class="flex items-center space-x-2">
@@ -479,7 +482,7 @@ export default function WorkoutModal({
         </div>
 
         {/* Sticky Footer */}
-        <div class="p-3 sm:p-4 border-t border-white/[0.08] bg-dark-900 flex items-center justify-between gap-3 shrink-0">
+        <div class="p-3 sm:p-4 border-t border-white/[0.08] bg-dark-900 flex items-center justify-between gap-3 shrink-0 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
           <label class="flex items-center space-x-2 cursor-pointer select-none">
             <input
               type="checkbox"

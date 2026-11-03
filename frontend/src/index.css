@@ -34,7 +34,7 @@ body {
   background-color: var(--bg-main);
   color: #f4f4f5;
   min-height: 100vh;
-  padding-bottom: calc(74px + env(safe-area-inset-bottom, 16px));
+  padding-bottom: calc(76px + env(safe-area-inset-bottom, 16px));
   overflow-x: hidden;
 }
 
@@ -42,6 +42,15 @@ body {
   body {
     padding-bottom: 2rem;
   }
+}
+
+/* iPhone Dynamic Island & Notch Safe Area Inset Support */
+.header-safe-area {
+  padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
+}
+
+.bottom-dock-safe-area {
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 16px));
 }
 
 /* Prevent auto-zoom on inputs in iOS */
@@ -52,7 +61,6 @@ textarea {
 }
 
 @media (min-width: 640px) {
-
   input,
   select,
   textarea {

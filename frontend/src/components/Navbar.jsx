@@ -19,7 +19,7 @@ export default function Navbar({ activeTab, setActiveTab, stats, onOpenWeightMod
   };
 
   return (
-    <header class="sticky top-0 z-40 bg-dark-900/95 backdrop-blur-md border-b border-white/[0.08] px-3 sm:px-6 py-2.5 transition-all">
+    <header class="sticky top-0 z-40 bg-dark-900/95 backdrop-blur-md border-b border-white/[0.08] px-3 sm:px-6 header-safe-area pb-2.5 transition-all">
       <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
         {/* Brand */}
         <div class="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab('today')}>
