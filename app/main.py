@@ -49,22 +49,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def restore_vercel_path(request: Request, call_next):
+    # Restore actual requested path when forwarded via Vercel serverless rewrite (?__path__=...)
+    subpath = request.query_params.get("__path__")
+    if subpath:
+        clean_sub = subpath.lstrip("/")
+        request.scope["path"] = f"/api/{clean_sub}"
+        # Strip __path__ from query string to preserve original caller query parameters
+        qs = request.scope.get("query_string", b"").decode("utf-8")
+        clean_qs = "&".join([p for p in qs.split("&") if not p.startswith("__path__=")])
+        request.scope["query_string"] = clean_qs.encode("utf-8")
+    return await call_next(request)
+
 @app.get("/api")
 @app.get("/api/index.py")
-def root_api(request: Request):
-    return {
-        "status": "connected",
-        "scope_path": request.scope.get("path"),
-        "raw_path": request.scope.get("raw_path", b"").decode("utf-8", "ignore"),
-        "headers": dict(request.headers),
-        "url": str(request.url),
-    }
+def root_api():
+    return {"status": "connected", "message": "90-Day Tracker API is online"}
 
 # Register API router across standard and serverless prefixes
 app.include_router(router, prefix="/api")
 app.include_router(router, prefix="")
-app.include_router(router, prefix="/api/index.py/api")
-app.include_router(router, prefix="/api/index.py")
 
 @app.exception_handler(404)
 async def custom_404_handler(request: Request, exc):
