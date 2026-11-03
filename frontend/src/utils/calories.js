@@ -95,3 +95,4 @@ export function calculateDayCalories(day, weightKg = 91.5) {
     total_completed_kcal: comp,
   };
 }
+

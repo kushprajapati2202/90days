@@ -45,11 +45,17 @@ body {
 }
 
 /* Prevent auto-zoom on inputs in iOS */
-input, select, textarea {
+input,
+select,
+textarea {
   font-size: 16px !important;
 }
+
 @media (min-width: 640px) {
-  input, select, textarea {
+
+  input,
+  select,
+  textarea {
     font-size: 14px !important;
   }
 }
@@ -59,13 +65,16 @@ input, select, textarea {
   width: 5px;
   height: 5px;
 }
+
 ::-webkit-scrollbar-track {
   background: #09090D;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #22222E;
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: #3F3F50;
 }
@@ -73,6 +82,7 @@ input, select, textarea {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;

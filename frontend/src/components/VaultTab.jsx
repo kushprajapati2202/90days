@@ -152,3 +152,4 @@ export default function VaultTab({ onSelectExerciseGuide }) {
     </div>
   );
 }
+

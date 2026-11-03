@@ -125,3 +125,4 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
     </div>
   );
 }
+

@@ -223,3 +223,4 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
     </div>
   );
 }
+

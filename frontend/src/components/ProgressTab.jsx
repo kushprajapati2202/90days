@@ -239,3 +239,4 @@ export default function ProgressTab({ stats, weightHistory, onOpenWeightModal, o
     </div>
   );
 }
+

@@ -97,3 +97,4 @@ export default function Navbar({ activeTab, setActiveTab, stats, onOpenWeightMod
     </header>
   );
 }
+

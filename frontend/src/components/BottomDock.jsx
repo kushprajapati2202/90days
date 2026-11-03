@@ -36,3 +36,4 @@ export default function BottomDock({ activeTab, setActiveTab }) {
     </nav>
   );
 }
+

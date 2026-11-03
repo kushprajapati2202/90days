@@ -84,3 +84,4 @@ export default function RestTimer({ isOpen, onClose, secondsLeft, isRunning, onT
     </div>
   );
 }
+

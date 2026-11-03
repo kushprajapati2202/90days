@@ -108,3 +108,4 @@ export default function WeightModal({ isOpen, onClose, currentWeight, onWeightLo
     </div>
   );
 }
+
