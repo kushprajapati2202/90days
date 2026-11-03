@@ -255,3 +255,4 @@ def calculate_day_calories(day: dict, weight_kg: float = 90.0) -> dict:
             "cooldown": cooldown_res
         }
     }
+
