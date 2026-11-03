@@ -1677,6 +1677,23 @@ async function saveWorkoutModalData() {
 }
 
 // 5. Weight Tracker Modal & Chart.js
+let activeWeightScope = 'all';
+let lastWeightData = null;
+
+function setWeightChartScope(scope) {
+  activeWeightScope = scope;
+  document.querySelectorAll('.weight-scope-btn').forEach(btn => {
+    if (btn.getAttribute('data-scope') === scope) {
+      btn.className = 'weight-scope-btn active px-3 py-1 rounded-lg text-xs font-bold bg-emerald-500 text-dark-900 shadow-md shadow-emerald-500/20';
+    } else {
+      btn.className = 'weight-scope-btn px-3 py-1 rounded-lg text-xs font-bold bg-dark-800 text-slate-300 hover:bg-slate-700';
+    }
+  });
+  if (lastWeightData) {
+    renderWeightChart(lastWeightData, scope);
+  }
+}
+
 async function openWeightModal() {
   const pending = allDays.find(d => !d.completed);
   const targetDay = pending ? pending.day_number : 1;
@@ -1685,11 +1702,12 @@ async function openWeightModal() {
 
   document.getElementById('weight-modal').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
+  lucide.createIcons();
   try {
     const res = await fetch('/api/weight-history');
     const data = await res.json();
     requestAnimationFrame(() => {
-      renderWeightChart(data);
+      renderWeightChart(data, activeWeightScope);
     });
     renderWeightHistoryList(data.logs || []);
   } catch (err) {
@@ -1702,78 +1720,219 @@ function closeWeightModal() {
   document.body.style.overflow = '';
 }
 
-function renderWeightChart(data) {
-  const ctx = document.getElementById('weightChart').getContext('2d');
+function renderWeightChart(data, scope = activeWeightScope) {
+  if (!data) return;
+  lastWeightData = data;
+  activeWeightScope = scope;
+
+  // 1. Update KPI Summary Badges
+  const startKg = parseFloat(data.start_weight) || 92.5;
+  const targetKg = parseFloat(data.target_weight) || 82.0;
+  const logs = data.logs || [];
+  const latestLog = logs.length > 0 ? logs[logs.length - 1] : null;
+  const currentKg = latestLog ? parseFloat(latestLog.weight_kg) : startKg;
+  const diffKg = +(startKg - currentKg).toFixed(1);
+
+  const elStart = document.getElementById('weight-kpi-start');
+  if (elStart) elStart.innerText = `${startKg} kg`;
+
+  const elCurr = document.getElementById('weight-kpi-current');
+  if (elCurr) elCurr.innerText = `${currentKg} kg`;
+
+  const elLost = document.getElementById('weight-kpi-lost');
+  if (elLost) {
+    if (diffKg > 0) {
+      elLost.innerText = `-${diffKg} kg`;
+      elLost.className = 'text-base sm:text-lg font-black font-heading text-emerald-400';
+    } else if (diffKg < 0) {
+      elLost.innerText = `+${Math.abs(diffKg)} kg`;
+      elLost.className = 'text-base sm:text-lg font-black font-heading text-rose-400';
+    } else {
+      elLost.innerText = `0.0 kg`;
+      elLost.className = 'text-base sm:text-lg font-black font-heading text-slate-300';
+    }
+  }
+
+  const elGoal = document.getElementById('weight-kpi-goal');
+  if (elGoal) elGoal.innerText = `${targetKg} kg`;
+
+  // 2. Build Axis Labels and Datasets based on scope
+  const chartCanvas = document.getElementById('weightChart');
+  if (!chartCanvas) return;
+  const ctx = chartCanvas.getContext('2d');
   if (weightChartInstance) {
     weightChartInstance.destroy();
   }
 
-  const daysLabels = [];
-  for (let i = 1; i <= 90; i++) daysLabels.push(`D${i}`);
+  let daysLabels = [];
+  let idealData = [];
+  let actualData = [];
 
-  const idealData = new Array(90).fill(null);
-  for (let i = 1; i <= 90; i++) {
-    const p = (i - 1) / 89.0;
-    idealData[i - 1] = +(data.start_weight - p * (data.start_weight - data.target_weight)).toFixed(2);
-  }
+  let maxDay = 90;
+  if (scope === 'phase1') maxDay = 28;
 
-  const actualData = new Array(90).fill(null);
-  if (data.logs) {
-    data.logs.forEach(l => {
-      if (l.day_number >= 1 && l.day_number <= 90) {
+  if (scope === 'logged') {
+    // Only show days with logged entries plus start day
+    const loggedDayNums = new Set(logs.map(l => l.day_number));
+    loggedDayNums.add(1);
+    const sortedDays = Array.from(loggedDayNums).sort((a, b) => a - b);
+    
+    sortedDays.forEach(dNum => {
+      daysLabels.push(`Day ${dNum}`);
+      const p = (dNum - 1) / 89.0;
+      idealData.push(+(startKg - p * (startKg - targetKg)).toFixed(2));
+      const logEntry = logs.find(l => l.day_number === dNum);
+      if (logEntry) {
+        actualData.push(logEntry.weight_kg);
+      } else if (dNum === 1) {
+        actualData.push(startKg);
+      } else {
+        actualData.push(null);
+      }
+    });
+  } else {
+    for (let i = 1; i <= maxDay; i++) {
+      daysLabels.push(`D${i}`);
+      const p = (i - 1) / 89.0;
+      idealData.push(+(startKg - p * (startKg - targetKg)).toFixed(2));
+    }
+
+    actualData = new Array(maxDay).fill(null);
+    logs.forEach(l => {
+      if (l.day_number >= 1 && l.day_number <= maxDay) {
         actualData[l.day_number - 1] = l.weight_kg;
       }
     });
   }
 
+  // 3. Dynamic Y-Axis scale to make the curve prominent
+  const allWeightNums = [startKg, targetKg];
+  logs.forEach(l => { if (l.weight_kg) allWeightNums.push(Number(l.weight_kg)); });
+  const minObserved = Math.min(...allWeightNums);
+  const maxObserved = Math.max(...allWeightNums);
+  const yAxisMin = Math.max(70, Math.floor(minObserved - 1.0));
+  const yAxisMax = Math.min(120, Math.ceil(maxObserved + 1.0));
+
+  // 4. Gradient Fill for Area
+  const areaGradient = ctx.createLinearGradient(0, 0, 0, 340);
+  areaGradient.addColorStop(0, 'rgba(16, 185, 129, 0.35)');
+  areaGradient.addColorStop(0.7, 'rgba(16, 185, 129, 0.08)');
+  areaGradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+  // 5. Construct High-Visibility Chart
   weightChartInstance = new Chart(ctx, {
     type: 'line',
     data: {
       labels: daysLabels,
       datasets: [
         {
-          label: 'Goal (➔ 82 kg)',
+          label: `Goal Target (➔ ${targetKg} kg)`,
           data: idealData,
-          borderColor: 'rgba(6, 182, 212, 0.4)',
-          borderDash: [4, 4],
-          pointRadius: 0,
-          borderWidth: 2,
+          borderColor: '#06b6d4',
+          borderWidth: 2.5,
+          borderDash: [6, 4],
+          pointRadius: (ctx) => {
+            const idx = ctx.dataIndex;
+            return (idx === 0 || idx === daysLabels.length - 1) ? 4 : 0;
+          },
+          pointBackgroundColor: '#06b6d4',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 1.5,
           fill: false,
           tension: 0.1
         },
         {
-          label: 'Recorded Weight (kg)',
+          label: 'Your Logged Weight (kg)',
           data: actualData,
           borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.15)',
-          pointBackgroundColor: '#10b981',
-          pointBorderColor: '#ffffff',
-          pointRadius: 3,
-          borderWidth: 2.5,
-          spanGaps: true,
+          borderWidth: 3.5,
+          backgroundColor: areaGradient,
           fill: true,
-          tension: 0.3
+          tension: 0.3,
+          spanGaps: true,
+          pointRadius: 7,
+          pointHoverRadius: 10,
+          pointBackgroundColor: '#ffffff',
+          pointBorderColor: '#10b981',
+          pointBorderWidth: 3,
+          pointHitRadius: 18
         }
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
       plugins: {
         legend: {
-          labels: { color: '#cbd5e1', font: { family: 'Plus Jakarta Sans', size: 10 } }
+          display: true,
+          position: 'top',
+          labels: {
+            color: '#f1f5f9',
+            font: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' },
+            boxWidth: 22,
+            boxHeight: 8,
+            padding: 14
+          }
+        },
+        tooltip: {
+          enabled: true,
+          backgroundColor: '#090d16',
+          titleColor: '#38bdf8',
+          titleFont: { size: 13, weight: 'bold' },
+          bodyColor: '#ffffff',
+          bodyFont: { size: 12, weight: '600' },
+          borderColor: '#10b981',
+          borderWidth: 1.5,
+          padding: 12,
+          boxPadding: 6,
+          usePointStyle: true,
+          callbacks: {
+            title: (items) => {
+              const label = items[0].label;
+              return label.startsWith('D') && !label.startsWith('Day') 
+                ? `Day ${label.replace('D', '')}` 
+                : label;
+            },
+            label: (item) => {
+              const val = item.raw;
+              if (val === null || val === undefined) return '';
+              if (item.datasetIndex === 1) {
+                const diff = +(val - startKg).toFixed(1);
+                const sign = diff > 0 ? '+' : '';
+                return `  ⚖️ Logged Weight: ${val} kg (${sign}${diff} kg from start)`;
+              } else {
+                return `  🎯 Target Trajectory: ${val} kg`;
+              }
+            }
+          }
         }
       },
       scales: {
         x: {
           grid: { color: 'rgba(255, 255, 255, 0.05)' },
-          ticks: { color: '#64748b', maxTicksLimit: 9, font: { size: 9 } }
+          ticks: {
+            color: '#94a3b8',
+            maxTicksLimit: scope === 'phase1' ? 14 : 12,
+            font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' }
+          }
         },
         y: {
-          min: 80,
-          max: 95,
-          grid: { color: 'rgba(255, 255, 255, 0.05)' },
-          ticks: { color: '#64748b', font: { size: 9 } }
+          min: yAxisMin,
+          max: yAxisMax,
+          grid: {
+            color: 'rgba(255, 255, 255, 0.08)',
+            borderDash: [3, 3]
+          },
+          ticks: {
+            color: '#cbd5e1',
+            font: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' },
+            callback: (v) => `${v} kg`,
+            stepSize: (yAxisMax - yAxisMin > 10) ? 2 : 1
+          }
         }
       }
     }

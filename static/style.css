@@ -439,3 +439,15 @@ input, select, textarea {
     transform: translateX(0);
   }
 }
+
+/* Weight Tracker Chart Enhancements */
+#weightChart {
+  filter: drop-shadow(0 4px 14px rgba(16, 185, 129, 0.25));
+}
+.weight-scope-btn {
+  transition: all 0.2s ease-in-out;
+}
+.weight-scope-btn.active {
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.45);
+}
+
