@@ -51,8 +51,14 @@ app.add_middleware(
 
 @app.get("/api")
 @app.get("/api/index.py")
-def root_api():
-    return {"status": "connected", "message": "90-Day Tracker API is online"}
+def root_api(request: Request):
+    return {
+        "status": "connected",
+        "scope_path": request.scope.get("path"),
+        "raw_path": request.scope.get("raw_path", b"").decode("utf-8", "ignore"),
+        "headers": dict(request.headers),
+        "url": str(request.url),
+    }
 
 # Register API router across standard and serverless prefixes
 app.include_router(router, prefix="/api")
