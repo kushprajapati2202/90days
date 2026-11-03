@@ -614,6 +614,7 @@ def get_stats():
     }
 
 @router.get("/weight-history")
+@router.get("/weight/history")
 def get_weight_history():
     """Return historical weight logs and projected linear goal line."""
     db = get_db()
@@ -635,10 +636,12 @@ def get_weight_history():
         "start_weight": start_weight,
         "target_weight": target_weight,
         "logs": logs,
+        "history": logs,
         "ideal_curve": ideal_curve
     }
 
 @router.post("/weight-log")
+@router.post("/weight")
 def create_weight_log(data: WeightLogCreateModel):
     """Log a direct weight entry."""
     db = get_db()
@@ -658,6 +661,14 @@ def create_weight_log(data: WeightLogCreateModel):
         db.workout_days.update_one({"day_number": day_num}, {"$set": {"actual_weight_kg": data.weight_kg}})
 
     return {"status": "success", "log": doc}
+
+@router.delete("/weight/{day_num}")
+@router.delete("/weight-log/{day_num}")
+def delete_weight_log(day_num: int):
+    """Delete a weight log entry."""
+    db = get_db()
+    db.weight_logs.delete_one({"day_number": day_num})
+    return {"status": "success"}
 
 @router.post("/seed")
 def trigger_seed(force: bool = False):

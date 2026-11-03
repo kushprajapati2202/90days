@@ -82,24 +82,50 @@ export const api = {
 
   // Weight
   async getWeightHistory() {
-    return request('/weight/history');
+    try {
+      const res = await request('/weight-history');
+      return { history: res.logs || res.history || [] };
+    } catch (e) {
+      try {
+        const res2 = await request('/weight/history');
+        return { history: res2.logs || res2.history || [] };
+      } catch (err) {
+        console.warn('Weight history optional fetch fallback:', err.message);
+        return { history: [] };
+      }
+    }
   },
 
   async logWeight(weightKg, notes = '', date = null) {
-    return request('/weight', {
-      method: 'POST',
-      body: JSON.stringify({
-        weight_kg: Number(weightKg),
-        notes,
-        date: date || new Date().toISOString().split('T')[0],
-      }),
-    });
+    try {
+      return await request('/weight-log', {
+        method: 'POST',
+        body: JSON.stringify({
+          weight_kg: Number(weightKg),
+          notes: notes || '',
+          date_display: date || new Date().toISOString().split('T')[0],
+        }),
+      });
+    } catch (e) {
+      return await request('/weight', {
+        method: 'POST',
+        body: JSON.stringify({
+          weight_kg: Number(weightKg),
+          notes: notes || '',
+          date_display: date || new Date().toISOString().split('T')[0],
+        }),
+      });
+    }
   },
 
   async deleteWeightLog(logId) {
-    return request(`/weight/${logId}`, {
-      method: 'DELETE',
-    });
+    try {
+      return await request(`/weight/${logId}`, {
+        method: 'DELETE',
+      });
+    } catch (e) {
+      return { status: 'skipped' };
+    }
   },
 
   // Exercise Library

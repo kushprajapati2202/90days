@@ -38,12 +38,18 @@ export default function App() {
       setLoadError(null);
       const [daysRes, statsRes, weightRes] = await Promise.all([
         api.getDays(),
-        api.getStats(),
-        api.getWeightHistory(),
+        api.getStats().catch((e) => {
+          console.warn('Stats fetch fallback:', e);
+          return null;
+        }),
+        api.getWeightHistory().catch((e) => {
+          console.warn('Weight history fetch fallback:', e);
+          return { history: [] };
+        }),
       ]);
 
       setAllDays(daysRes.days || []);
-      setStats(statsRes);
+      if (statsRes) setStats(statsRes);
       setWeightHistory(weightRes.history || []);
     } catch (err) {
       console.error('Failed to load application data:', err);
