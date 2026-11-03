@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Trophy, Flame, Scale, Clock, CheckCircle2, Sparkles, ArrowRight, X, Zap } from 'lucide-react';
+import { CheckCircle2, ArrowRight, X } from 'lucide-react';
+import { FaTrophy, FaFireFlameCurved, FaWeightScale, FaStopwatch, FaBolt } from 'react-icons/fa6';
 import confetti from 'canvas-confetti';
 import { formatTimeOfDay, formatDuration } from '../utils/timeFormat';
 import { sounds } from '../utils/sound';
@@ -78,7 +79,7 @@ export default function CelebrationModal({
         {/* Trophy / Medal Celebration Badge */}
         <div className="relative inline-block mx-auto pt-2">
           <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-volt/30 to-emerald-500/10 border-2 border-volt flex items-center justify-center text-volt shadow-xl shadow-volt/20 mx-auto">
-            <Trophy className="w-10 h-10 stroke-[2.5]" />
+            <FaTrophy className="w-9 h-9 text-volt" />
           </div>
           <span className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full bg-emerald-500 text-dark-950 text-[10px] font-black uppercase font-mono tracking-wider shadow">
             100% DONE
@@ -104,7 +105,7 @@ export default function CelebrationModal({
           <div className="p-3 rounded-2xl bg-dark-900 border border-white/[0.06] relative overflow-hidden">
             <div className="flex items-center justify-between text-zinc-400 text-[10px] font-bold uppercase tracking-wider mb-1">
               <span>Consistency Streak</span>
-              <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400/20" />
+              <FaFireFlameCurved className="w-3.5 h-3.5 text-amber-400" />
             </div>
             <div className="flex items-baseline space-x-1">
               <span className="text-2xl font-black font-heading text-amber-400 font-mono">
@@ -119,7 +120,7 @@ export default function CelebrationModal({
           <div className="p-3 rounded-2xl bg-dark-900 border border-white/[0.06]">
             <div className="flex items-center justify-between text-zinc-400 text-[10px] font-bold uppercase tracking-wider mb-1">
               <span>Energy Burned</span>
-              <Flame className="w-3.5 h-3.5 text-volt fill-volt/20" />
+              <FaFireFlameCurved className="w-3.5 h-3.5 text-volt" />
             </div>
             <div className="flex items-baseline space-x-1">
               <span className="text-2xl font-black font-heading text-volt font-mono">
@@ -134,7 +135,7 @@ export default function CelebrationModal({
           <div className="p-3 rounded-2xl bg-dark-900 border border-white/[0.06]">
             <div className="flex items-center justify-between text-zinc-400 text-[10px] font-bold uppercase tracking-wider mb-1">
               <span>Today's Weight</span>
-              <Scale className="w-3.5 h-3.5 text-sky-400" />
+              <FaWeightScale className="w-3.5 h-3.5 text-sky-400" />
             </div>
             <div className="flex items-baseline space-x-1">
               <span className="text-2xl font-black font-heading text-white font-mono">
@@ -151,7 +152,7 @@ export default function CelebrationModal({
           <div className="p-3 rounded-2xl bg-dark-900 border border-white/[0.06]">
             <div className="flex items-center justify-between text-zinc-400 text-[10px] font-bold uppercase tracking-wider mb-1">
               <span>Workout Time</span>
-              <Clock className="w-3.5 h-3.5 text-emerald-400" />
+              <FaStopwatch className="w-3.5 h-3.5 text-emerald-400" />
             </div>
             <div className="flex items-baseline space-x-1">
               <span className="text-2xl font-black font-heading text-emerald-400 font-mono">

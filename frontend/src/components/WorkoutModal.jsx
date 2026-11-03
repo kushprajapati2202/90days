@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Check, CheckCircle2, Flame, Timer, Scale, CloudCheck, Sparkles, ChevronDown, ChevronUp, ExternalLink, Dumbbell, Play, StopCircle, Clock } from 'lucide-react';
+import { X, Check, CheckCircle2, ChevronDown, ChevronUp, ExternalLink, Play, StopCircle, Clock } from 'lucide-react';
+import { TbBarbell, TbStretching, TbStretching2, TbRun } from 'react-icons/tb';
+import { FaFireFlameCurved, FaStopwatch, FaPersonRunning, FaDumbbell, FaWeightScale } from 'react-icons/fa6';
 import confetti from 'canvas-confetti';
 import { sounds } from '../utils/sound';
 import { api } from '../services/api';
@@ -292,7 +294,7 @@ export default function WorkoutModal({
                 <span class={pct === 100 ? 'text-volt' : 'text-white'}>{pct}% Done</span>
               </span>
               <span class="text-amber-400 flex items-center space-x-1">
-                <Flame class="w-3.5 h-3.5 fill-amber-400 inline" />
+                <FaFireFlameCurved class="w-3.5 h-3.5 text-amber-400 inline" />
                 <span>{cal.total_completed_kcal} / {cal.total_estimated_kcal} kcal</span>
               </span>
             </div>
@@ -369,6 +371,7 @@ export default function WorkoutModal({
               <div class="flex items-center justify-between mb-2.5">
                 <div class="flex items-center space-x-1.5 text-xs font-bold text-white font-heading">
                   <span class="w-5 h-5 rounded-md bg-amber-500/20 text-amber-300 flex items-center justify-center text-[10px] font-bold">1</span>
+                  <TbStretching2 class="w-4 h-4 text-amber-400" />
                   <span>Dynamic Warm-Up Mobility</span>
                 </div>
                 <div class="flex items-center space-x-2 text-[10px] font-mono">
@@ -406,8 +409,8 @@ export default function WorkoutModal({
                             )}
                           </div>
                         ) : (
-                          <div class="w-11 h-11 rounded-lg bg-dark-950 flex items-center justify-center shrink-0 border border-white/5 text-zinc-600">
-                            <Sparkles class="w-4 h-4 text-amber-400/60" />
+                          <div class="w-11 h-11 rounded-lg bg-dark-950 flex items-center justify-center shrink-0 border border-white/5 text-amber-400/70">
+                            <TbStretching2 class="w-5 h-5" />
                           </div>
                         )}
 
@@ -440,6 +443,7 @@ export default function WorkoutModal({
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-1.5 text-xs font-bold text-white font-heading">
                 <span class="w-5 h-5 rounded-md bg-volt/20 text-volt flex items-center justify-center text-[10px] font-bold">2</span>
+                <TbBarbell class="w-4 h-4 text-volt" />
                 <span>Strength Lifts & Progressive Sets</span>
               </div>
               <span class="text-[10px] text-zinc-400 font-mono">
@@ -490,8 +494,8 @@ export default function WorkoutModal({
                           )}
                         </div>
                       ) : (
-                        <div class="w-14 h-14 rounded-xl bg-dark-950 flex items-center justify-center shrink-0 border border-white/10 text-zinc-600">
-                          <Dumbbell class="w-6 h-6" />
+                        <div class="w-14 h-14 rounded-xl bg-dark-950 flex items-center justify-center shrink-0 border border-white/10 text-volt/60">
+                          <TbBarbell class="w-7 h-7" />
                         </div>
                       )}
 
@@ -507,7 +511,7 @@ export default function WorkoutModal({
                           <span class="text-zinc-600">•</span>
                           {/* Calorie burn badge */}
                           <span class="text-[10px] text-amber-400 font-mono font-bold flex items-center space-x-0.5">
-                            <Flame class="w-3 h-3 fill-amber-400" />
+                            <FaFireFlameCurved class="w-3 h-3 text-amber-400" />
                             <span>~{exTotalCal} kcal</span>
                           </span>
                           <span class="text-zinc-600">•</span>
@@ -606,6 +610,7 @@ export default function WorkoutModal({
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center space-x-1.5 text-xs font-bold text-white font-heading">
                   <span class="w-5 h-5 rounded-md bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-[10px] font-bold">3</span>
+                  <FaPersonRunning class="w-4 h-4 text-cyan-400" />
                   <span>Conditioning & Cardio</span>
                 </div>
                 <span class="text-[10px] text-amber-400 font-mono font-bold">~95 kcal</span>
@@ -643,6 +648,7 @@ export default function WorkoutModal({
               <div class="flex items-center justify-between mb-2.5">
                 <div class="flex items-center space-x-1.5 text-xs font-bold text-white font-heading">
                   <span class="w-5 h-5 rounded-md bg-purple-500/20 text-purple-300 flex items-center justify-center text-[10px] font-bold">4</span>
+                  <TbStretching class="w-4 h-4 text-purple-400" />
                   <span>Cool-Down Static Stretches</span>
                 </div>
                 <div class="flex items-center space-x-2 text-[10px] font-mono">
@@ -679,8 +685,8 @@ export default function WorkoutModal({
                             )}
                           </div>
                         ) : (
-                          <div class="w-11 h-11 rounded-lg bg-dark-950 flex items-center justify-center shrink-0 border border-white/5 text-zinc-600">
-                            <Sparkles class="w-4 h-4 text-purple-400/60" />
+                          <div class="w-11 h-11 rounded-lg bg-dark-950 flex items-center justify-center shrink-0 border border-white/5 text-purple-400/70">
+                            <TbStretching class="w-5 h-5" />
                           </div>
                         )}
 

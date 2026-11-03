@@ -1,5 +1,6 @@
 import React from 'react';
-import { Play, Pause, RotateCcw, X, Timer } from 'lucide-react';
+import { Play, Pause, RotateCcw, X } from 'lucide-react';
+import { FaStopwatch } from 'react-icons/fa6';
 import { sounds } from '../utils/sound';
 
 export default function RestTimer({ isOpen, onClose, secondsLeft, isRunning, onToggleRun, onReset, onSetPreset }) {
@@ -16,7 +17,7 @@ export default function RestTimer({ isOpen, onClose, secondsLeft, isRunning, onT
       {/* Header */}
       <div class="flex items-center justify-between pb-2 border-b border-white/[0.08] mb-3">
         <div class="flex items-center space-x-2 text-xs font-bold text-white">
-          <Timer class="w-4 h-4 text-rose-400" />
+          <FaStopwatch class="w-4 h-4 text-rose-400" />
           <span>Rest Interval Timer</span>
         </div>
         <button onClick={onClose} class="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition">

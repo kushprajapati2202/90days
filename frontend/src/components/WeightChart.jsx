@@ -1,7 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
 import {
-  Scale,
-  Target,
   TrendingDown,
   TrendingUp,
   Calendar,
@@ -12,6 +10,8 @@ import {
   ChevronRight,
   Info,
 } from 'lucide-react';
+import { FaWeightScale } from 'react-icons/fa6';
+import { TbTargetArrow } from 'react-icons/tb';
 
 // Generates smooth cubic bezier path for an array of {x, y} points
 function getSmoothSplinePath(points) {
@@ -279,7 +279,7 @@ export default function WeightChart({
         <div className="space-y-1">
           <div className="flex items-center space-x-2">
             <div className="w-7 h-7 rounded-lg bg-volt/15 border border-volt/30 flex items-center justify-center text-volt">
-              <Scale className="w-4 h-4" />
+              <FaWeightScale className="w-4 h-4" />
             </div>
             <span className="text-xs font-black uppercase tracking-wider text-zinc-300 font-heading">
               Bodyweight Trajectory
@@ -684,7 +684,7 @@ export default function WeightChart({
         {/* Goal Indicator Pill if Target is below focused view */}
         {viewMode === 'focused' && targetWeight < minW && (
           <div className="absolute bottom-3 right-3 sm:right-4 flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-dark-950/90 border border-sky-400/30 text-sky-300 text-xs shadow-lg backdrop-blur-md">
-            <Target className="w-3.5 h-3.5 text-sky-400" />
+            <TbTargetArrow className="w-4 h-4 text-sky-400" />
             <span className="font-bold text-[11px]">
               Goal Target: <span className="text-white font-mono">{targetWeight} kg</span> ({remainingToGoal} kg to go)
             </span>
@@ -702,7 +702,7 @@ export default function WeightChart({
       <div className="p-3.5 rounded-2xl bg-dark-900 border border-white/[0.06] space-y-2">
         <div className="flex items-center justify-between text-xs font-mono">
           <div className="flex items-center space-x-2">
-            <Target className="w-3.5 h-3.5 text-volt" />
+            <TbTargetArrow className="w-4 h-4 text-volt" />
             <span className="font-bold text-white font-heading">
               Transformation Progress
             </span>

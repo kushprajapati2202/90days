@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Scale, Calendar, Check } from 'lucide-react';
+import { X, Calendar, Check } from 'lucide-react';
+import { FaWeightScale } from 'react-icons/fa6';
 import { api } from '../services/api';
 
 export default function WeightModal({ isOpen, onClose, currentWeight, onWeightLogged }) {
@@ -34,7 +35,7 @@ export default function WeightModal({ isOpen, onClose, currentWeight, onWeightLo
         <div class="flex items-center justify-between pb-3 border-b border-white/[0.08] mb-4">
           <div class="flex items-center space-x-2">
             <div class="w-8 h-8 rounded-xl bg-volt/10 text-volt flex items-center justify-center">
-              <Scale class="w-4 h-4" />
+              <FaWeightScale class="w-4 h-4 text-volt" />
             </div>
             <h3 class="text-sm font-bold text-white font-heading">Log Morning Weigh-In</h3>
           </div>

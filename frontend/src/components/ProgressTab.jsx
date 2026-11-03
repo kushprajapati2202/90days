@@ -1,5 +1,7 @@
 import React from 'react';
-import { Flame, Scale, TrendingDown, Target, Plus, CheckCircle2, Trash2 } from 'lucide-react';
+import { TrendingDown, Target, Plus, CheckCircle2, Trash2 } from 'lucide-react';
+import { FaFireFlameCurved, FaWeightScale } from 'react-icons/fa6';
+import { TbBarbell } from 'react-icons/tb';
 import WeightChart from './WeightChart';
 
 export default function ProgressTab({ stats, weightHistory, onOpenWeightModal, onDeleteWeightLog }) {
@@ -59,8 +61,8 @@ export default function ProgressTab({ stats, weightHistory, onOpenWeightModal, o
           <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">
             Active Streak
           </span>
-          <div className="flex items-center space-x-1 text-amber-400">
-            <Flame className="w-5 h-5 fill-amber-400" />
+          <div className="flex items-center space-x-1.5 text-amber-400">
+            <FaFireFlameCurved className="w-5 h-5 text-amber-400" />
             <span className="text-xl sm:text-2xl font-black font-heading">{stats?.current_streak || 0}</span>
             <span className="text-xs text-zinc-400 font-bold">days</span>
           </div>
@@ -70,8 +72,8 @@ export default function ProgressTab({ stats, weightHistory, onOpenWeightModal, o
           <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">
             Workouts Done
           </span>
-          <div className="flex items-center space-x-1 text-emerald-400">
-            <CheckCircle2 className="w-5 h-5 fill-emerald-400/20" />
+          <div className="flex items-center space-x-1.5 text-emerald-400">
+            <TbBarbell className="w-5 h-5 text-emerald-400" />
             <span className="text-xl sm:text-2xl font-black font-heading">{stats?.completed_days || 0}</span>
             <span className="text-xs text-zinc-400 font-bold">/ 90</span>
           </div>
@@ -81,8 +83,8 @@ export default function ProgressTab({ stats, weightHistory, onOpenWeightModal, o
           <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">
             Energy Burned
           </span>
-          <div className="flex items-center space-x-1 text-volt">
-            <Flame className="w-5 h-5" />
+          <div className="flex items-center space-x-1.5 text-volt">
+            <FaFireFlameCurved className="w-5 h-5 text-volt" />
             <span className="text-xl sm:text-2xl font-black font-heading font-mono">
               {(stats?.total_calories_burned || 0).toLocaleString()}
             </span>
@@ -94,8 +96,8 @@ export default function ProgressTab({ stats, weightHistory, onOpenWeightModal, o
           <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">
             Total Loss
           </span>
-          <div className="flex items-center space-x-1 text-cyan-400">
-            <TrendingDown className="w-5 h-5" />
+          <div className="flex items-center space-x-1.5 text-cyan-400">
+            <FaWeightScale className="w-5 h-5 text-cyan-400" />
             <span className="text-xl sm:text-2xl font-black font-heading font-mono">
               -{ws.total_loss_kg || 0}
             </span>

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, Dumbbell, ExternalLink, BookOpen, Filter, X, Sparkles, Layers, ChevronDown } from 'lucide-react';
+import { Search, ExternalLink, Filter, X, Sparkles, Layers, ChevronDown } from 'lucide-react';
+import { MdFitnessCenter } from 'react-icons/md';
+import { TbBarbell } from 'react-icons/tb';
 import { api } from '../services/api';
 
 const BODY_GROUPS = [
@@ -123,7 +125,7 @@ export default function VaultTab({ onSelectExerciseGuide }) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center space-x-2.5">
             <div className="w-8 h-8 rounded-xl bg-volt/15 border border-volt/30 flex items-center justify-center text-volt">
-              <BookOpen className="w-4 h-4" />
+              <MdFitnessCenter className="w-4 h-4 text-volt" />
             </div>
             <div>
               <h2 className="text-sm sm:text-base font-extrabold text-white font-heading tracking-tight flex items-center space-x-2">
@@ -293,7 +295,7 @@ export default function VaultTab({ onSelectExerciseGuide }) {
                       />
                     ) : (
                       <div className="flex flex-col items-center justify-center text-zinc-600">
-                        <Dumbbell className="w-8 h-8 mb-1" />
+                        <TbBarbell className="w-8 h-8 mb-1 text-zinc-600" />
                         <span className="text-[10px] text-zinc-400">Exercise Preview</span>
                       </div>
                     )}

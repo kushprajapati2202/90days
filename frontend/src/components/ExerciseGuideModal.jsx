@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { X, ExternalLink, Dumbbell, Sparkles } from 'lucide-react';
+import { X, ExternalLink } from 'lucide-react';
+import { TbBarbell, TbActivity } from 'react-icons/tb';
+import { FaDumbbell } from 'react-icons/fa6';
 
 export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
   if (!isOpen || !exercise) return null;
@@ -131,7 +133,7 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
             </div>
           ) : (
             <div className="w-full h-36 rounded-2xl bg-dark-900 border border-white/[0.06] flex flex-col items-center justify-center text-zinc-500 space-y-1">
-              <Dumbbell className="w-8 h-8 text-zinc-600" />
+              <TbBarbell className="w-10 h-10 text-zinc-600" />
               <span className="text-xs text-zinc-400">Visual demonstration available via Video Guide below</span>
             </div>
           )}
@@ -139,7 +141,10 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
           {/* Muscles & Equipment */}
           <div className="p-3.5 rounded-2xl bg-dark-900 border border-white/[0.06] space-y-2.5">
             <div className="flex items-center justify-between text-xs pb-2 border-b border-white/[0.04]">
-              <span className="text-zinc-400 font-bold">Equipment Needed:</span>
+              <span className="text-zinc-400 font-bold flex items-center space-x-1">
+                <FaDumbbell className="w-3.5 h-3.5 text-zinc-400 inline" />
+                <span>Equipment Needed:</span>
+              </span>
               <span className="text-white font-semibold px-2 py-0.5 rounded bg-white/5 border border-white/10">
                 {exercise.equipment || exercise.raw_equipment || 'Bodyweight / Gym Equipment'}
               </span>
@@ -174,7 +179,7 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
           {cues.length > 0 && (
             <div className="p-3.5 rounded-2xl bg-dark-900 border border-white/[0.06] space-y-2.5">
               <div className="flex items-center space-x-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-volt" />
+                <TbActivity className="w-4 h-4 text-volt" />
                 <h4 className="text-xs font-bold text-white font-heading uppercase tracking-wider">
                   Biomechanical Execution Protocol
                 </h4>

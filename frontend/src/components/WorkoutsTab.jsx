@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Flame, CheckCircle2, ChevronRight, RotateCcw, Dumbbell, Clock } from 'lucide-react';
+import { Search, CheckCircle2, ChevronRight, RotateCcw, Clock } from 'lucide-react';
+import { FaFireFlameCurved } from 'react-icons/fa6';
+import { TbBarbell } from 'react-icons/tb';
 import { calculateDayCalories } from '../utils/calories';
 import { formatTimeOfDay, formatDuration } from '../utils/timeFormat';
 
@@ -259,7 +261,7 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
 
                 <div class="pt-1.5 border-t border-white/[0.04] flex items-center justify-between text-[11px]">
                   <div class="flex items-center space-x-1 text-zinc-400">
-                    <Flame class="w-3.5 h-3.5 text-amber-400 fill-amber-400/20" />
+                    <FaFireFlameCurved class="w-3.5 h-3.5 text-amber-400" />
                     <span class="font-mono">
                       {isDone ? `${cal.total_completed_kcal} kcal` : `~${cal.total_estimated_kcal} kcal`}
                     </span>

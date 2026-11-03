@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Play, CheckCircle2, Flame, Scale, ChevronRight, Dumbbell, Sparkles, Clock, Timer } from 'lucide-react';
+import { Play, CheckCircle2, ChevronRight, Sparkles, Clock, Timer } from 'lucide-react';
+import { TbBarbell } from 'react-icons/tb';
+import { FaFireFlameCurved, FaWeightScale, FaShoePrints, FaStopwatch } from 'react-icons/fa6';
 import { calculateDayCalories, calculateExerciseTotalCalories } from '../utils/calories';
 import { formatTimeOfDay, formatDuration } from '../utils/timeFormat';
 import { api } from '../services/api';
@@ -227,8 +229,13 @@ export default function TodayTab({
             <span class="text-xs font-bold text-white font-heading">Week {currentWeekNum} Consistency</span>
             <span class="text-[10px] text-zinc-400">({weekDays.filter((d) => d.completed).length}/7 Done)</span>
           </div>
-          <span class="text-[11px] font-mono text-volt font-bold">
-            {stats?.current_streak ? `🔥 ${stats.current_streak} Day Streak` : 'Keep Pushing'}
+          <span class="text-[11px] font-mono text-volt font-bold flex items-center space-x-1">
+            {stats?.current_streak ? (
+              <>
+                <FaFireFlameCurved class="w-3.5 h-3.5 text-amber-400" />
+                <span>{stats.current_streak} Day Streak</span>
+              </>
+            ) : 'Keep Pushing'}
           </span>
         </div>
 
@@ -270,7 +277,7 @@ export default function TodayTab({
       <div class="p-4 rounded-2xl bg-dark-850 border border-white/[0.06] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div class="flex items-center space-x-3">
           <div class="w-10 h-10 rounded-xl bg-volt/10 border border-volt/20 flex items-center justify-center text-volt">
-            <Scale class="w-5 h-5" />
+            <FaWeightScale class="w-5 h-5 text-volt" />
           </div>
           <div>
             <div class="flex items-center space-x-2">
@@ -312,7 +319,7 @@ export default function TodayTab({
       <div class="p-4 rounded-2xl bg-dark-850 border border-white/[0.06]">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center space-x-2">
-            <Dumbbell class="w-4 h-4 text-volt" />
+            <TbBarbell class="w-4 h-4 text-volt" />
             <span class="text-xs font-bold text-white font-heading">Movements Breakdown</span>
           </div>
           <button
@@ -369,7 +376,7 @@ export default function TodayTab({
                       <span>Target: {ex.target || '3 sets'}</span>
                       <span>•</span>
                       <span class="text-amber-400 font-bold flex items-center space-x-0.5">
-                        <Flame class="w-3 h-3 fill-amber-400" />
+                        <FaFireFlameCurved class="w-3 h-3 text-amber-400" />
                         <span>~{exCal} kcal</span>
                       </span>
                     </div>
