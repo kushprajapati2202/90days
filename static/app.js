@@ -2809,7 +2809,8 @@ function renderTodayHero() {
   const pct = stats.percentage;
   const isCompleted = !!today.completed;
   const isDeload = !!today.is_deload;
-  const dayCal = calculateDayCaloriesClient(today);
+  const calStats = calculateDayCaloriesClient(today);
+  const dayCal = calStats && calStats.total_estimated_kcal !== undefined ? calStats.total_estimated_kcal : 350;
 
   let focusMuscles = [];
   if (today.parsed_exercises) {
@@ -2851,7 +2852,7 @@ function renderTodayHero() {
     <div class="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-[#09090D]/80 border border-white/[0.06] mb-4 text-center">
       <div>
         <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Est. Energy</span>
-        <span class="text-sm sm:text-base font-black text-[#CCFF00] font-heading">~${dayCal} kcal</span>
+        <span class="text-sm sm:text-base font-black text-[#CCFF00] font-heading">~${Number(dayCal).toLocaleString()} kcal</span>
       </div>
       <div>
         <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Movements</span>
