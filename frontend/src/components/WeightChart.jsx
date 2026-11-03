@@ -1,5 +1,17 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { Scale, Target, TrendingDown, Calendar, Sparkles, ChevronRight, Info } from 'lucide-react';
+import {
+  Scale,
+  Target,
+  TrendingDown,
+  TrendingUp,
+  Calendar,
+  Sparkles,
+  Plus,
+  Maximize2,
+  Minimize2,
+  ChevronRight,
+  Info,
+} from 'lucide-react';
 
 // Generates smooth cubic bezier path for an array of {x, y} points
 function getSmoothSplinePath(points) {
@@ -36,18 +48,18 @@ export default function WeightChart({
   currentWeight = 91.55,
   onOpenWeightModal,
 }) {
-  const [timeframe, setTimeframe] = useState('ALL'); // '7D', '30D', '90D', 'ALL'
+  const [timeframe, setTimeframe] = useState('ALL'); // '7D', '14D', '30D', 'ALL'
+  const [viewMode, setViewMode] = useState('focused'); // 'focused' (zoomed in to progress) or 'runway' (full 82kg span)
   const [hoveredPoint, setHoveredPoint] = useState(null);
-  const [showTarget, setShowTarget] = useState(true);
   const [showTrend, setShowTrend] = useState(true);
   const svgRef = useRef(null);
 
-  // Normalize and sort weight logs
+  // 1. Normalize and sort weight logs
   const rawData = useMemo(() => {
     if (!weightHistory || weightHistory.length === 0) {
       return [
-        { date: 'Start', dateDisplay: 'Start', weight: startWeight, notes: 'Target transformation start' },
-        { date: 'Today', dateDisplay: 'Today', weight: currentWeight, notes: 'Current progress' },
+        { id: 0, date: 'Start', dateDisplay: 'Start', weight: startWeight, notes: 'Target transformation start' },
+        { id: 1, date: 'Today', dateDisplay: 'Today', weight: currentWeight, notes: 'Current progress' },
       ];
     }
 
@@ -59,40 +71,62 @@ export default function WeightChart({
 
     return sorted.map((item, idx) => {
       const w = item.weight_kg !== undefined ? Number(item.weight_kg) : Number(item.weight || currentWeight);
-      const dStr = item.date_display || (item.date ? String(item.date).slice(5) : `Entry ${idx + 1}`);
-      const fullDate = item.recorded_at ? new Date(item.recorded_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : (item.date || 'Weigh-In');
+      const dStr = item.date_display || (item.date ? String(item.date).slice(5) : `D${idx + 1}`);
+      const fullDate = item.recorded_at
+        ? new Date(item.recorded_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+        : (item.date || `Entry ${idx + 1}`);
       return {
         id: item._id || idx,
         weight: w,
         dateDisplay: dStr,
         fullDate,
-        dayNumber: item.day_number || null,
+        dayNumber: item.day_number || (idx + 1),
         notes: item.notes || '',
         raw: item,
       };
     });
   }, [weightHistory, startWeight, currentWeight]);
 
-  // Filter based on selected timeframe
+  // 2. Filter based on selected timeframe
   const filteredData = useMemo(() => {
     if (timeframe === 'ALL' || rawData.length <= 2) return rawData;
-    const count = timeframe === '7D' ? 7 : timeframe === '30D' ? 30 : 90;
+    const count = timeframe === '7D' ? 7 : timeframe === '14D' ? 14 : 30;
     return rawData.slice(-count);
   }, [rawData, timeframe]);
 
-  // Dimensions & bounds
+  // 3. Dimensions & canvas margins
   const width = 640;
-  const height = 220;
-  const padLeft = 45;
-  const padRight = 30;
-  const padTop = 25;
-  const padBottom = 35;
+  const height = 260;
+  const padLeft = 48;
+  const padRight = 32;
+  const padTop = 32;
+  const padBottom = 38;
 
+  // 4. Adaptive dynamic scaling
   const weights = filteredData.map((d) => d.weight);
-  const minW = Math.floor(Math.min(targetWeight - 1, ...weights) - 1);
-  const maxW = Math.ceil(Math.max(startWeight + 1, ...weights) + 1);
+  const dataMin = weights.length > 0 ? Math.min(...weights) : startWeight;
+  const dataMax = weights.length > 0 ? Math.max(...weights) : startWeight;
 
-  // Map to SVG coordinates
+  const { minW, maxW } = useMemo(() => {
+    if (viewMode === 'focused') {
+      const span = Math.max(0.6, dataMax - dataMin);
+      const buffer = Math.max(0.35, span * 0.25);
+      let calculatedMin = Number((dataMin - buffer).toFixed(1));
+      let calculatedMax = Number((dataMax + buffer).toFixed(1));
+      if (calculatedMax - calculatedMin < 1.2) {
+        calculatedMin = Number((calculatedMin - 0.4).toFixed(1));
+        calculatedMax = Number((calculatedMax + 0.4).toFixed(1));
+      }
+      return { minW: calculatedMin, maxW: calculatedMax };
+    } else {
+      // Runway view (shows all the way down to target weight)
+      const calculatedMin = Math.floor(Math.min(targetWeight, dataMin) - 1);
+      const calculatedMax = Math.ceil(Math.max(startWeight, dataMax) + 1);
+      return { minW: calculatedMin, maxW: calculatedMax };
+    }
+  }, [viewMode, dataMin, dataMax, targetWeight, startWeight]);
+
+  // 5. Map data points to SVG coordinates
   const points = useMemo(() => {
     if (filteredData.length === 0) return [];
     const plotW = width - padLeft - padRight;
@@ -102,7 +136,7 @@ export default function WeightChart({
       const x = filteredData.length === 1
         ? padLeft + plotW / 2
         : padLeft + (i / (filteredData.length - 1)) * plotW;
-      const normY = (d.weight - minW) / Math.max(1, maxW - minW);
+      const normY = (d.weight - minW) / Math.max(0.1, maxW - minW);
       const y = height - padBottom - normY * plotH;
 
       const prev = i > 0 ? filteredData[i - 1].weight : null;
@@ -119,17 +153,17 @@ export default function WeightChart({
     });
   }, [filteredData, minW, maxW, startWeight]);
 
-  // Target line Y coordinate
+  // Target line Y coordinate (if within bounds)
   const targetY = useMemo(() => {
     const plotH = height - padTop - padBottom;
-    const norm = (targetWeight - minW) / Math.max(1, maxW - minW);
+    const norm = (targetWeight - minW) / Math.max(0.1, maxW - minW);
     return height - padBottom - norm * plotH;
   }, [targetWeight, minW, maxW]);
 
-  // Start weight line Y
+  // Start weight line Y coordinate
   const startY = useMemo(() => {
     const plotH = height - padTop - padBottom;
-    const norm = (startWeight - minW) / Math.max(1, maxW - minW);
+    const norm = (startWeight - minW) / Math.max(0.1, maxW - minW);
     return height - padBottom - norm * plotH;
   }, [startWeight, minW, maxW]);
 
@@ -143,7 +177,7 @@ export default function WeightChart({
     return `${splinePath} L ${last.x} ${bottomY} L ${first.x} ${bottomY} Z`;
   }, [splinePath, points]);
 
-  // Simple Linear Regression Trendline
+  // Linear Regression Trendline
   const trendlinePoints = useMemo(() => {
     if (!showTrend || points.length < 2) return null;
     const n = points.length;
@@ -157,7 +191,8 @@ export default function WeightChart({
       sumXY += points[i].x * points[i].y;
       sumXX += points[i].x * points[i].x;
     }
-    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX || 1);
+    const denom = n * sumXX - sumX * sumX || 1;
+    const slope = (n * sumXY - sumX * sumY) / denom;
     const intercept = (sumY - slope * sumX) / n;
 
     const firstX = points[0].x;
@@ -170,39 +205,51 @@ export default function WeightChart({
     };
   }, [points, showTrend]);
 
-  // Grid steps (horizontal lines)
+  // Horizontal Grid Lines
   const gridSteps = useMemo(() => {
     const steps = [];
-    const stepSize = Math.max(1, Math.round((maxW - minW) / 4));
-    for (let w = Math.ceil(minW / stepSize) * stepSize; w <= maxW; w += stepSize) {
+    const span = maxW - minW;
+    let stepInterval = 0.5;
+    if (span <= 1.4) stepInterval = 0.25;
+    else if (span <= 3.2) stepInterval = 0.5;
+    else if (span <= 6.5) stepInterval = 1.0;
+    else if (span <= 14.0) stepInterval = 2.0;
+    else stepInterval = 5.0;
+
+    const startVal = Math.ceil(minW / stepInterval) * stepInterval;
+    for (let w = startVal; w <= maxW; w += stepInterval) {
+      const cleanW = Number(w.toFixed(2));
       const plotH = height - padTop - padBottom;
-      const norm = (w - minW) / Math.max(1, maxW - minW);
+      const norm = (cleanW - minW) / Math.max(0.1, maxW - minW);
       const y = height - padBottom - norm * plotH;
-      steps.push({ weight: w, y });
+      if (y >= padTop - 5 && y <= height - padBottom + 5) {
+        steps.push({ weight: cleanW, y });
+      }
     }
     return steps;
   }, [minW, maxW]);
 
-  // Interactive active point (hovered or latest point)
+  // Interactive Active Point
   const active = hoveredPoint || (points.length > 0 ? points[points.length - 1] : null);
 
   // Overall key metrics
-  const latestWeight = points.length > 0 ? points[points.length - 1].weight : currentWeight;
+  const latestPoint = points.length > 0 ? points[points.length - 1] : null;
+  const latestWeight = latestPoint ? latestPoint.weight : currentWeight;
   const totalDropped = Number((startWeight - latestWeight).toFixed(2));
   const remainingToGoal = Number((latestWeight - targetWeight).toFixed(2));
-  const minRecorded = Math.min(...points.map((p) => p.weight));
+  const minRecorded = points.length > 0 ? Math.min(...points.map((p) => p.weight)) : latestWeight;
+  const progressPercent = Math.min(100, Math.max(0, Math.round((totalDropped / (startWeight - targetWeight)) * 100)));
 
-  // Handle pointer scrub
-  const handlePointerMove = (e) => {
+  // Interactive Pointer & Touch Scrubbing
+  const updateScrubPoint = (clientX) => {
     if (!svgRef.current || points.length === 0) return;
     const rect = svgRef.current.getBoundingClientRect();
-    const mouseX = ((e.clientX - rect.left) / rect.width) * width;
+    const touchX = ((clientX - rect.left) / rect.width) * width;
 
-    // Find closest point by X coordinate
     let closest = points[0];
-    let minDist = Math.abs(points[0].x - mouseX);
+    let minDist = Math.abs(points[0].x - touchX);
     for (let i = 1; i < points.length; i++) {
-      const dist = Math.abs(points[i].x - mouseX);
+      const dist = Math.abs(points[i].x - touchX);
       if (dist < minDist) {
         minDist = dist;
         closest = points[i];
@@ -211,13 +258,23 @@ export default function WeightChart({
     setHoveredPoint(closest);
   };
 
-  const handlePointerLeave = () => {
+  const handlePointerMove = (e) => {
+    updateScrubPoint(e.clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches && e.touches[0]) {
+      updateScrubPoint(e.touches[0].clientX);
+    }
+  };
+
+  const handleLeave = () => {
     setHoveredPoint(null);
   };
 
   return (
     <div className="p-4 sm:p-5 rounded-3xl bg-dark-850 border border-white/[0.08] shadow-2xl space-y-4">
-      {/* 1. Header with Current Metric & Timeframe Filter */}
+      {/* 1. Header with Current Stats, View Mode, and Timeframe Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="space-y-1">
           <div className="flex items-center space-x-2">
@@ -227,67 +284,182 @@ export default function WeightChart({
             <span className="text-xs font-black uppercase tracking-wider text-zinc-300 font-heading">
               Bodyweight Trajectory
             </span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/5 text-zinc-400 border border-white/10">
+              {filteredData.length} Logs
+            </span>
           </div>
 
-          <div className="flex items-baseline space-x-2.5">
+          <div className="flex items-baseline space-x-3">
             <span className="text-2xl sm:text-3xl font-black font-heading text-white tracking-tight">
               {latestWeight.toFixed(2)}
               <span className="text-xs sm:text-sm font-bold text-zinc-400 font-mono ml-1">kg</span>
             </span>
 
             {totalDropped > 0 ? (
-              <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold flex items-center space-x-1">
+              <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold flex items-center space-x-1 shadow-sm">
                 <TrendingDown className="w-3.5 h-3.5" />
-                <span>-{totalDropped} kg overall</span>
+                <span>-{totalDropped} kg dropped</span>
               </span>
             ) : (
-              <span className="text-xs text-zinc-400 font-mono">Baseline</span>
+              <span className="text-xs text-zinc-400 font-mono">Baseline started</span>
             )}
           </div>
         </div>
 
-        {/* Timeframe Buttons */}
-        <div className="flex items-center space-x-1 bg-dark-900 p-1 rounded-xl border border-white/[0.06] self-start sm:self-auto">
-          {['7D', '30D', '90D', 'ALL'].map((tf) => (
+        {/* View Controls: Scale Mode Toggle & Timeframes */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Zoom scale mode toggle */}
+          <div className="flex items-center bg-dark-900 p-1 rounded-xl border border-white/[0.06]">
             <button
-              key={tf}
-              onClick={() => setTimeframe(tf)}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
-                timeframe === tf
+              onClick={() => setViewMode('focused')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center space-x-1 ${
+                viewMode === 'focused'
                   ? 'bg-volt text-dark-950 font-black shadow-md shadow-volt/20'
                   : 'text-zinc-400 hover:text-white'
               }`}
+              title="Zoom into your actual weigh-ins to see every drop clearly"
             >
-              {tf}
+              <Minimize2 className="w-3 h-3" />
+              <span>Detailed View</span>
             </button>
-          ))}
+            <button
+              onClick={() => setViewMode('runway')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center space-x-1 ${
+                viewMode === 'runway'
+                  ? 'bg-volt text-dark-950 font-black shadow-md shadow-volt/20'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+              title="Full 90-day runway down to your 82kg target"
+            >
+              <Maximize2 className="w-3 h-3" />
+              <span>Goal Runway</span>
+            </button>
+          </div>
+
+          {/* Timeframe Buttons */}
+          <div className="flex items-center space-x-1 bg-dark-900 p-1 rounded-xl border border-white/[0.06]">
+            {['7D', '14D', '30D', 'ALL'].map((tf) => (
+              <button
+                key={tf}
+                onClick={() => setTimeframe(tf)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+                  timeframe === tf
+                    ? 'bg-white/15 text-white font-black'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                {tf}
+              </button>
+            ))}
+          </div>
+
+          {onOpenWeightModal && (
+            <button
+              onClick={onOpenWeightModal}
+              className="p-1.5 rounded-xl bg-volt/10 text-volt border border-volt/30 hover:bg-volt hover:text-dark-950 transition active:scale-95"
+              title="Record new weigh-in"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* 2. Interactive SVG Spline Canvas */}
-      <div className="relative bg-dark-900 rounded-2xl p-2 sm:p-3 border border-white/[0.05] overflow-hidden">
+      {/* 2. Interactive Inspection Deck (Tracks Touch/Hover without overlapping graph) */}
+      {active && (
+        <div className="p-3 rounded-2xl bg-dark-900/90 border border-white/[0.08] flex flex-wrap items-center justify-between gap-2.5 transition">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded-xl bg-volt/10 border border-volt/25 flex items-center justify-center text-volt">
+              <Calendar className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-black text-white font-heading">
+                  {active.dateDisplay}
+                </span>
+                {active.dayNumber && (
+                  <span className="text-[10px] font-mono font-bold text-volt bg-volt/10 px-1.5 py-0.2 rounded">
+                    Day {active.dayNumber}
+                  </span>
+                )}
+                {active.fullDate && (
+                  <span className="text-[10px] text-zinc-400 font-mono hidden sm:inline">
+                    • {active.fullDate}
+                  </span>
+                )}
+              </div>
+              {active.notes && (
+                <p className="text-[10px] text-zinc-400 italic line-clamp-1 max-w-sm">
+                  "{active.notes}"
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-3 text-right">
+            <div>
+              <span className="text-xs text-zinc-400 block font-mono uppercase text-[9px] font-bold">
+                Logged Weight
+              </span>
+              <span className="text-base sm:text-lg font-black font-mono text-white">
+                {active.weight.toFixed(2)} kg
+              </span>
+            </div>
+
+            {active.changeFromPrev !== 0 && (
+              <div className="pl-3 border-l border-white/[0.08]">
+                <span className="text-xs text-zinc-400 block font-mono uppercase text-[9px] font-bold">
+                  vs Previous
+                </span>
+                <span
+                  className={`text-xs font-mono font-black ${
+                    active.changeFromPrev < 0 ? 'text-emerald-400' : 'text-rose-400'
+                  }`}
+                >
+                  {active.changeFromPrev > 0 ? `+${active.changeFromPrev}` : active.changeFromPrev} kg
+                </span>
+              </div>
+            )}
+
+            <div className="pl-3 border-l border-white/[0.08]">
+              <span className="text-xs text-zinc-400 block font-mono uppercase text-[9px] font-bold">
+                Total From Start
+              </span>
+              <span className="text-xs font-mono font-black text-volt">
+                {active.totalLostSoFar > 0 ? `-${active.totalLostSoFar}` : active.totalLostSoFar} kg
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Interactive SVG Curve Canvas */}
+      <div className="relative bg-dark-900 rounded-2xl p-2 sm:p-3 border border-white/[0.06] overflow-hidden">
         <svg
           ref={svgRef}
           viewBox={`0 0 ${width} ${height}`}
-          className="w-full h-48 sm:h-56 touch-none cursor-crosshair select-none"
+          className="w-full h-56 sm:h-64 touch-none cursor-crosshair select-none"
           onPointerMove={handlePointerMove}
-          onPointerLeave={handlePointerLeave}
+          onPointerLeave={handleLeave}
+          onTouchStart={handleTouchMove}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleLeave}
         >
           <defs>
             {/* Glowing neon green gradient under curve */}
             <linearGradient id="weightAreaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#CCFF00" stopOpacity="0.28" />
-              <stop offset="45%" stopColor="#CCFF00" stopOpacity="0.10" />
+              <stop offset="0%" stopColor="#CCFF00" stopOpacity="0.32" />
+              <stop offset="50%" stopColor="#CCFF00" stopOpacity="0.10" />
               <stop offset="100%" stopColor="#CCFF00" stopOpacity="0.0" />
             </linearGradient>
 
             {/* Neon line glow filter */}
             <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#CCFF00" floodOpacity="0.4" />
+              <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#CCFF00" floodOpacity="0.45" />
             </filter>
           </defs>
 
-          {/* Horizontal Grid Lines */}
+          {/* Horizontal Grid Lines & Y-Axis Labels */}
           {gridSteps.map((step, idx) => (
             <g key={idx}>
               <line
@@ -296,16 +468,17 @@ export default function WeightChart({
                 x2={width - padRight}
                 y2={step.y}
                 stroke="#ffffff"
-                strokeOpacity="0.05"
+                strokeOpacity="0.08"
                 strokeWidth="1"
+                strokeDasharray="2 4"
               />
               <text
                 x={padLeft - 8}
-                y={step.y + 3}
-                fill="#71717a"
-                fontSize="9"
+                y={step.y + 3.5}
+                fill="#a1a1aa"
+                fontSize="10"
                 fontFamily="monospace"
-                fontWeight="bold"
+                fontWeight="700"
                 textAnchor="end"
               >
                 {step.weight}
@@ -313,7 +486,44 @@ export default function WeightChart({
             </g>
           ))}
 
-          {/* Start Weight Benchmark Line */}
+          {/* Target Weight Goal Line (if in visible Y range) */}
+          {targetY >= padTop && targetY <= height - padBottom && (
+            <g>
+              <line
+                x1={padLeft}
+                y1={targetY}
+                x2={width - padRight}
+                y2={targetY}
+                stroke="#38bdf8"
+                strokeDasharray="4 4"
+                strokeWidth="1.5"
+                opacity="0.8"
+              />
+              <rect
+                x={width - padRight - 90}
+                y={targetY - 11}
+                width="90"
+                height="18"
+                rx="5"
+                fill="#09090D"
+                stroke="#38bdf8"
+                strokeWidth="1"
+              />
+              <text
+                x={width - padRight - 45}
+                y={targetY + 2.5}
+                fill="#38bdf8"
+                fontSize="9"
+                fontFamily="monospace"
+                fontWeight="bold"
+                textAnchor="middle"
+              >
+                🎯 Goal: {targetWeight} kg
+              </text>
+            </g>
+          )}
+
+          {/* Start Weight Benchmark Line (if in visible Y range) */}
           {startY >= padTop && startY <= height - padBottom && (
             <g>
               <line
@@ -328,51 +538,13 @@ export default function WeightChart({
               />
               <text
                 x={width - padRight}
-                y={startY - 4}
+                y={startY - 5}
                 fill="#a1a1aa"
-                fontSize="8.5"
+                fontSize="9"
                 fontFamily="monospace"
                 textAnchor="end"
               >
-                Start ({startWeight} kg)
-              </text>
-            </g>
-          )}
-
-          {/* Target Weight Goal Line (82.0 kg) */}
-          {showTarget && targetY >= padTop && targetY <= height - padBottom && (
-            <g>
-              <line
-                x1={padLeft}
-                y1={targetY}
-                x2={width - padRight}
-                y2={targetY}
-                stroke="#CCFF00"
-                strokeDasharray="4 4"
-                strokeWidth="1.5"
-                opacity="0.7"
-              />
-              <rect
-                x={width - padRight - 85}
-                y={targetY - 10}
-                width="85"
-                height="16"
-                rx="4"
-                fill="#121217"
-                stroke="#CCFF00"
-                strokeWidth="0.8"
-                opacity="0.9"
-              />
-              <text
-                x={width - padRight - 42}
-                y={targetY + 2}
-                fill="#CCFF00"
-                fontSize="8.5"
-                fontFamily="monospace"
-                fontWeight="bold"
-                textAnchor="middle"
-              >
-                🎯 Goal: {targetWeight} kg
+                Start: {startWeight} kg
               </text>
             </g>
           )}
@@ -386,8 +558,8 @@ export default function WeightChart({
               y2={trendlinePoints.y2}
               stroke="#38bdf8"
               strokeDasharray="3 3"
-              strokeWidth="1.5"
-              opacity="0.5"
+              strokeWidth="2"
+              opacity="0.6"
             />
           )}
 
@@ -400,7 +572,7 @@ export default function WeightChart({
               d={splinePath}
               fill="none"
               stroke="#CCFF00"
-              strokeWidth="3"
+              strokeWidth="3.5"
               strokeLinecap="round"
               strokeLinejoin="round"
               filter="url(#neonGlow)"
@@ -409,12 +581,11 @@ export default function WeightChart({
 
           {/* X Axis Date Labels */}
           {points.map((p, i) => {
-            // Filter labels on mobile to avoid overcrowding
             const shouldShow =
-              points.length <= 8 ||
+              points.length <= 10 ||
               i === 0 ||
               i === points.length - 1 ||
-              i % Math.ceil(points.length / 5) === 0;
+              i % Math.ceil(points.length / 6) === 0;
 
             if (!shouldShow) return null;
 
@@ -423,10 +594,10 @@ export default function WeightChart({
                 key={`lbl-${i}`}
                 x={p.x}
                 y={height - 12}
-                fill="#71717a"
-                fontSize="9"
+                fill="#a1a1aa"
+                fontSize="10"
                 fontFamily="monospace"
-                fontWeight="600"
+                fontWeight="700"
                 textAnchor="middle"
               >
                 {p.dateDisplay}
@@ -434,34 +605,63 @@ export default function WeightChart({
             );
           })}
 
-          {/* Data Points */}
+          {/* Data Points and Direct Value Callouts */}
           {points.map((p, i) => {
             const isHovered = hoveredPoint && hoveredPoint.id === p.id;
             const isLatest = !hoveredPoint && i === points.length - 1;
+            const isFirst = i === 0;
 
             return (
               <g key={`pt-${i}`}>
-                {/* Outer pulsing ring for latest / active point */}
+                {/* Outer pulsing ring for active/hovered point */}
                 {(isHovered || isLatest) && (
                   <circle
                     cx={p.x}
                     cy={p.y}
-                    r={isHovered ? 9 : 7}
+                    r={isHovered ? 10 : 8}
                     fill="#CCFF00"
                     fillOpacity={isHovered ? 0.35 : 0.2}
                     className="animate-pulse"
                   />
                 )}
 
+                {/* Point anchor */}
                 <circle
                   cx={p.x}
                   cy={p.y}
-                  r={isHovered ? 5 : isLatest ? 4.5 : 3.5}
+                  r={isHovered ? 6 : isLatest ? 5.5 : 4}
                   fill="#09090D"
                   stroke="#CCFF00"
-                  strokeWidth={isHovered ? 3 : 2}
+                  strokeWidth={isHovered ? 3.5 : 2.5}
                   className="transition-all duration-150"
                 />
+
+                {/* Direct Weight Labels above points when point count is small (<= 7) */}
+                {points.length <= 7 && (
+                  <g>
+                    <rect
+                      x={p.x - 22}
+                      y={p.y - 24}
+                      width="44"
+                      height="16"
+                      rx="4"
+                      fill="#121217"
+                      stroke={isHovered || isLatest ? '#CCFF00' : 'rgba(255,255,255,0.15)'}
+                      strokeWidth={isHovered || isLatest ? '1.2' : '0.8'}
+                    />
+                    <text
+                      x={p.x}
+                      y={p.y - 12}
+                      fill={isHovered || isLatest ? '#CCFF00' : '#ffffff'}
+                      fontSize="9"
+                      fontFamily="monospace"
+                      fontWeight="bold"
+                      textAnchor="middle"
+                    >
+                      {p.weight.toFixed(2)}
+                    </text>
+                  </g>
+                )}
               </g>
             );
           })}
@@ -474,112 +674,111 @@ export default function WeightChart({
               x2={hoveredPoint.x}
               y2={height - padBottom}
               stroke="#ffffff"
-              strokeOpacity="0.25"
+              strokeOpacity="0.3"
               strokeDasharray="2 2"
-              strokeWidth="1"
+              strokeWidth="1.5"
             />
           )}
         </svg>
 
-        {/* 3. Floating Interactive Tooltip */}
-        {active && (
-          <div
-            className="absolute top-3 left-3 sm:left-4 bg-dark-950/90 backdrop-blur-md border border-white/10 rounded-xl p-2.5 shadow-xl text-left pointer-events-none transition-all duration-150 min-w-[140px]"
-          >
-            <div className="flex items-center space-x-1.5 text-[10px] text-zinc-400 font-mono mb-0.5">
-              <Calendar className="w-3 h-3 text-volt" />
-              <span>{active.fullDate || active.dateDisplay}</span>
-              {active.dayNumber && <span className="text-volt font-bold">• Day {active.dayNumber}</span>}
-            </div>
-
-            <div className="flex items-baseline space-x-2">
-              <span className="text-base font-extrabold text-white font-heading font-mono">
-                {active.weight.toFixed(2)} kg
-              </span>
-              {active.changeFromPrev !== 0 && (
-                <span
-                  className={`text-[10px] font-mono font-bold ${
-                    active.changeFromPrev < 0 ? 'text-emerald-400' : 'text-rose-400'
-                  }`}
-                >
-                  {active.changeFromPrev > 0 ? `+${active.changeFromPrev}` : active.changeFromPrev} kg
-                </span>
-              )}
-            </div>
-
-            {active.notes && (
-              <p className="text-[10px] text-zinc-300 italic mt-0.5 max-w-[180px] line-clamp-1">
-                "{active.notes}"
-              </p>
-            )}
+        {/* Goal Indicator Pill if Target is below focused view */}
+        {viewMode === 'focused' && targetWeight < minW && (
+          <div className="absolute bottom-3 right-3 sm:right-4 flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-dark-950/90 border border-sky-400/30 text-sky-300 text-xs shadow-lg backdrop-blur-md">
+            <Target className="w-3.5 h-3.5 text-sky-400" />
+            <span className="font-bold text-[11px]">
+              Goal Target: <span className="text-white font-mono">{targetWeight} kg</span> ({remainingToGoal} kg to go)
+            </span>
+            <button
+              onClick={() => setViewMode('runway')}
+              className="text-[10px] font-bold text-volt hover:underline ml-1"
+            >
+              Show Runway ➔
+            </button>
           </div>
         )}
       </div>
 
-      {/* 4. Chart Controls & Toggles */}
-      <div className="flex flex-wrap items-center justify-between text-xs text-zinc-400 pt-1">
-        <div className="flex items-center space-x-3">
-          <label className="flex items-center space-x-1.5 cursor-pointer text-[11px] font-medium hover:text-white transition">
-            <input
-              type="checkbox"
-              checked={showTarget}
-              onChange={(e) => setShowTarget(e.target.checked)}
-              className="accent-[#CCFF00] rounded"
-            />
-            <span>Goal Target Line ({targetWeight} kg)</span>
-          </label>
-
-          <label className="flex items-center space-x-1.5 cursor-pointer text-[11px] font-medium hover:text-white transition">
-            <input
-              type="checkbox"
-              checked={showTrend}
-              onChange={(e) => setShowTrend(e.target.checked)}
-              className="accent-sky-400 rounded"
-            />
-            <span>Trajectory Trend</span>
-          </label>
+      {/* 4. Progress Runway Bar (From Start to Goal) */}
+      <div className="p-3.5 rounded-2xl bg-dark-900 border border-white/[0.06] space-y-2">
+        <div className="flex items-center justify-between text-xs font-mono">
+          <div className="flex items-center space-x-2">
+            <Target className="w-3.5 h-3.5 text-volt" />
+            <span className="font-bold text-white font-heading">
+              Transformation Progress
+            </span>
+          </div>
+          <span className="font-bold text-volt">
+            {progressPercent}% Achieved ({totalDropped > 0 ? `-${totalDropped} kg` : '0 kg'} / -{Number((startWeight - targetWeight).toFixed(2))} kg)
+          </span>
         </div>
 
-        <span className="text-[10px] text-zinc-400 font-mono">
-          Touch or drag across points to inspect daily change
-        </span>
+        <div className="w-full h-2.5 rounded-full bg-dark-950 border border-white/[0.06] overflow-hidden p-0.5">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-volt via-emerald-400 to-cyan-400 transition-all duration-700 shadow-md shadow-volt/20"
+            style={{ width: `${Math.max(4, Math.min(100, progressPercent))}%` }}
+          />
+        </div>
+
+        <div className="flex items-center justify-between text-[10px] text-zinc-400 font-mono">
+          <span>Start: {startWeight} kg</span>
+          <span>Current: {latestWeight.toFixed(2)} kg</span>
+          <span className="text-sky-300 font-bold">Target: {targetWeight} kg</span>
+        </div>
       </div>
 
       {/* 5. Vitals Scorecards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-white/[0.04]">
-        <div className="p-2.5 rounded-xl bg-dark-900 border border-white/[0.04]">
-          <span className="text-[9px] uppercase tracking-wider text-zinc-400 font-bold block mb-0.5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+        <div className="p-3 rounded-2xl bg-dark-900 border border-white/[0.04]">
+          <span className="text-[9px] uppercase tracking-wider text-zinc-400 font-bold block mb-1">
             Starting Weight
           </span>
-          <span className="text-sm font-bold text-white font-mono">{startWeight} kg</span>
+          <span className="text-base font-bold text-white font-mono">{startWeight} kg</span>
         </div>
 
-        <div className="p-2.5 rounded-xl bg-dark-900 border border-white/[0.04]">
-          <span className="text-[9px] uppercase tracking-wider text-zinc-400 font-bold block mb-0.5">
+        <div className="p-3 rounded-2xl bg-dark-900 border border-white/[0.04]">
+          <span className="text-[9px] uppercase tracking-wider text-zinc-400 font-bold block mb-1">
             Lowest Weigh-In
           </span>
-          <span className="text-sm font-bold text-emerald-400 font-mono">{minRecorded.toFixed(2)} kg</span>
+          <span className="text-base font-bold text-emerald-400 font-mono">
+            {minRecorded.toFixed(2)} kg
+          </span>
         </div>
 
-        <div className="p-2.5 rounded-xl bg-dark-900 border border-white/[0.04]">
-          <span className="text-[9px] uppercase tracking-wider text-zinc-400 font-bold block mb-0.5">
+        <div className="p-3 rounded-2xl bg-dark-900 border border-white/[0.04]">
+          <span className="text-[9px] uppercase tracking-wider text-zinc-400 font-bold block mb-1">
             Total Dropped
           </span>
-          <span className="text-sm font-bold text-volt font-mono">
-            {totalDropped > 0 ? `-${totalDropped} kg` : '0 kg'}
+          <span className="text-base font-bold text-volt font-mono">
+            {totalDropped > 0 ? `-${totalDropped} kg` : '0.00 kg'}
           </span>
         </div>
 
-        <div className="p-2.5 rounded-xl bg-dark-900 border border-white/[0.04]">
-          <span className="text-[9px] uppercase tracking-wider text-zinc-400 font-bold block mb-0.5">
+        <div className="p-3 rounded-2xl bg-dark-900 border border-white/[0.04]">
+          <span className="text-[9px] uppercase tracking-wider text-zinc-400 font-bold block mb-1">
             Remaining To Goal
           </span>
-          <span className="text-sm font-bold text-sky-400 font-mono">
-            {remainingToGoal > 0 ? `${remainingToGoal} kg` : 'Goal Reached!'}
+          <span className="text-base font-bold text-sky-400 font-mono">
+            {remainingToGoal > 0 ? `${remainingToGoal} kg` : 'Goal Reached! 🎉'}
           </span>
         </div>
+      </div>
+
+      {/* 6. Chart Options & Controls Footer */}
+      <div className="flex flex-wrap items-center justify-between text-xs text-zinc-400 pt-1">
+        <label className="flex items-center space-x-1.5 cursor-pointer text-[11px] font-medium hover:text-white transition">
+          <input
+            type="checkbox"
+            checked={showTrend}
+            onChange={(e) => setShowTrend(e.target.checked)}
+            className="accent-sky-400 rounded"
+          />
+          <span>Show Trajectory Trendline</span>
+        </label>
+
+        <span className="text-[10px] text-zinc-400 font-mono">
+          Touch or drag across points to inspect daily weigh-ins
+        </span>
       </div>
     </div>
   );
 }
-
