@@ -277,6 +277,41 @@ let activeCatalogPart = 'All';
 
 let activeEquipment = 'All';
 let activePattern = 'All';
+
+// Validated MET Reference Constants (Compendium of Physical Activities)
+function getExerciseMet(name) {
+  if (!name) return 3.8;
+  const lower = name.toLowerCase();
+  if (lower.includes('burpee') || lower.includes('jumping jack') || lower.includes('mountain climber') || lower.includes('high knee') || lower.includes('skipping')) {
+    return 7.5;
+  }
+  if (lower.includes('plank') || lower.includes('deadbug') || lower.includes('bird dog') || lower.includes('bird-dog') || lower.includes('hollow')) {
+    return 4.0;
+  }
+  const heavy = [
+    'squat', 'deadlift', 'bench press', 'incline bench', 'barbell row', 
+    'overhead press', 'military press', 'shoulder press', 'pull-up', 
+    'pull up', 'chin-up', 'chin up', 'dip', 'leg press', 'hack squat', 
+    'romanian deadlift', 'rdl', 'hip thrust', 'clean'
+  ];
+  if (heavy.some(k => lower.includes(k))) return 6.0;
+
+  const mod = [
+    'lat pulldown', 'pulldown', 'cable row', 't-bar', 'chest press', 
+    'dumbbell press', 'incline dumbbell', 'lunge', 'split squat', 
+    'push-up', 'push up', 'pec deck', 'cable crossover'
+  ];
+  if (mod.some(k => lower.includes(k))) return 5.0;
+
+  return 3.8;
+}
+
+function calculateSetCalories(name, weightKg = 90.0) {
+  const met = getExerciseMet(name);
+  const ratePerMin = (met * 3.5 * weightKg) / 200.0;
+  const effectiveMins = met >= 5.0 ? 1.0 : 0.8;
+  return Math.round(ratePerMin * effectiveMins * 10) / 10;
+}
 let customRoutine = JSON.parse(localStorage.getItem('user_custom_routine') || '[]');
 let searchQuery = '';
 
@@ -884,8 +919,9 @@ function renderPlanGrid() {
               <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
               <span>${ex.body_group || ex.category}</span>
             </span>
-            <span class="text-[10px] text-slate-400 truncate max-w-[130px]" title="${ex.equipment || 'Gym Equipment'}">
-              ${ex.equipment || 'Gym Equipment'}
+            <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20" title="Estimated scientific calorie burn per set">
+              <i data-lucide="flame" class="w-3 h-3 text-amber-400 fill-amber-400 inline"></i>
+              <span>~${calculateSetCalories(ex.display_name || ex.name || ex.key)}k/set</span>
             </span>
           </div>
 
@@ -1583,6 +1619,13 @@ async function openExerciseGuideModal(exerciseName) {
     
     const muscles = (media.primary_muscles || []).join(', ');
     document.getElementById('guide-modal-muscles').innerText = muscles || 'Target Muscles';
+
+    const calBadge = document.getElementById('guide-modal-calories');
+    if (calBadge) {
+      const met = getExerciseMet(exerciseName);
+      const setBurn = calculateSetCalories(exerciseName);
+      calBadge.innerHTML = `<span class="flex items-center space-x-1 text-amber-400 font-bold"><i data-lucide="flame" class="w-3.5 h-3.5 text-amber-400 fill-amber-400 inline"></i><span>MET ${met} • ~${setBurn} kcal/set</span></span>`;
+    }
 
     const photosContainer = document.getElementById('guide-modal-photos-grid');
     if (media.images && media.images.length > 0) {

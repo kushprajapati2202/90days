@@ -8,6 +8,7 @@ from app.database import get_db, check_connection
 from app.models import DayUpdateModel, ProfileUpdateModel, WeightLogCreateModel
 from app.seeder import seed_database
 from app.exercise_media import EXERCISE_MEDIA_DATABASE, STRETCHES_AND_CARDIO_DATABASE, get_exercise_media
+from app.calories import calculate_day_calories, get_exercise_met, calculate_set_calories
 
 logger = logging.getLogger("workout_app")
 router = APIRouter(prefix="/api")
@@ -342,6 +343,8 @@ def get_days(
             days = list(db.workout_days.find({}, {"_id": 0}).sort("day_number", 1))
         for d in days:
             d["completion_percentage"] = calculate_day_completion(d)
+            w = float(d.get("actual_weight_kg") or 90.0)
+            d["calories"] = calculate_day_calories(d, w)
         return {"total": len(days), "days": days}
     except HTTPException:
         raise
@@ -359,7 +362,9 @@ def get_day(day_number: int):
     day = db.workout_days.find_one({"day_number": day_number}, {"_id": 0})
     if not day:
         raise HTTPException(status_code=404, detail=f"Day {day_number} not found")
+    w = float(day.get("actual_weight_kg") or 90.0)
     day["completion_percentage"] = calculate_day_completion(day)
+    day["calories"] = calculate_day_calories(day, w)
     return day
 
 @router.patch("/days/{day_number}")
@@ -425,6 +430,8 @@ def update_day(day_number: int, data: DayUpdateModel):
                 updated["completed_at"] = None
 
         updated["completion_percentage"] = pct
+        w = float(updated.get("actual_weight_kg") or 90.0)
+        updated["calories"] = calculate_day_calories(updated, w)
     return {"status": "success", "day": updated}
 
 @router.post("/days/{day_number}/toggle")
@@ -472,12 +479,17 @@ def toggle_day_completion(day_number: int):
     db.workout_days.update_one({"day_number": day_number}, {"$set": update})
     updated_day = db.workout_days.find_one({"day_number": day_number}, {"_id": 0})
     pct = calculate_day_completion(updated_day)
+    w = float(updated_day.get("actual_weight_kg") or 90.0) if updated_day else 90.0
+    calories = calculate_day_calories(updated_day, w) if updated_day else {}
+    if updated_day:
+        updated_day["calories"] = calories
     return {
         "status": "success",
         "day_number": day_number,
         "completed": new_status,
         "completed_at": update["completed_at"],
         "completion_percentage": pct,
+        "calories": calories,
         "day": updated_day
     }
 
@@ -549,8 +561,17 @@ def get_stats():
     goal_loss = round(start_weight - target_weight, 2)
     weight_pct = round((total_loss / goal_loss * 100), 1) if goal_loss > 0 and total_loss > 0 else 0.0
 
+    total_calories_burned = 0
+    all_days = list(db.workout_days.find({}))
+    for d in all_days:
+        if d.get("completed"):
+            w = float(d.get("actual_weight_kg") or current_weight or 90.0)
+            c = calculate_day_calories(d, w)
+            total_calories_burned += c.get("total_completed_kcal", 0)
+
     return {
         "total_days": total_days,
+        "total_calories_burned": total_calories_burned,
         "completed_days": completed_days,
         "remaining_days": total_days - completed_days,
         "completion_percentage": round((completed_days / total_days) * 100, 1) if total_days else 0,

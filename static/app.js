@@ -153,6 +153,151 @@ async function loadStats() {
   }
 }
 
+// Validated MET Reference Constants (Compendium of Physical Activities / ACSM)
+const MET_COMPOUND_HEAVY = 6.0;      // Squat, Deadlift, Bench Press, Barbell Row, Overhead Press
+const MET_COMPOUND_MODERATE = 5.0;   // Lat pulldowns, Cable rows, Dumbbell presses, Leg press
+const MET_ISOLATION = 3.8;           // Bicep curls, Lateral raises, Tricep pushdowns, Leg curls
+const MET_BODYWEIGHT_HIIT = 7.5;     // Burpees, Mountain climbers, Jump jacks, High knees
+const MET_CORE_HOLDS = 4.0;          // Planks, Deadbugs, Bird dogs
+const MET_CARDIO_INCLINE_WALK = 5.3; // Treadmill incline brisk walk (4.5–5.5 km/h @ 3-5%)
+const MET_CARDIO_ELLIPTICAL = 6.8;   // Cross trainer / elliptical
+const MET_CARDIO_BIKE = 6.5;         // Stationary cycle
+const MET_CARDIO_SKIP = 9.0;         // Fast skipping
+const MET_WARMUP_DYNAMIC = 3.2;      // Dynamic mobility & activation
+const MET_COOLDOWN_STATIC = 2.5;     // Static cool-down stretching
+const MET_RECOVERY_WALK = 3.5;       // Relaxed recovery walk
+
+function getUserWeightKg() {
+  if (currentModalDay && currentModalDay.actual_weight_kg) {
+    return parseFloat(currentModalDay.actual_weight_kg);
+  }
+  if (allDays && allDays.length > 0) {
+    for (let i = allDays.length - 1; i >= 0; i--) {
+      if (allDays[i].actual_weight_kg) return parseFloat(allDays[i].actual_weight_kg);
+    }
+  }
+  return 92.5; // Athlete starting weight
+}
+
+function getExerciseMet(name) {
+  if (!name) return MET_ISOLATION;
+  const lower = name.toLowerCase();
+
+  if (lower.includes('burpee') || lower.includes('jumping jack') || lower.includes('mountain climber') || lower.includes('high knee') || lower.includes('skipping')) {
+    return MET_BODYWEIGHT_HIIT;
+  }
+  if (lower.includes('plank') || lower.includes('deadbug') || lower.includes('bird dog') || lower.includes('bird-dog') || lower.includes('hollow')) {
+    return MET_CORE_HOLDS;
+  }
+  const heavy = [
+    'squat', 'deadlift', 'bench press', 'incline bench', 'barbell row', 
+    'overhead press', 'military press', 'shoulder press', 'pull-up', 
+    'pull up', 'chin-up', 'chin up', 'dip', 'leg press', 'hack squat', 
+    'romanian deadlift', 'rdl', 'hip thrust', 'clean'
+  ];
+  if (heavy.some(k => lower.includes(k))) return MET_COMPOUND_HEAVY;
+
+  const mod = [
+    'lat pulldown', 'pulldown', 'cable row', 't-bar', 'chest press', 
+    'dumbbell press', 'incline dumbbell', 'lunge', 'split squat', 
+    'push-up', 'push up', 'pec deck', 'cable crossover'
+  ];
+  if (mod.some(k => lower.includes(k))) return MET_COMPOUND_MODERATE;
+
+  return MET_ISOLATION;
+}
+
+function calculateSetCalories(name, weightKg = getUserWeightKg()) {
+  const met = getExerciseMet(name);
+  const ratePerMin = (met * 3.5 * weightKg) / 200.0;
+  const effectiveMins = met >= 5.0 ? 1.0 : 0.8;
+  return Math.round(ratePerMin * effectiveMins * 10) / 10;
+}
+
+function calculateDayCaloriesClient(day, weightKg = getUserWeightKg()) {
+  if (!day) return { total_estimated_kcal: 0, total_completed_kcal: 0 };
+
+  // 1. Warm-up
+  const warmups = day.warmup_stretches || [];
+  const warmupCount = warmups.length || 5;
+  const warmupPer = (MET_WARMUP_DYNAMIC * 3.5 * weightKg / 200.0) * 1.0;
+  const warmupTotal = Math.round(warmupPer * warmupCount);
+  const warmupDoneCount = warmups.filter(s => s.completed).length;
+  const warmupDone = Math.round(warmupPer * warmupDoneCount);
+
+  // 2. Strength Lifts
+  const exercises = day.parsed_exercises || [];
+  let strengthTotal = 0;
+  let strengthDone = 0;
+  exercises.forEach(ex => {
+    const sets = ex.logged_sets || [];
+    let planned = sets.length;
+    if (!planned) {
+      const m = (ex.target || '').match(/^(\d+)/);
+      planned = m ? parseInt(m[1]) : 3;
+    }
+    const setBurn = calculateSetCalories(ex.name, weightKg);
+    strengthTotal += Math.round(setBurn * planned);
+    const doneSets = sets.filter(s => s.completed).length;
+    strengthDone += Math.round(setBurn * doneSets);
+  });
+
+  // 3. Conditioning
+  const condText = (day.bodyweight_conditioning || '').toLowerCase();
+  let condTotal = 0;
+  let condDone = 0;
+  if (condText && !condText.includes('optional') && !condText.includes('no conditioning')) {
+    const items = condText.split(';').map(p => p.trim()).filter(Boolean);
+    const duration = Math.max(5, Math.min(15, items.length * 2)) || 7;
+    const rate = (MET_BODYWEIGHT_HIIT * 3.5 * weightKg) / 200.0;
+    condTotal = Math.round(rate * duration);
+    condDone = day.conditioning_completed ? condTotal : 0;
+  }
+
+  // 4. Cardio
+  const cardioText = (day.cardio || '').toLowerCase();
+  let cardioTotal = 0;
+  let cardioDone = 0;
+  if (cardioText && !cardioText.includes('none') && !cardioText.includes('optional')) {
+    let met = MET_CARDIO_INCLINE_WALK;
+    if (cardioText.includes('cross trainer') || cardioText.includes('elliptical')) met = MET_CARDIO_ELLIPTICAL;
+    else if (cardioText.includes('cycle') || cardioText.includes('bike')) met = MET_CARDIO_BIKE;
+    else if (cardioText.includes('skip') || cardioText.includes('jump rope')) met = MET_CARDIO_SKIP;
+
+    let duration = 20;
+    const mRange = cardioText.match(/(\d+)\s*[-–]\s*(\d+)\s*min/);
+    if (mRange) duration = parseInt(mRange[1]);
+    else {
+      const mSingle = cardioText.match(/(\d+)\s*min/);
+      if (mSingle) duration = parseInt(mSingle[1]);
+    }
+    const rate = (met * 3.5 * weightKg) / 200.0;
+    cardioTotal = Math.round(rate * duration);
+    cardioDone = day.cardio_completed ? cardioTotal : 0;
+  }
+
+  // 5. Cool-down
+  const cooldowns = day.cooldown_stretches || [];
+  const cooldownCount = cooldowns.length || 5;
+  const cooldownPer = (MET_COOLDOWN_STATIC * 3.5 * weightKg / 200.0) * 0.8;
+  const cooldownTotal = Math.round(cooldownPer * cooldownCount);
+  const cooldownDoneCount = cooldowns.filter(s => s.completed).length;
+  const cooldownDone = Math.round(cooldownPer * cooldownDoneCount);
+
+  let totalEst = warmupTotal + strengthTotal + condTotal + cardioTotal + cooldownTotal;
+  let totalDone = warmupDone + strengthDone + condDone + cardioDone + cooldownDone;
+
+  if (totalEst === 0 && (day.day_type || '').toLowerCase().includes('recovery')) {
+    totalEst = Math.round((MET_RECOVERY_WALK * 3.5 * weightKg / 200.0) * 30);
+    totalDone = day.completed ? totalEst : 0;
+  }
+
+  return {
+    total_estimated_kcal: totalEst,
+    total_completed_kcal: totalDone
+  };
+}
+
 // Calculate granular day progress percentage and breakdown
 function getDayCompletionStats(day) {
   if (!day) return { percentage: 0, completedItems: 0, totalItems: 0, isCompleted: false };
@@ -281,6 +426,10 @@ function renderStats(s) {
   if (s.weight_stats) {
     document.getElementById('hero-current-weight').innerText = s.weight_stats.current_weight_kg;
   }
+  if (s.total_calories_burned !== undefined) {
+    const heroCalEl = document.getElementById('hero-total-calories');
+    if (heroCalEl) heroCalEl.innerText = Number(s.total_calories_burned).toLocaleString();
+  }
   
   document.getElementById('overall-progress-pct').innerText = `${s.completion_percentage}%`;
   document.getElementById('overall-progress-bar').style.width = `${s.completion_percentage}%`;
@@ -349,6 +498,7 @@ function buildDayCardHTML(day) {
 
   const stats = getDayCompletionStats(day);
   const pct = stats.percentage;
+  const dayCal = calculateDayCaloriesClient(day);
 
   let badgeClass = 'badge-push';
   if (day.day_type.toLowerCase().includes('pull')) badgeClass = 'badge-pull';
@@ -445,16 +595,19 @@ function buildDayCardHTML(day) {
           </span>
         </div>
 
-        <!-- Quick Meta Chips: Time, Steps, Effort -->
-        <div class="grid grid-cols-3 gap-1 text-[10px] text-slate-400 mb-2.5">
+        <!-- Quick Meta Chips: Time, Steps, Effort, Validated Calories -->
+        <div class="grid grid-cols-4 gap-1 text-[10px] text-slate-400 mb-2.5">
           <div class="bg-dark-900/60 px-1.5 py-1 rounded border border-slate-800 text-center truncate" title="Duration">
-            ⏱️ ${day.target_duration}
+            ⏱️ ${day.target_duration.replace(' min', 'm')}
           </div>
           <div class="bg-dark-900/60 px-1.5 py-1 rounded border border-slate-800 text-center truncate" title="Daily Steps">
             👟 ${day.daily_steps_target}
           </div>
           <div class="bg-dark-900/60 px-1.5 py-1 rounded border border-slate-800 text-center truncate" title="Effort">
             ⚡ ${day.effort_target.replace('RPE ', '')}
+          </div>
+          <div class="bg-dark-900/60 px-1.5 py-1 rounded border border-slate-800 text-center truncate text-amber-400 font-bold" title="Scientifically estimated calorie burn">
+            🔥 ${dayCal.total_estimated_kcal}k
           </div>
         </div>
       </div>
@@ -463,10 +616,10 @@ function buildDayCardHTML(day) {
       <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
         <div class="text-[11px]">
           ${day.actual_weight_kg 
-            ? `<span class="text-emerald-400 font-bold">⚖️ ${day.actual_weight_kg} kg • ${pct}%</span>` 
+            ? `<span class="text-emerald-400 font-bold">⚖️ ${day.actual_weight_kg} kg • ${pct}% • 🔥 ${dayCal.total_completed_kcal} kcal</span>` 
             : (pct === 100 
-                ? `<span class="text-emerald-400 font-semibold flex items-center space-x-1"><i data-lucide="check" class="w-3.5 h-3.5 inline"></i><span>100% Completed</span></span>` 
-                : (pct > 0 ? `<span class="text-cyan-400 font-semibold">${pct}% Done</span>` : '<span class="text-slate-500">Not logged</span>')
+                ? `<span class="text-emerald-400 font-semibold flex items-center space-x-1"><i data-lucide="check" class="w-3.5 h-3.5 inline"></i><span>100% Done • 🔥 ${dayCal.total_completed_kcal} kcal</span></span>` 
+                : (pct > 0 ? `<span class="text-cyan-400 font-semibold">${pct}% Done • 🔥 ${dayCal.total_completed_kcal} kcal</span>` : `<span class="text-slate-500">🔥 ~${dayCal.total_estimated_kcal} kcal plan</span>`)
               )
           }
         </div>
@@ -548,9 +701,18 @@ function recalculateStatsOnTheFly() {
     weeks[String(w)] = { week_number: w, total: wTotal, completed: wDone, pct: wPct };
   }
 
+  let totalCaloriesBurned = 0;
+  allDays.forEach(d => {
+    if (d.completed) {
+      const c = calculateDayCaloriesClient(d);
+      totalCaloriesBurned += c.total_completed_kcal;
+    }
+  });
+
   const simulatedStats = {
     total_days: totalDays,
     completed_days: completedDays,
+    total_calories_burned: totalCaloriesBurned,
     remaining_days: remainingDays,
     completion_percentage: overallPct,
     current_streak: currentStreak,
@@ -947,6 +1109,12 @@ function updateModalProgress() {
     if (b.cooldown.total > 0) items.push(`Cooldown: ${b.cooldown.done}/${b.cooldown.total}`);
     bdownEl.innerText = items.join(' • ');
   }
+
+  const cal = calculateDayCaloriesClient(currentModalDay);
+  const calEl = document.getElementById('modal-calories-display');
+  if (calEl) {
+    calEl.innerText = `${cal.total_completed_kcal} / ${cal.total_estimated_kcal} kcal`;
+  }
 }
 
 function handleModalCompletedToggle(checked) {
@@ -1011,7 +1179,8 @@ function handleModalCompletedToggle(checked) {
 function renderModalWarmupStretches(day) {
   const container = document.getElementById('modal-warmup-stretches-list');
   const stretches = day.warmup_stretches || [];
-  document.getElementById('warmup-count-badge').innerText = `${stretches.length} Stretches`;
+  const warmupCal = Math.round((MET_WARMUP_DYNAMIC * 3.5 * getUserWeightKg() / 200.0) * stretches.length);
+  document.getElementById('warmup-count-badge').innerHTML = `${stretches.length} Stretches <span class="text-amber-400 font-semibold">• 🔥 ~${warmupCal} kcal</span>`;
 
   if (stretches.length === 0) {
     container.innerHTML = `<p class="text-xs text-slate-400">${day.warmup_cooldown}</p>`;
@@ -1066,7 +1235,8 @@ function toggleWarmupStretch(idx, checked) {
 function renderModalCooldownStretches(day) {
   const container = document.getElementById('modal-cooldown-stretches-list');
   const stretches = day.cooldown_stretches || [];
-  document.getElementById('cooldown-count-badge').innerText = `${stretches.length} Stretches`;
+  const cooldownCal = Math.round((MET_COOLDOWN_STATIC * 3.5 * getUserWeightKg() / 200.0) * 0.8 * stretches.length);
+  document.getElementById('cooldown-count-badge').innerHTML = `${stretches.length} Stretches <span class="text-amber-400 font-semibold">• 🔥 ~${cooldownCal} kcal</span>`;
 
   if (stretches.length === 0) {
     container.innerHTML = `<p class="text-xs text-slate-400">Finish with 3–5 min slow walk and gentle stretches.</p>`;
@@ -1170,8 +1340,13 @@ function renderModalExercises(day) {
             `}
             <div class="min-w-0">
               <span class="text-xs sm:text-sm font-extrabold text-white block truncate">${ex.name}</span>
-              <div class="flex items-center space-x-1.5 text-xs">
+              <div class="flex items-center space-x-1.5 text-xs flex-wrap gap-y-0.5">
                 <span class="text-emerald-400 font-bold">${ex.target}</span>
+                <span class="text-slate-600">•</span>
+                <span class="text-amber-400 font-bold text-[11px] flex items-center space-x-0.5" title="Scientific MET: ${getExerciseMet(ex.name)} • ~${calculateSetCalories(ex.name)} kcal/set">
+                  <i data-lucide="flame" class="w-3 h-3 text-amber-400 fill-amber-400 inline"></i>
+                  <span>~${Math.round(calculateSetCalories(ex.name) * (sets.length || 3))} kcal</span>
+                </span>
                 <span class="text-slate-600">•</span>
                 <button type="button" onclick="openExerciseGuideModal('${ex.name}')" class="text-[11px] text-cyan-400 hover:text-cyan-300 font-bold underline flex items-center space-x-0.5">
                   <i data-lucide="image" class="w-3 h-3 inline"></i>
@@ -1672,6 +1847,13 @@ async function openExerciseGuideModal(exerciseName) {
     
     const muscles = (media.primary_muscles || []).join(', ');
     document.getElementById('guide-modal-muscles').innerText = muscles || 'Target Muscles';
+
+    const calBadge = document.getElementById('guide-modal-calories');
+    if (calBadge) {
+      const met = getExerciseMet(exerciseName);
+      const setBurn = calculateSetCalories(exerciseName);
+      calBadge.innerHTML = `<span class="flex items-center space-x-1 text-amber-400 font-bold"><i data-lucide="flame" class="w-3.5 h-3.5 text-amber-400 fill-amber-400 inline"></i><span>MET ${met} • ~${setBurn} kcal/set</span></span>`;
+    }
 
     // Photos Grid (Start vs Peak Contraction)
     const photosContainer = document.getElementById('guide-modal-photos-grid');
