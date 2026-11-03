@@ -16,6 +16,8 @@ let timerInitial = 90;
 let timerInterval = null;
 let isTimerRunning = false;
 let weightChartInstance = null;
+let inlineWeightChartInstance = null;
+let activeInlineWeightScope = 'all';
 
 // Audio alert using Web Audio API
 let audioCtx = null;
@@ -106,7 +108,8 @@ async function refreshAllData() {
     loadProfile(),
     loadStats(),
     loadDays(),
-    loadCoachingNotes()
+    loadCoachingNotes(),
+    loadWeightHistory()
   ]);
   lucide.createIcons();
 
@@ -1676,9 +1679,354 @@ async function saveWorkoutModalData() {
   }
 }
 
-// 5. Weight Tracker Modal & Chart.js
+// 5. Weight Tracker & Fat-Loss Trajectory (Inline Card & Modal)
 let activeWeightScope = 'all';
 let lastWeightData = null;
+
+function scrollToWeightSection() {
+  const section = document.getElementById('dashboard-weight-section');
+  if (!section) return;
+  const body = document.getElementById('inline-weight-body');
+  const icon = document.getElementById('icon-toggle-inline-chart');
+  if (body && body.classList.contains('hidden')) {
+    body.classList.remove('hidden');
+    if (icon) icon.setAttribute('data-lucide', 'chevron-up');
+    lucide.createIcons();
+  }
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  section.classList.add('ring-2', 'ring-emerald-500/80', 'shadow-2xl', 'shadow-emerald-500/20');
+  setTimeout(() => {
+    section.classList.remove('ring-2', 'ring-emerald-500/80', 'shadow-2xl', 'shadow-emerald-500/20');
+  }, 1800);
+}
+
+function toggleInlineWeightChart() {
+  const body = document.getElementById('inline-weight-body');
+  const icon = document.getElementById('icon-toggle-inline-chart');
+  if (!body) return;
+  const isHidden = body.classList.toggle('hidden');
+  if (icon) {
+    icon.setAttribute('data-lucide', isHidden ? 'chevron-down' : 'chevron-up');
+    lucide.createIcons();
+  }
+}
+
+function setInlineWeightScope(scope) {
+  activeInlineWeightScope = scope;
+  document.querySelectorAll('.inline-weight-scope-btn').forEach(btn => {
+    if (btn.getAttribute('data-scope') === scope) {
+      btn.className = 'inline-weight-scope-btn active px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500 text-dark-900 shadow-md shadow-emerald-500/20';
+    } else {
+      btn.className = 'inline-weight-scope-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-dark-800 text-slate-300 hover:bg-slate-700';
+    }
+  });
+  if (lastWeightData) {
+    renderInlineWeightChart(lastWeightData, scope);
+  }
+}
+
+async function loadWeightHistory() {
+  try {
+    const res = await fetch('/api/weight-history');
+    const data = await res.json();
+    lastWeightData = data;
+    requestAnimationFrame(() => {
+      renderInlineWeightChart(data, activeInlineWeightScope);
+    });
+    return data;
+  } catch (err) {
+    console.error("Error loading weight history:", err);
+    return null;
+  }
+}
+
+function renderInlineWeightChart(data, scope = activeInlineWeightScope) {
+  if (!data) return;
+  lastWeightData = data;
+  activeInlineWeightScope = scope;
+
+  // 1. Update KPI Summary Badges
+  const startKg = parseFloat(data.start_weight) || 92.5;
+  const targetKg = parseFloat(data.target_weight) || 82.0;
+  const logs = data.logs || [];
+  const latestLog = logs.length > 0 ? logs[logs.length - 1] : null;
+  const currentKg = latestLog ? parseFloat(latestLog.weight_kg) : startKg;
+  const diffKg = +(startKg - currentKg).toFixed(1);
+  const remainingKg = +(currentKg - targetKg).toFixed(1);
+
+  const elStart = document.getElementById('inline-kpi-start');
+  if (elStart) elStart.innerText = `${startKg} kg`;
+
+  const elCurr = document.getElementById('inline-kpi-current');
+  if (elCurr) elCurr.innerText = `${currentKg} kg`;
+
+  const elLost = document.getElementById('inline-kpi-lost');
+  if (elLost) {
+    if (diffKg > 0) {
+      elLost.innerText = `-${diffKg} kg`;
+      elLost.className = 'text-base sm:text-lg font-black font-heading text-emerald-400';
+    } else if (diffKg < 0) {
+      elLost.innerText = `+${Math.abs(diffKg)} kg`;
+      elLost.className = 'text-base sm:text-lg font-black font-heading text-rose-400';
+    } else {
+      elLost.innerText = `0.0 kg`;
+      elLost.className = 'text-base sm:text-lg font-black font-heading text-slate-300';
+    }
+  }
+
+  const elRem = document.getElementById('inline-kpi-remaining');
+  if (elRem) {
+    if (remainingKg > 0) {
+      elRem.innerText = `${remainingKg} kg`;
+      elRem.className = 'text-base sm:text-lg font-black font-heading text-amber-400';
+    } else {
+      elRem.innerText = `Goal Hit! 🏆`;
+      elRem.className = 'text-base sm:text-lg font-black font-heading text-emerald-400';
+    }
+  }
+
+  // Set default pending day in inline form
+  const inlineDayInput = document.getElementById('inline-weight-day');
+  if (inlineDayInput && (!inlineDayInput.value || inlineDayInput.value === '1')) {
+    const pending = allDays.find(d => !d.completed);
+    const targetDay = pending ? pending.day_number : (logs.length > 0 ? Math.min(90, logs[logs.length - 1].day_number + 1) : 1);
+    inlineDayInput.value = targetDay;
+  }
+
+  // 2. Chart Canvas
+  const chartCanvas = document.getElementById('inlineWeightChart');
+  if (!chartCanvas) return;
+  const ctx = chartCanvas.getContext('2d');
+  if (inlineWeightChartInstance) {
+    inlineWeightChartInstance.destroy();
+  }
+
+  let daysLabels = [];
+  let idealData = [];
+  let actualData = [];
+
+  let maxDay = 90;
+  if (scope === 'phase1') maxDay = 28;
+
+  if (scope === 'logged') {
+    const loggedDayNums = new Set(logs.map(l => l.day_number));
+    loggedDayNums.add(1);
+    const sortedDays = Array.from(loggedDayNums).sort((a, b) => a - b);
+    sortedDays.forEach(dNum => {
+      daysLabels.push(`Day ${dNum}`);
+      const p = (dNum - 1) / 89.0;
+      idealData.push(+(startKg - p * (startKg - targetKg)).toFixed(2));
+      const logEntry = logs.find(l => l.day_number === dNum);
+      if (logEntry) {
+        actualData.push(logEntry.weight_kg);
+      } else if (dNum === 1) {
+        actualData.push(startKg);
+      } else {
+        actualData.push(null);
+      }
+    });
+  } else {
+    for (let i = 1; i <= maxDay; i++) {
+      daysLabels.push(`D${i}`);
+      const p = (i - 1) / 89.0;
+      idealData.push(+(startKg - p * (startKg - targetKg)).toFixed(2));
+    }
+    actualData = new Array(maxDay).fill(null);
+    logs.forEach(l => {
+      if (l.day_number >= 1 && l.day_number <= maxDay) {
+        actualData[l.day_number - 1] = l.weight_kg;
+      }
+    });
+  }
+
+  // 3. Dynamic Y-Axis scale
+  const allWeightNums = [startKg, targetKg];
+  logs.forEach(l => { if (l.weight_kg) allWeightNums.push(Number(l.weight_kg)); });
+  const minObserved = Math.min(...allWeightNums);
+  const maxObserved = Math.max(...allWeightNums);
+  const yAxisMin = Math.max(70, Math.floor(minObserved - 1.0));
+  const yAxisMax = Math.min(120, Math.ceil(maxObserved + 1.0));
+
+  // 4. Vibrant Gradient Area
+  const areaGradient = ctx.createLinearGradient(0, 0, 0, 320);
+  areaGradient.addColorStop(0, 'rgba(16, 185, 129, 0.40)');
+  areaGradient.addColorStop(0.65, 'rgba(16, 185, 129, 0.08)');
+  areaGradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+  // 5. Construct High-Visibility Chart
+  inlineWeightChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: daysLabels,
+      datasets: [
+        {
+          label: `Goal Target (➔ ${targetKg} kg)`,
+          data: idealData,
+          borderColor: '#06b6d4',
+          borderWidth: 2.5,
+          borderDash: [6, 4],
+          pointRadius: (ctx) => {
+            const idx = ctx.dataIndex;
+            return (idx === 0 || idx === daysLabels.length - 1) ? 4 : 0;
+          },
+          pointBackgroundColor: '#06b6d4',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 1.5,
+          fill: false,
+          tension: 0.1
+        },
+        {
+          label: 'Your Logged Weight (kg)',
+          data: actualData,
+          borderColor: '#10b981',
+          borderWidth: 3.5,
+          backgroundColor: areaGradient,
+          fill: true,
+          tension: 0.3,
+          spanGaps: true,
+          pointRadius: 7,
+          pointHoverRadius: 10,
+          pointBackgroundColor: '#ffffff',
+          pointBorderColor: '#10b981',
+          pointBorderWidth: 3,
+          pointHitRadius: 18
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: {
+            color: '#f1f5f9',
+            font: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' },
+            boxWidth: 22,
+            boxHeight: 8,
+            padding: 14
+          }
+        },
+        tooltip: {
+          enabled: true,
+          backgroundColor: '#090d16',
+          titleColor: '#38bdf8',
+          titleFont: { size: 13, weight: 'bold' },
+          bodyColor: '#ffffff',
+          bodyFont: { size: 12, weight: '600' },
+          borderColor: '#10b981',
+          borderWidth: 1.5,
+          padding: 12,
+          boxPadding: 6,
+          usePointStyle: true,
+          callbacks: {
+            title: (items) => {
+              const label = items[0].label;
+              return label.startsWith('D') && !label.startsWith('Day') 
+                ? `Day ${label.replace('D', '')}` 
+                : label;
+            },
+            label: (item) => {
+              const val = item.raw;
+              if (val === null || val === undefined) return '';
+              if (item.datasetIndex === 1) {
+                const diff = +(val - startKg).toFixed(1);
+                const sign = diff > 0 ? '+' : '';
+                return `  ⚖️ Logged Weight: ${val} kg (${sign}${diff} kg from start)`;
+              } else {
+                return `  🎯 Target Trajectory: ${val} kg`;
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255, 255, 255, 0.05)' },
+          ticks: {
+            color: '#94a3b8',
+            maxTicksLimit: scope === 'phase1' ? 14 : 12,
+            font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' }
+          }
+        },
+        y: {
+          min: yAxisMin,
+          max: yAxisMax,
+          grid: {
+            color: 'rgba(255, 255, 255, 0.08)',
+            borderDash: [3, 3]
+          },
+          ticks: {
+            color: '#cbd5e1',
+            font: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' },
+            callback: (v) => `${v} kg`,
+            stepSize: (yAxisMax - yAxisMin > 10) ? 2 : 1
+          }
+        }
+      }
+    }
+  });
+}
+
+async function submitInlineWeight(event) {
+  if (event) event.preventDefault();
+  const dayInput = document.getElementById('inline-weight-day');
+  const valInput = document.getElementById('inline-weight-value');
+  const noteInput = document.getElementById('inline-weight-note');
+  const submitBtn = document.getElementById('inline-weight-submit-btn');
+
+  const day = dayInput ? dayInput.value : '';
+  const weight = valInput ? valInput.value : '';
+  const note = noteInput ? noteInput.value : '';
+
+  if (!weight || !day) {
+    showToast("Please enter Day number and Weight", "error");
+    return;
+  }
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerText = 'Saving...';
+  }
+
+  try {
+    const res = await fetch('/api/weight-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        day_number: parseInt(day),
+        weight_kg: parseFloat(weight),
+        notes: note
+      })
+    });
+
+    if (!res.ok) throw new Error("Failed to save weight log");
+
+    showToast(`Weigh-in recorded: ${weight} kg for Day ${day}!`, "success");
+    if (valInput) valInput.value = '';
+    if (noteInput) noteInput.value = '';
+
+    await Promise.all([
+      loadWeightHistory(),
+      loadStats(),
+      loadProfile(),
+      loadDays()
+    ]);
+  } catch (err) {
+    console.error("Error logging inline weight:", err);
+    showToast("Failed to record weight in Atlas", "error");
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerText = 'Save';
+    }
+  }
+}
 
 function setWeightChartScope(scope) {
   activeWeightScope = scope;
@@ -1986,6 +2334,7 @@ async function submitQuickWeight() {
     document.getElementById('quick-weight-note').value = '';
     
     await openWeightModal();
+    await loadWeightHistory();
     await loadStats();
     await loadDays();
   } catch (err) {
@@ -2301,7 +2650,7 @@ function setupEventListeners() {
   if (btnJump) btnJump.addEventListener('click', jumpToToday);
 
   const btnWeight = document.getElementById('btn-open-weight');
-  if (btnWeight) btnWeight.addEventListener('click', openWeightModal);
+  if (btnWeight) btnWeight.addEventListener('click', scrollToWeightSection);
 
   const btnTimer = document.getElementById('btn-toggle-timer');
   if (btnTimer) btnTimer.addEventListener('click', toggleFloatingTimer);
