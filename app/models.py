@@ -21,6 +21,8 @@ class ExerciseItem(BaseModel):
 
 class DayUpdateModel(BaseModel):
     completed: Optional[bool] = None
+    started_at: Optional[str] = None
+    ended_at: Optional[str] = None
     actual_weight_kg: Optional[float] = None
     actual_steps: Optional[int] = None
     actual_duration_min: Optional[int] = None

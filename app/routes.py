@@ -387,20 +387,63 @@ def get_day(day_number: int):
     day["calories"] = calculate_day_calories(day, w)
     return day
 
+@router.put("/days/{day_number}")
 @router.patch("/days/{day_number}")
 def update_day(day_number: int, data: DayUpdateModel):
-    """Update workout day progress, weight, sets, steps, notes."""
+    """Update workout day progress, weight, sets, steps, notes, and session start/end time."""
     db = get_db()
     day = db.workout_days.find_one({"day_number": day_number})
     if not day:
         raise HTTPException(status_code=404, detail=f"Day {day_number} not found")
 
     update_fields = {k: v for k, v in data.model_dump().items() if v is not None}
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    # Session Timing Auto-measurement:
+    # 1. If start_time not set yet and activity is being logged or started, set started_at
+    if "started_at" not in update_fields and not day.get("started_at"):
+        # Check if user logged any exercise set or stretch
+        has_logged_activity = False
+        if "parsed_exercises" in update_fields:
+            for ex in update_fields.get("parsed_exercises") or []:
+                for s in ex.get("logged_sets") or []:
+                    if s.get("completed") or s.get("weight_kg") or s.get("reps"):
+                        has_logged_activity = True
+                        break
+        if "warmup_stretches" in update_fields:
+            if any(w.get("completed") for w in update_fields.get("warmup_stretches") or []):
+                has_logged_activity = True
+        if "cooldown_stretches" in update_fields:
+            if any(c.get("completed") for c in update_fields.get("cooldown_stretches") or []):
+                has_logged_activity = True
+        if update_fields.get("conditioning_completed") or update_fields.get("cardio_completed"):
+            has_logged_activity = True
+
+        if has_logged_activity:
+            update_fields["started_at"] = now_iso
+
+    # 2. Update ended_at to the current timestamp whenever activity is logged
+    if "ended_at" not in update_fields:
+        update_fields["ended_at"] = now_iso
+
+    # 3. Calculate actual_duration_min from started_at and ended_at
+    active_start = update_fields.get("started_at") or day.get("started_at")
+    active_end = update_fields.get("ended_at") or day.get("ended_at") or now_iso
+    if active_start and active_end:
+        try:
+            s_dt = datetime.fromisoformat(active_start.replace("Z", "+00:00"))
+            e_dt = datetime.fromisoformat(active_end.replace("Z", "+00:00"))
+            dur_mins = max(1, int(round((e_dt - s_dt).total_seconds() / 60.0)))
+            if not update_fields.get("actual_duration_min"):
+                update_fields["actual_duration_min"] = dur_mins
+        except Exception:
+            pass
 
     # Handle completion timestamp
     if "completed" in update_fields:
         if update_fields["completed"] and not day.get("completed"):
-            update_fields["completed_at"] = datetime.now(timezone.utc).isoformat()
+            update_fields["completed_at"] = now_iso
+            update_fields["ended_at"] = now_iso
         elif not update_fields["completed"]:
             update_fields["completed_at"] = None
 
@@ -453,6 +496,58 @@ def update_day(day_number: int, data: DayUpdateModel):
         w = float(updated.get("actual_weight_kg") or 90.0)
         updated["calories"] = calculate_day_calories(updated, w)
     return {"status": "success", "day": updated}
+
+@router.post("/days/{day_number}/start")
+def start_workout_session(day_number: int):
+    """Start or resume the active workout session, capturing start_time."""
+    db = get_db()
+    day = db.workout_days.find_one({"day_number": day_number})
+    if not day:
+        raise HTTPException(status_code=404, detail=f"Day {day_number} not found")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    update = {"ended_at": now_iso}
+    if not day.get("started_at"):
+        update["started_at"] = now_iso
+
+    db.workout_days.update_one({"day_number": day_number}, {"$set": update})
+    updated = db.workout_days.find_one({"day_number": day_number}, {"_id": 0})
+    w = float(updated.get("actual_weight_kg") or 90.0)
+    updated["completion_percentage"] = calculate_day_completion(updated)
+    updated["calories"] = calculate_day_calories(updated, w)
+    return {"status": "started", "started_at": updated.get("started_at"), "day": updated}
+
+@router.post("/days/{day_number}/finish")
+def finish_workout_session(day_number: int):
+    """Finish the workout session, record end_time and compute final duration in minutes."""
+    db = get_db()
+    day = db.workout_days.find_one({"day_number": day_number})
+    if not day:
+        raise HTTPException(status_code=404, detail=f"Day {day_number} not found")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    start_iso = day.get("started_at") or now_iso
+    dur_mins = 45
+    try:
+        s_dt = datetime.fromisoformat(start_iso.replace("Z", "+00:00"))
+        e_dt = datetime.fromisoformat(now_iso.replace("Z", "+00:00"))
+        dur_mins = max(1, int(round((e_dt - s_dt).total_seconds() / 60.0)))
+    except Exception:
+        pass
+
+    update = {
+        "completed": True,
+        "completed_at": now_iso,
+        "ended_at": now_iso,
+        "started_at": start_iso,
+        "actual_duration_min": dur_mins,
+    }
+    db.workout_days.update_one({"day_number": day_number}, {"$set": update})
+    updated = db.workout_days.find_one({"day_number": day_number}, {"_id": 0})
+    w = float(updated.get("actual_weight_kg") or 90.0)
+    updated["completion_percentage"] = calculate_day_completion(updated)
+    updated["calories"] = calculate_day_calories(updated, w)
+    return {"status": "finished", "actual_duration_min": dur_mins, "day": updated}
 
 @router.post("/days/{day_number}/toggle")
 def toggle_day_completion(day_number: int):

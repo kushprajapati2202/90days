@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Flame, CheckCircle2, ChevronRight, RotateCcw, Dumbbell } from 'lucide-react';
+import { Search, Flame, CheckCircle2, ChevronRight, RotateCcw, Dumbbell, Clock } from 'lucide-react';
 import { calculateDayCalories } from '../utils/calories';
+import { formatTimeOfDay, formatDuration } from '../utils/timeFormat';
 
 export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
   const [selectedWeek, setSelectedWeek] = useState(null); // null means All
@@ -231,6 +232,17 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
 
               {/* Progress Bar & Footer Vitals */}
               <div>
+                {day.started_at && (
+                  <div className="flex items-center space-x-1.5 text-[10px] text-zinc-400 font-mono mb-2">
+                    <span className={`w-1.5 h-1.5 rounded-full ${isDone ? 'bg-emerald-400' : 'bg-volt animate-ping'}`} />
+                    <span>
+                      {isDone ? 'Finished' : 'Started'}: {formatTimeOfDay(day.started_at)}
+                      {day.ended_at && ` – ${formatTimeOfDay(day.ended_at)}`}
+                      {day.actual_duration_min && ` (${day.actual_duration_min}m)`}
+                    </span>
+                  </div>
+                )}
+
                 {/* Visual mini progress bar */}
                 <div class="w-full h-1.5 rounded-full bg-dark-950 overflow-hidden mb-2">
                   <div

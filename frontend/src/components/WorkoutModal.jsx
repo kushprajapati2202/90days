@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Check, CheckCircle2, Flame, Timer, Scale, CloudCheck, Sparkles, ChevronDown, ChevronUp, ExternalLink, Dumbbell } from 'lucide-react';
+import { X, Check, CheckCircle2, Flame, Timer, Scale, CloudCheck, Sparkles, ChevronDown, ChevronUp, ExternalLink, Dumbbell, Play, StopCircle, Clock } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sounds } from '../utils/sound';
 import { api } from '../services/api';
 import { calculateDayCalories, calculateSetCalories, calculateExerciseTotalCalories, getExerciseMet } from '../utils/calories';
+import { formatTimeOfDay, formatDuration, formatStopwatch } from '../utils/timeFormat';
 
 export default function WorkoutModal({
   day,
@@ -18,11 +19,46 @@ export default function WorkoutModal({
   const [activeDay, setActiveDay] = useState(JSON.parse(JSON.stringify(day)));
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState('saved'); // 'saved', 'saving', 'error'
+  const [sessionSeconds, setSessionSeconds] = useState(0);
   const autoSaveTimerRef = useRef(null);
 
   useEffect(() => {
     setActiveDay(JSON.parse(JSON.stringify(day)));
   }, [day]);
+
+  // Live session running timer
+  useEffect(() => {
+    let interval = null;
+    if (activeDay?.started_at && !activeDay?.completed) {
+      const updateTimer = () => {
+        const sTime = new Date(activeDay.started_at).getTime();
+        const now = Date.now();
+        setSessionSeconds(Math.max(0, Math.floor((now - sTime) / 1000)));
+      };
+      updateTimer();
+      interval = setInterval(updateTimer, 1000);
+    } else {
+      setSessionSeconds(0);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [activeDay?.started_at, activeDay?.completed]);
+
+  // Automatic timestamp stamping on ANY user logging action
+  const stampActivityTimes = (clone) => {
+    const nowIso = new Date().toISOString();
+    if (!clone.started_at) {
+      clone.started_at = nowIso;
+    }
+    clone.ended_at = nowIso;
+    try {
+      const s = new Date(clone.started_at).getTime();
+      const dur = Math.max(1, Math.round((Date.now() - s) / 60000));
+      clone.actual_duration_min = dur;
+    } catch (_) {}
+    return clone;
+  };
 
   // Recalculate completion percentage
   const calculateProgress = (d) => {
@@ -67,6 +103,8 @@ export default function WorkoutModal({
     autoSaveTimerRef.current = setTimeout(async () => {
       try {
         await api.updateDay(updatedDay.day_number, {
+          started_at: updatedDay.started_at || null,
+          ended_at: updatedDay.ended_at || null,
           actual_weight_kg: updatedDay.actual_weight_kg ? Number(updatedDay.actual_weight_kg) : null,
           actual_steps: updatedDay.actual_steps ? Number(updatedDay.actual_steps) : null,
           actual_duration_min: updatedDay.actual_duration_min ? Number(updatedDay.actual_duration_min) : null,
@@ -88,9 +126,44 @@ export default function WorkoutModal({
     }, 600);
   };
 
+  const handleStartWorkoutSession = () => {
+    const clone = JSON.parse(JSON.stringify(activeDay));
+    const nowIso = new Date().toISOString();
+    clone.started_at = nowIso;
+    clone.ended_at = nowIso;
+    clone.actual_duration_min = 1;
+    triggerAutoSave(clone);
+    sounds.playSetCheck();
+  };
+
+  const handleFinishWorkoutSession = () => {
+    const clone = JSON.parse(JSON.stringify(activeDay));
+    const nowIso = new Date().toISOString();
+    if (!clone.started_at) clone.started_at = nowIso;
+    clone.ended_at = nowIso;
+    clone.completed = true;
+    clone.completed_at = nowIso;
+    clone.completion_percentage = 100;
+    try {
+      const s = new Date(clone.started_at).getTime();
+      const dur = Math.max(1, Math.round((Date.now() - s) / 60000));
+      clone.actual_duration_min = dur;
+    } catch (_) {
+      clone.actual_duration_min = 45;
+    }
+    confetti({
+      particleCount: 90,
+      spread: 75,
+      origin: { y: 0.6 },
+      colors: ['#CCFF00', '#10B981', '#ffffff'],
+    });
+    sounds.playTimerDone();
+    triggerAutoSave(clone);
+  };
+
   // Toggle Warmup / Cooldown stretch
   const toggleStretch = (listKey, idx) => {
-    const clone = JSON.parse(JSON.stringify(activeDay));
+    const clone = stampActivityTimes(JSON.parse(JSON.stringify(activeDay)));
     clone[listKey][idx].completed = !clone[listKey][idx].completed;
     clone.completion_percentage = calculateProgress(clone);
     sounds.playSetCheck();
@@ -99,7 +172,7 @@ export default function WorkoutModal({
 
   // Log or Toggle Set
   const handleSetToggle = (exIdx, setIdx) => {
-    const clone = JSON.parse(JSON.stringify(activeDay));
+    const clone = stampActivityTimes(JSON.parse(JSON.stringify(activeDay)));
     const ex = clone.parsed_exercises[exIdx];
     if (!ex.logged_sets) ex.logged_sets = [];
 
@@ -132,7 +205,7 @@ export default function WorkoutModal({
   };
 
   const handleSetInputChange = (exIdx, setIdx, field, value) => {
-    const clone = JSON.parse(JSON.stringify(activeDay));
+    const clone = stampActivityTimes(JSON.parse(JSON.stringify(activeDay)));
     const ex = clone.parsed_exercises[exIdx];
     if (!ex.logged_sets) ex.logged_sets = [];
     if (!ex.logged_sets[setIdx]) {
@@ -144,10 +217,11 @@ export default function WorkoutModal({
 
   // Toggle Entire Day Complete
   const handleToggleDayComplete = (checked) => {
-    const clone = JSON.parse(JSON.stringify(activeDay));
+    const clone = stampActivityTimes(JSON.parse(JSON.stringify(activeDay)));
     clone.completed = checked;
     if (checked) {
       clone.completion_percentage = 100;
+      clone.completed_at = new Date().toISOString();
       confetti({
         particleCount: 80,
         spread: 70,
@@ -155,6 +229,8 @@ export default function WorkoutModal({
         colors: ['#CCFF00', '#10B981', '#ffffff'],
       });
       sounds.playTimerDone();
+    } else {
+      clone.completed_at = null;
     }
     triggerAutoSave(clone);
   };
@@ -223,6 +299,62 @@ export default function WorkoutModal({
                 style={{ width: `${Math.min(100, Math.max(pct > 0 ? 4 : 0, pct))}%` }}
               />
             </div>
+          </div>
+        </div>
+
+        {/* Active Workout Session Timing Strip */}
+        <div class="px-3.5 sm:px-4 py-2.5 bg-dark-850 border-b border-white/[0.06] flex items-center justify-between text-xs">
+          <div class="flex items-center space-x-2">
+            {activeDay.started_at && !activeDay.completed ? (
+              <span class="flex items-center space-x-2 text-volt font-bold">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-volt opacity-75" />
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-volt" />
+                </span>
+                <span class="font-heading font-black text-[11px] tracking-wide">ACTIVE SESSION</span>
+                <span class="font-mono text-white bg-dark-900 px-2 py-0.5 rounded-md border border-white/10 font-bold">
+                  ⏱ {formatStopwatch(sessionSeconds)}
+                </span>
+              </span>
+            ) : activeDay.completed ? (
+              <span class="flex items-center space-x-1.5 text-emerald-400 font-bold">
+                <CheckCircle2 class="w-3.5 h-3.5 fill-emerald-400/20" />
+                <span>Session Complete • {activeDay.actual_duration_min || 45} mins total</span>
+              </span>
+            ) : (
+              <span class="text-zinc-400 flex items-center space-x-1 text-[11px]">
+                <Clock class="w-3.5 h-3.5 text-zinc-500" />
+                <span>Timer auto-starts on your first logged rep</span>
+              </span>
+            )}
+          </div>
+
+          <div class="flex items-center space-x-2 text-[11px] font-mono">
+            {activeDay.started_at && (
+              <span class="text-zinc-400 hidden sm:inline">
+                Started {formatTimeOfDay(activeDay.started_at)}
+                {activeDay.ended_at && ` • Last activity ${formatTimeOfDay(activeDay.ended_at)}`}
+              </span>
+            )}
+
+            {!activeDay.started_at ? (
+              <button
+                type="button"
+                onClick={handleStartWorkoutSession}
+                class="px-2.5 py-1 rounded-lg bg-volt text-dark-950 hover:bg-volt-light font-black text-[11px] shadow-sm shadow-volt/20 transition flex items-center space-x-1"
+              >
+                <Play class="w-3 h-3 fill-dark-950" />
+                <span>Start Timer</span>
+              </button>
+            ) : !activeDay.completed ? (
+              <button
+                type="button"
+                onClick={handleFinishWorkoutSession}
+                class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-400 hover:text-dark-950 font-bold text-[11px] border border-emerald-500/30 transition flex items-center space-x-1"
+              >
+                <span>Finish Session ✓</span>
+              </button>
+            ) : null}
           </div>
         </div>
 
@@ -466,7 +598,7 @@ export default function WorkoutModal({
 
               <div
                 onClick={() => {
-                  const clone = JSON.parse(JSON.stringify(activeDay));
+                  const clone = stampActivityTimes(JSON.parse(JSON.stringify(activeDay)));
                   clone.conditioning_completed = !clone.conditioning_completed;
                   clone.completion_percentage = calculateProgress(clone);
                   sounds.playSetCheck();

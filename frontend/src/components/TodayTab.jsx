@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Play, CheckCircle2, Flame, Scale, ChevronRight, Dumbbell, Sparkles } from 'lucide-react';
+import { Play, CheckCircle2, Flame, Scale, ChevronRight, Dumbbell, Sparkles, Clock, Timer } from 'lucide-react';
 import { calculateDayCalories, calculateExerciseTotalCalories } from '../utils/calories';
+import { formatTimeOfDay, formatDuration } from '../utils/timeFormat';
+import { api } from '../services/api';
 
 export default function TodayTab({
   todayDay,
@@ -17,9 +19,9 @@ export default function TodayTab({
 
   if (!todayDay) {
     return (
-      <div class="py-12 text-center">
-        <div class="w-8 h-8 border-2 border-volt border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p class="text-xs text-zinc-400">Loading today's workout program...</p>
+      <div className="py-12 text-center">
+        <div className="w-8 h-8 border-2 border-volt border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-xs text-zinc-400">Loading today's workout program...</p>
       </div>
     );
   }
@@ -28,7 +30,20 @@ export default function TodayTab({
   const cal = calculateDayCalories(todayDay, userWeight);
   const isCompleted = !!todayDay.completed;
   const isDeload = !!todayDay.is_deload;
+  const isStarted = !!todayDay.started_at;
   const pct = todayDay.completion_percentage !== undefined ? todayDay.completion_percentage : (isCompleted ? 100 : 0);
+
+  const handleStartWorkout = () => {
+    const clone = JSON.parse(JSON.stringify(todayDay));
+    if (!clone.started_at) {
+      const nowIso = new Date().toISOString();
+      clone.started_at = nowIso;
+      clone.ended_at = nowIso;
+      clone.actual_duration_min = 1;
+      api.startWorkoutSession(clone.day_number).catch(() => {});
+    }
+    onOpenWorkoutModal(clone);
+  };
 
   // Primary muscle extraction
   let primaryMuscles = [];
@@ -160,14 +175,48 @@ export default function TodayTab({
           </div>
         </div>
 
+        {/* Active Workout Session Banner if started */}
+        {isStarted && (
+          <div className="mb-3 p-2.5 sm:p-3 rounded-2xl bg-dark-900 border border-volt/25 flex items-center justify-between text-xs">
+            <div className="flex items-center space-x-2.5">
+              <span className="relative flex h-2.5 w-2.5">
+                {!isCompleted && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-volt opacity-75" />
+                )}
+                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isCompleted ? 'bg-emerald-400' : 'bg-volt'}`} />
+              </span>
+              <div>
+                <span className="font-bold text-white text-xs block">
+                  {isCompleted ? 'Workout Session Completed' : 'Live Workout In Progress'}
+                </span>
+                <span className="text-[10px] text-zinc-400 font-mono">
+                  Started {formatTimeOfDay(todayDay.started_at)}
+                  {todayDay.ended_at && ` • Last activity ${formatTimeOfDay(todayDay.ended_at)}`}
+                  {todayDay.actual_duration_min && ` • ${todayDay.actual_duration_min} min`}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Main Action Launch Button */}
         <button
-          onClick={() => onOpenWorkoutModal(todayDay)}
-          class="w-full py-3.5 px-4 rounded-2xl font-heading font-black text-sm text-dark-950 bg-volt hover:bg-[#b8e600] active:scale-[0.98] transition flex items-center justify-center space-x-2 shadow-xl shadow-volt/20"
+          onClick={handleStartWorkout}
+          className={`w-full py-3.5 px-4 rounded-2xl font-heading font-black text-sm transition flex items-center justify-center space-x-2 shadow-xl ${
+            isCompleted
+              ? 'bg-dark-900 text-zinc-300 hover:text-white border border-white/10'
+              : 'bg-volt text-dark-950 hover:bg-volt-light shadow-volt/20'
+          }`}
         >
-          <Play class="w-4 h-4 fill-dark-950" />
-          <span>{isCompleted ? 'Review / Edit Workout Session' : 'Start Today\'s Workout'}</span>
-          <ChevronRight class="w-4 h-4" />
+          <Play className="w-4 h-4 fill-current" />
+          <span>
+            {isCompleted
+              ? 'Review Workout Session'
+              : isStarted
+              ? 'Continue Today\'s Workout (Active Session)'
+              : 'Start Today\'s Workout'}
+          </span>
+          <ChevronRight className="w-4 h-4" />
         </button>
       </div>
 

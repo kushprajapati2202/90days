@@ -54,6 +54,18 @@ export const api = {
     });
   },
 
+  async startWorkoutSession(dayNumber) {
+    return request(`/days/${dayNumber}/start`, {
+      method: 'POST',
+    });
+  },
+
+  async finishWorkoutSession(dayNumber) {
+    return request(`/days/${dayNumber}/finish`, {
+      method: 'POST',
+    });
+  },
+
   async toggleExercise(dayNumber, exerciseName, completed) {
     const encoded = encodeURIComponent(exerciseName);
     return request(`/days/${dayNumber}/exercises/${encoded}/toggle`, {
