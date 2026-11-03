@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Play, CheckCircle2, Flame, Scale, ChevronRight, Dumbbell, Sparkles } from 'lucide-react';
-import { calculateDayCalories } from '../utils/calories';
+import { calculateDayCalories, calculateExerciseTotalCalories } from '../utils/calories';
 
 export default function TodayTab({
   todayDay,
@@ -24,9 +24,11 @@ export default function TodayTab({
     );
   }
 
-  const cal = calculateDayCalories(todayDay, stats?.weight_stats?.current_weight_kg || 91.5);
+  const userWeight = stats?.weight_stats?.current_weight_kg || 91.5;
+  const cal = calculateDayCalories(todayDay, userWeight);
   const isCompleted = !!todayDay.completed;
   const isDeload = !!todayDay.is_deload;
+  const pct = todayDay.completion_percentage !== undefined ? todayDay.completion_percentage : (isCompleted ? 100 : 0);
 
   // Primary muscle extraction
   let primaryMuscles = [];
@@ -114,26 +116,47 @@ export default function TodayTab({
         )}
 
         {/* Workout Vitals Strip */}
-        <div class="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-dark-900/90 border border-white/[0.06] mb-4 text-center">
+        <div class="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-dark-900/90 border border-white/[0.06] mb-3 text-center">
           <div>
             <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Est. Energy</span>
             <span class="text-sm sm:text-base font-black text-volt font-heading">
               ~{cal.total_estimated_kcal.toLocaleString()} kcal
             </span>
+            {cal.total_completed_kcal > 0 && (
+              <span class="text-[10px] text-emerald-400 font-mono block mt-0.5">
+                🔥 {cal.total_completed_kcal} kcal burned
+              </span>
+            )}
           </div>
           <div>
             <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Movements</span>
             <span class="text-sm sm:text-base font-black text-white font-heading">
               {(todayDay.parsed_exercises || []).length} Lifts
             </span>
+            <span class="text-[10px] text-zinc-500 font-mono block mt-0.5">
+              + Warmup & Stretch
+            </span>
           </div>
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Session Status</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Completion</span>
             <span class={`text-sm sm:text-base font-black font-heading ${
-              isCompleted ? 'text-volt' : (todayDay.completion_percentage > 0 ? 'text-cyan-400' : 'text-zinc-400')
+              isCompleted || pct === 100 ? 'text-volt' : (pct > 0 ? 'text-cyan-400' : 'text-zinc-400')
             }`}>
-              {isCompleted ? '100% Done' : `${todayDay.completion_percentage || 0}% Done`}
+              {pct}% Done
             </span>
+            <span class="text-[10px] text-zinc-500 font-mono block mt-0.5">
+              {isCompleted ? 'Target Reached ✓' : 'In Progress'}
+            </span>
+          </div>
+        </div>
+
+        {/* Today's Workout Progress Bar */}
+        <div class="mb-4">
+          <div class="w-full h-2 rounded-full bg-dark-950 border border-white/[0.06] overflow-hidden">
+            <div
+              class="h-full rounded-full bg-gradient-to-r from-volt to-emerald-400 transition-all duration-500"
+              style={{ width: `${Math.min(100, Math.max(pct > 0 ? 5 : 0, pct))}%` }}
+            />
           </div>
         </div>
 
@@ -236,10 +259,13 @@ export default function TodayTab({
         </form>
       </div>
 
-      {/* 4. TODAY'S MOVEMENTS PREVIEW LIST */}
+      {/* 4. TODAY'S MOVEMENTS PREVIEW LIST (WITH THUMBNAIL PHOTOS & PER-EXERCISE CALORIES) */}
       <div class="p-4 rounded-2xl bg-dark-850 border border-white/[0.06]">
         <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-bold text-white font-heading">Movements Breakdown</span>
+          <div class="flex items-center space-x-2">
+            <Dumbbell class="w-4 h-4 text-volt" />
+            <span class="text-xs font-bold text-white font-heading">Movements Breakdown</span>
+          </div>
           <button
             onClick={() => onOpenWorkoutModal(todayDay)}
             class="text-[11px] font-bold text-volt hover:underline flex items-center space-x-1"
@@ -255,28 +281,55 @@ export default function TodayTab({
             const doneSets = sets.filter((s) => s.completed).length;
             const totalSets = sets.length || 3;
             const isAllDone = sets.length > 0 && doneSets === totalSets;
+            const setPct = Math.round((doneSets / totalSets) * 100);
+            const exCal = calculateExerciseTotalCalories(ex.name, totalSets, userWeight);
+            const thumbUrl = ex.media?.images?.[0] || '';
 
             return (
               <div
                 key={idx}
                 onClick={() => onOpenWorkoutModal(todayDay)}
-                class="flex items-center justify-between p-2.5 rounded-xl bg-dark-900/80 border border-white/[0.04] hover:border-white/15 transition cursor-pointer"
+                class="flex items-center justify-between p-2.5 rounded-2xl bg-dark-900/80 border border-white/[0.04] hover:border-volt/30 transition cursor-pointer gap-3"
               >
-                <div class="flex items-center space-x-3">
-                  <div class="w-7 h-7 rounded-lg bg-dark-800 flex items-center justify-center text-xs font-mono font-bold text-zinc-400">
-                    {idx + 1}
-                  </div>
-                  <div>
-                    <h4 class="text-xs font-bold text-white">{ex.name}</h4>
-                    <span class="text-[10px] text-zinc-400 font-mono">Target: {ex.target || '3 sets'}</span>
+                <div class="flex items-center space-x-3 flex-1 min-w-0">
+                  {/* Photo thumbnail */}
+                  {thumbUrl ? (
+                    <div class="w-12 h-12 rounded-xl overflow-hidden bg-dark-950 shrink-0 border border-white/10">
+                      <img
+                        src={thumbUrl}
+                        alt={ex.name}
+                        loading="lazy"
+                        class="w-full h-full object-cover object-center"
+                      />
+                    </div>
+                  ) : (
+                    <div class="w-12 h-12 rounded-xl bg-dark-950 flex items-center justify-center shrink-0 text-xs font-mono font-bold text-zinc-400 border border-white/5">
+                      {idx + 1}
+                    </div>
+                  )}
+
+                  <div class="flex-1 min-w-0">
+                    <h4 class="text-xs font-bold text-white truncate">{ex.name}</h4>
+                    <div class="flex items-center space-x-2 text-[10px] text-zinc-400 font-mono mt-0.5">
+                      <span>Target: {ex.target || '3 sets'}</span>
+                      <span>•</span>
+                      <span class="text-amber-400 font-bold flex items-center space-x-0.5">
+                        <Flame class="w-3 h-3 fill-amber-400" />
+                        <span>~{exCal} kcal</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-2 shrink-0">
                   <span class={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-md ${
-                    isAllDone ? 'bg-volt/15 text-volt border border-volt/30' : 'bg-white/5 text-zinc-400'
+                    isAllDone
+                      ? 'bg-volt/15 text-volt border border-volt/30'
+                      : doneSets > 0
+                      ? 'bg-cyan-500/15 text-cyan-300'
+                      : 'bg-white/5 text-zinc-400'
                   }`}>
-                    {doneSets}/{totalSets} Sets
+                    {doneSets}/{totalSets} ({setPct}%)
                   </span>
                   <ChevronRight class="w-4 h-4 text-zinc-600" />
                 </div>
@@ -288,4 +341,3 @@ export default function TodayTab({
     </div>
   );
 }
-

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Flame, CheckCircle2, ChevronRight, RotateCcw } from 'lucide-react';
+import { Search, Flame, CheckCircle2, ChevronRight, RotateCcw, Dumbbell } from 'lucide-react';
 import { calculateDayCalories } from '../utils/calories';
 
 export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
@@ -145,8 +145,9 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
         {filteredDays.map((day) => {
           const isDone = !!day.completed;
           const isDeload = !!day.is_deload;
-          const pct = day.completion_percentage || (isDone ? 100 : 0);
+          const pct = day.completion_percentage !== undefined ? day.completion_percentage : (isDone ? 100 : 0);
           const cal = calculateDayCalories(day, stats?.weight_stats?.current_weight_kg || 91.5);
+          const exercises = day.parsed_exercises || [];
 
           return (
             <div
@@ -154,18 +155,22 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
               onClick={() => onOpenWorkoutModal(day)}
               class={`p-4 rounded-2xl transition cursor-pointer flex flex-col justify-between ${
                 isDone
-                  ? 'bg-dark-850 border border-emerald-500/30 hover:border-emerald-500/60'
+                  ? 'bg-dark-850 border border-emerald-500/30 hover:border-emerald-500/60 shadow-sm'
                   : pct > 0
-                  ? 'bg-dark-850 border border-cyan-500/30 hover:border-cyan-500/60'
+                  ? 'bg-dark-850 border border-volt/40 hover:border-volt'
                   : 'bg-dark-850 border border-white/[0.06] hover:border-white/20'
               }`}
             >
               <div>
-                {/* Header */}
+                {/* Header Strip */}
                 <div class="flex items-center justify-between gap-2 mb-2">
                   <div class="flex items-center space-x-2">
                     <span class={`text-[10px] font-black font-heading px-2 py-0.5 rounded ${
-                      isDone ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/10 text-zinc-300'
+                      isDone
+                        ? 'bg-emerald-500/20 text-emerald-400'
+                        : pct > 0
+                        ? 'bg-volt/15 text-volt border border-volt/30'
+                        : 'bg-white/10 text-zinc-300'
                     }`}>
                       DAY {day.day_number}
                     </span>
@@ -178,7 +183,11 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
                         ⚡ DELOAD
                       </span>
                     )}
-                    {isDone && <CheckCircle2 class="w-4 h-4 text-emerald-400 fill-emerald-400/20" />}
+                    {isDone ? (
+                      <CheckCircle2 class="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
+                    ) : pct > 0 ? (
+                      <span class="text-[10px] font-mono font-bold text-volt">{pct}%</span>
+                    ) : null}
                   </div>
                 </div>
 
@@ -187,24 +196,65 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
                 <p class="text-xs text-zinc-400 line-clamp-2 mb-3">
                   {day.strength_workout || day.cardio || 'Active Recovery Routine'}
                 </p>
+
+                {/* Exercises Photo Thumbnails Strip */}
+                {exercises.length > 0 && (
+                  <div class="flex items-center space-x-1.5 mb-3 overflow-x-auto no-scrollbar">
+                    {exercises.slice(0, 4).map((ex, i) => {
+                      const thumb = ex.media?.images?.[0];
+                      return thumb ? (
+                        <div
+                          key={i}
+                          class="w-9 h-9 rounded-lg overflow-hidden bg-dark-950 border border-white/10 shrink-0"
+                          title={ex.name}
+                        >
+                          <img src={thumb} alt={ex.name} class="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div
+                          key={i}
+                          class="w-9 h-9 rounded-lg bg-dark-950 flex items-center justify-center text-[10px] font-bold text-zinc-500 border border-white/5 shrink-0"
+                          title={ex.name}
+                        >
+                          {i + 1}
+                        </div>
+                      );
+                    })}
+                    {exercises.length > 4 && (
+                      <div class="w-9 h-9 rounded-lg bg-dark-900 border border-white/5 flex items-center justify-center text-[10px] font-bold text-zinc-400 shrink-0">
+                        +{exercises.length - 4}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* Footer Vitals */}
-              <div class="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[11px]">
-                <div class="flex items-center space-x-1 text-zinc-400">
-                  <Flame class="w-3.5 h-3.5 text-amber-400 fill-amber-400/20" />
-                  <span class="font-mono">
-                    {isDone ? `${cal.total_completed_kcal} kcal` : `~${cal.total_estimated_kcal} kcal`}
-                  </span>
-                  <span>•</span>
-                  <span class={`font-bold ${isDone ? 'text-emerald-400' : pct > 0 ? 'text-cyan-400' : 'text-zinc-500'}`}>
-                    {isDone ? '100% Done' : `${pct}% Done`}
-                  </span>
+              {/* Progress Bar & Footer Vitals */}
+              <div>
+                {/* Visual mini progress bar */}
+                <div class="w-full h-1.5 rounded-full bg-dark-950 overflow-hidden mb-2">
+                  <div
+                    class={`h-full rounded-full transition-all ${isDone ? 'bg-emerald-400' : 'bg-volt'}`}
+                    style={{ width: `${Math.min(100, Math.max(pct > 0 ? 5 : 0, pct))}%` }}
+                  />
                 </div>
 
-                <div class="text-volt font-bold flex items-center space-x-0.5 hover:underline">
-                  <span>Log Workout</span>
-                  <ChevronRight class="w-3.5 h-3.5" />
+                <div class="pt-1.5 border-t border-white/[0.04] flex items-center justify-between text-[11px]">
+                  <div class="flex items-center space-x-1 text-zinc-400">
+                    <Flame class="w-3.5 h-3.5 text-amber-400 fill-amber-400/20" />
+                    <span class="font-mono">
+                      {isDone ? `${cal.total_completed_kcal} kcal` : `~${cal.total_estimated_kcal} kcal`}
+                    </span>
+                    <span>•</span>
+                    <span class={`font-bold ${isDone ? 'text-emerald-400' : pct > 0 ? 'text-volt' : 'text-zinc-500'}`}>
+                      {pct}% Done
+                    </span>
+                  </div>
+
+                  <div class="text-volt font-bold flex items-center space-x-0.5 hover:underline">
+                    <span>Log Sets</span>
+                    <ChevronRight class="w-3.5 h-3.5" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -223,4 +273,3 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
     </div>
   );
 }
-

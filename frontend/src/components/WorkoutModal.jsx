@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Check, CheckCircle2, Flame, Timer, Scale, CloudCheck, Sparkles, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { X, Check, CheckCircle2, Flame, Timer, Scale, CloudCheck, Sparkles, ChevronDown, ChevronUp, ExternalLink, Dumbbell } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sounds } from '../utils/sound';
 import { api } from '../services/api';
-import { calculateDayCalories } from '../utils/calories';
+import { calculateDayCalories, calculateSetCalories, calculateExerciseTotalCalories, getExerciseMet } from '../utils/calories';
 
 export default function WorkoutModal({
   day,
@@ -159,41 +159,70 @@ export default function WorkoutModal({
     triggerAutoSave(clone);
   };
 
-  const cal = calculateDayCalories(activeDay, activeDay.actual_weight_kg || 91.5);
-  const pct = activeDay.completion_percentage || 0;
+  const userWeight = activeDay.actual_weight_kg || 91.5;
+  const cal = calculateDayCalories(activeDay, userWeight);
+  const pct = activeDay.completion_percentage !== undefined ? activeDay.completion_percentage : (activeDay.completed ? 100 : 0);
 
   return (
-    <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+    <div class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
       <div class="w-full sm:max-w-2xl bg-dark-850 border border-white/[0.1] rounded-t-3xl sm:rounded-3xl max-h-[92vh] sm:max-h-[88vh] flex flex-col shadow-2xl overflow-hidden">
         {/* Mobile Drag Pill */}
         <div class="sm:hidden w-10 h-1 bg-white/25 rounded-full mx-auto mt-2.5 mb-1 shrink-0" />
 
         {/* Sticky Header */}
-        <div class="p-3.5 sm:p-4 border-b border-white/[0.08] bg-dark-900 flex items-center justify-between shrink-0">
-          <div class="flex items-center space-x-2">
-            <span class="px-2.5 py-1 rounded-lg text-xs font-black font-heading bg-volt text-dark-950">
-              DAY {activeDay.day_number}
-            </span>
-            <div>
-              <h2 class="text-xs sm:text-sm font-bold text-white font-heading line-clamp-1">
-                {activeDay.day_type}
-              </h2>
-              <span class="text-[10px] text-zinc-400 font-mono">
-                {activeDay.date_display} • Week {activeDay.week_number}
+        <div class="p-3.5 sm:p-4 border-b border-white/[0.08] bg-dark-900 shrink-0 space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <span class="px-2.5 py-1 rounded-lg text-xs font-black font-heading bg-volt text-dark-950">
+                DAY {activeDay.day_number}
               </span>
+              <div>
+                <h2 class="text-xs sm:text-sm font-bold text-white font-heading line-clamp-1">
+                  {activeDay.day_type}
+                </h2>
+                <span class="text-[10px] text-zinc-400 font-mono">
+                  {activeDay.date_display} • Week {activeDay.week_number}
+                </span>
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <button
+                onClick={() => onLaunchRestTimer(90)}
+                class="px-2 py-1 rounded-lg bg-dark-800 hover:bg-dark-750 text-rose-400 text-[11px] font-bold border border-white/5 flex items-center space-x-1"
+                title="Launch Rest Timer"
+              >
+                <Timer class="w-3.5 h-3.5" />
+                <span class="font-mono">90s Rest</span>
+              </button>
+
+              <button
+                onClick={onClose}
+                class="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition"
+              >
+                <X class="w-5 h-5" />
+              </button>
             </div>
           </div>
 
-          <div class="flex items-center space-x-2">
-            <span class="text-[11px] font-mono font-bold text-volt hidden sm:inline">
-              ~{cal.total_estimated_kcal} kcal
-            </span>
-            <button
-              onClick={onClose}
-              class="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition"
-            >
-              <X class="w-5 h-5" />
-            </button>
+          {/* Live Session Progress Bar & Calories Indicator */}
+          <div class="pt-1">
+            <div class="flex items-center justify-between text-[11px] font-mono font-bold mb-1">
+              <span class="text-zinc-400 flex items-center space-x-1">
+                <span>Progress:</span>
+                <span class={pct === 100 ? 'text-volt' : 'text-white'}>{pct}% Done</span>
+              </span>
+              <span class="text-amber-400 flex items-center space-x-1">
+                <Flame class="w-3.5 h-3.5 fill-amber-400 inline" />
+                <span>{cal.total_completed_kcal} / {cal.total_estimated_kcal} kcal</span>
+              </span>
+            </div>
+            <div class="w-full h-2 rounded-full bg-dark-950 border border-white/[0.06] overflow-hidden">
+              <div
+                class="h-full rounded-full bg-gradient-to-r from-volt to-emerald-400 transition-all duration-300"
+                style={{ width: `${Math.min(100, Math.max(pct > 0 ? 4 : 0, pct))}%` }}
+              />
+            </div>
           </div>
         </div>
 
@@ -204,54 +233,77 @@ export default function WorkoutModal({
             <div class="p-3.5 rounded-2xl bg-dark-900 border border-white/[0.06]">
               <div class="flex items-center justify-between mb-2.5">
                 <div class="flex items-center space-x-1.5 text-xs font-bold text-white font-heading">
-                  <span class="w-5 h-5 rounded-md bg-amber-500/20 text-amber-300 flex items-center justify-center text-[10px]">1</span>
+                  <span class="w-5 h-5 rounded-md bg-amber-500/20 text-amber-300 flex items-center justify-center text-[10px] font-bold">1</span>
                   <span>Dynamic Warm-Up Mobility</span>
                 </div>
-                <span class="text-[10px] text-zinc-400 font-mono">
-                  {activeDay.warmup_stretches.filter((w) => w.completed).length}/{activeDay.warmup_stretches.length} Done
-                </span>
+                <div class="flex items-center space-x-2 text-[10px] font-mono">
+                  <span class="text-amber-400 font-bold">~25 kcal</span>
+                  <span class="text-zinc-400">
+                    {activeDay.warmup_stretches.filter((w) => w.completed).length}/{activeDay.warmup_stretches.length} Done
+                  </span>
+                </div>
               </div>
 
-              <div class="space-y-1.5">
-                {activeDay.warmup_stretches.map((stretch, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => toggleStretch('warmup_stretches', idx)}
-                    class={`flex items-center justify-between p-2 rounded-xl transition cursor-pointer ${
-                      stretch.completed ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-dark-850 hover:bg-white/5 border border-white/[0.04]'
-                    }`}
-                  >
-                    <div class="flex items-center space-x-2">
-                      <div class={`w-5 h-5 rounded-md flex items-center justify-center transition ${
-                        stretch.completed ? 'bg-emerald-400 text-dark-950' : 'border border-zinc-600'
-                      }`}>
-                        {stretch.completed && <Check class="w-3.5 h-3.5 stroke-[3]" />}
+              <div class="space-y-2">
+                {activeDay.warmup_stretches.map((stretch, idx) => {
+                  const thumb = stretch.media?.images?.[0] || '';
+                  return (
+                    <div
+                      key={idx}
+                      class={`p-2 rounded-xl transition flex items-center justify-between gap-3 ${
+                        stretch.completed ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-dark-850 hover:bg-white/5 border border-white/[0.04]'
+                      }`}
+                    >
+                      <div class="flex items-center space-x-3 flex-1 min-w-0">
+                        {/* Thumbnail image if available */}
+                        {thumb ? (
+                          <div
+                            onClick={() => stretch.media && onOpenExerciseGuide(stretch.media)}
+                            class="w-11 h-11 rounded-lg overflow-hidden bg-dark-950 shrink-0 border border-white/10 cursor-pointer relative group"
+                            title="Tap to see form guide"
+                          >
+                            <img src={thumb} alt={stretch.name} class="w-full h-full object-cover object-center group-hover:scale-105 transition" />
+                          </div>
+                        ) : (
+                          <div class="w-11 h-11 rounded-lg bg-dark-950 flex items-center justify-center shrink-0 border border-white/5 text-zinc-600">
+                            <Sparkles class="w-4 h-4 text-amber-400/60" />
+                          </div>
+                        )}
+
+                        <div class="flex-1 min-w-0">
+                          <h4 class={`text-xs truncate ${stretch.completed ? 'text-zinc-400 line-through' : 'text-zinc-200 font-semibold'}`}>
+                            {stretch.name}
+                          </h4>
+                          <span class="text-[10px] text-zinc-500 font-mono block">{stretch.reps_or_time} • ~5 kcal</span>
+                        </div>
                       </div>
-                      <span class={`text-xs ${stretch.completed ? 'text-zinc-400 line-through' : 'text-zinc-200 font-medium'}`}>
-                        {stretch.name}
-                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => toggleStretch('warmup_stretches', idx)}
+                        class={`w-7 h-7 rounded-lg flex items-center justify-center transition active:scale-90 ${
+                          stretch.completed ? 'bg-emerald-400 text-dark-950 font-bold' : 'border border-zinc-700 hover:border-zinc-500 text-transparent'
+                        }`}
+                      >
+                        <Check class="w-4 h-4 stroke-[3]" />
+                      </button>
                     </div>
-                    <span class="text-[10px] text-zinc-500 font-mono">{stretch.reps_or_time}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
 
-          {/* 2. PRIMARY STRENGTH LIFTS */}
+          {/* 2. PRIMARY STRENGTH LIFTS (WITH EXERCISE PHOTOS & CALORIES) */}
           <div class="p-3.5 rounded-2xl bg-dark-900 border border-white/[0.06] space-y-3">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-1.5 text-xs font-bold text-white font-heading">
-                <span class="w-5 h-5 rounded-md bg-volt/20 text-volt flex items-center justify-center text-[10px]">2</span>
+                <span class="w-5 h-5 rounded-md bg-volt/20 text-volt flex items-center justify-center text-[10px] font-bold">2</span>
                 <span>Strength Lifts & Progressive Sets</span>
               </div>
-              <button
-                onClick={() => onLaunchRestTimer(90)}
-                class="text-[10px] font-bold text-rose-400 flex items-center space-x-1 hover:underline"
-              >
-                <Timer class="w-3 h-3" />
-                <span>Rest Timer</span>
-              </button>
+              <span class="text-[10px] text-zinc-400 font-mono">
+                {(activeDay.parsed_exercises || []).length} Movements
+              </span>
             </div>
 
             {(activeDay.parsed_exercises || []).map((ex, exIdx) => {
@@ -264,27 +316,88 @@ export default function WorkoutModal({
                 ? ex.logged_sets
                 : Array.from({ length: plannedSetsCount }, (_, i) => ({ set_num: i + 1, weight_kg: 0, reps: 10, completed: false }));
 
+              const doneCount = sets.filter((s) => s.completed).length;
+              const setPct = Math.round((doneCount / Math.max(1, sets.length)) * 100);
+              const setBurn = calculateSetCalories(ex.name, userWeight);
+              const exTotalCal = calculateExerciseTotalCalories(ex.name, sets.length, userWeight);
+              const met = getExerciseMet(ex.name);
+              const thumbUrl = ex.media?.images?.[0] || '';
+
               return (
-                <div key={exIdx} class="p-3 rounded-xl bg-dark-850 border border-white/[0.06] space-y-2">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <h4 class="text-xs font-bold text-white font-heading">{ex.name}</h4>
-                      <span class="text-[10px] text-zinc-400 font-mono">Target: {ex.target}</span>
+                <div key={exIdx} class="p-3 rounded-2xl bg-dark-850 border border-white/[0.06] space-y-2.5">
+                  {/* Top Row: Exercise Thumbnail + Title + Calorie Burn */}
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-center space-x-3 flex-1 min-w-0">
+                      {/* Photo Thumbnail (Tap to open full guide) */}
+                      {thumbUrl ? (
+                        <div
+                          onClick={() => ex.media && onOpenExerciseGuide(ex.media)}
+                          class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-dark-950 shrink-0 border border-white/10 hover:border-volt/80 transition cursor-pointer relative group shadow-md"
+                          title="Tap to see proper form and muscle demonstration"
+                        >
+                          <img
+                            src={thumbUrl}
+                            alt={ex.name}
+                            class="w-full h-full object-cover object-center group-hover:scale-105 transition"
+                          />
+                          <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition" />
+                        </div>
+                      ) : (
+                        <div class="w-14 h-14 rounded-xl bg-dark-950 flex items-center justify-center shrink-0 border border-white/10 text-zinc-600">
+                          <Dumbbell class="w-6 h-6" />
+                        </div>
+                      )}
+
+                      {/* Title & Metadata */}
+                      <div class="flex-1 min-w-0">
+                        <h4 class="text-xs sm:text-sm font-bold text-white font-heading truncate">
+                          {ex.name}
+                        </h4>
+                        <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
+                          <span class="text-[10px] text-zinc-400 font-mono font-bold">
+                            Target: {ex.target}
+                          </span>
+                          <span class="text-zinc-600">•</span>
+                          {/* Calorie burn badge */}
+                          <span class="text-[10px] text-amber-400 font-mono font-bold flex items-center space-x-0.5">
+                            <Flame class="w-3 h-3 fill-amber-400" />
+                            <span>~{exTotalCal} kcal</span>
+                          </span>
+                          <span class="text-zinc-600">•</span>
+                          <span class="text-[10px] text-zinc-500 font-mono">
+                            MET {met} (~{setBurn} kcal/set)
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
-                    {ex.media && (
-                      <button
-                        onClick={() => onOpenExerciseGuide(ex.media)}
-                        class="text-[10px] font-bold text-volt flex items-center space-x-0.5 hover:underline"
-                      >
-                        <span>Form Guide</span>
-                        <ExternalLink class="w-3 h-3" />
-                      </button>
-                    )}
+                    {/* Set completion badge & Form Guide Button */}
+                    <div class="flex flex-col items-end space-y-1 shrink-0">
+                      <span class={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${
+                        setPct === 100
+                          ? 'bg-volt/15 text-volt border border-volt/30'
+                          : doneCount > 0
+                          ? 'bg-cyan-500/15 text-cyan-300'
+                          : 'bg-white/5 text-zinc-400'
+                      }`}>
+                        {doneCount}/{sets.length} Sets ({setPct}%)
+                      </span>
+
+                      {ex.media && (
+                        <button
+                          type="button"
+                          onClick={() => onOpenExerciseGuide(ex.media)}
+                          class="text-[10px] font-bold text-volt flex items-center space-x-0.5 hover:underline"
+                        >
+                          <span>Guide</span>
+                          <ExternalLink class="w-2.5 h-2.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Set table */}
-                  <div class="space-y-1">
+                  <div class="space-y-1 pt-1 border-t border-white/[0.04]">
                     <div class="grid grid-cols-12 gap-1 text-[10px] font-mono uppercase text-zinc-500 text-center px-1">
                       <span class="col-span-2 text-left">Set</span>
                       <span class="col-span-4">Weight (kg)</span>
@@ -345,9 +458,10 @@ export default function WorkoutModal({
             <div class="p-3.5 rounded-2xl bg-dark-900 border border-white/[0.06]">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center space-x-1.5 text-xs font-bold text-white font-heading">
-                  <span class="w-5 h-5 rounded-md bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-[10px]">3</span>
+                  <span class="w-5 h-5 rounded-md bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-[10px] font-bold">3</span>
                   <span>Conditioning & Cardio</span>
                 </div>
+                <span class="text-[10px] text-amber-400 font-mono font-bold">~95 kcal</span>
               </div>
 
               <div
@@ -376,41 +490,67 @@ export default function WorkoutModal({
             </div>
           )}
 
-          {/* 4. COOL-DOWN STRETCHES */}
+          {/* 4. COOL-DOWN STRETCHES (WITH PHOTOS) */}
           {activeDay.cooldown_stretches && activeDay.cooldown_stretches.length > 0 && (
             <div class="p-3.5 rounded-2xl bg-dark-900 border border-white/[0.06]">
               <div class="flex items-center justify-between mb-2.5">
                 <div class="flex items-center space-x-1.5 text-xs font-bold text-white font-heading">
-                  <span class="w-5 h-5 rounded-md bg-purple-500/20 text-purple-300 flex items-center justify-center text-[10px]">4</span>
+                  <span class="w-5 h-5 rounded-md bg-purple-500/20 text-purple-300 flex items-center justify-center text-[10px] font-bold">4</span>
                   <span>Cool-Down Static Stretches</span>
                 </div>
-                <span class="text-[10px] text-zinc-400 font-mono">
-                  {activeDay.cooldown_stretches.filter((c) => c.completed).length}/{activeDay.cooldown_stretches.length} Done
-                </span>
+                <div class="flex items-center space-x-2 text-[10px] font-mono">
+                  <span class="text-amber-400 font-bold">~20 kcal</span>
+                  <span class="text-zinc-400">
+                    {activeDay.cooldown_stretches.filter((c) => c.completed).length}/{activeDay.cooldown_stretches.length} Done
+                  </span>
+                </div>
               </div>
 
-              <div class="space-y-1.5">
-                {activeDay.cooldown_stretches.map((stretch, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => toggleStretch('cooldown_stretches', idx)}
-                    class={`flex items-center justify-between p-2 rounded-xl transition cursor-pointer ${
-                      stretch.completed ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-dark-850 hover:bg-white/5 border border-white/[0.04]'
-                    }`}
-                  >
-                    <div class="flex items-center space-x-2">
-                      <div class={`w-5 h-5 rounded-md flex items-center justify-center transition ${
-                        stretch.completed ? 'bg-emerald-400 text-dark-950' : 'border border-zinc-600'
-                      }`}>
-                        {stretch.completed && <Check class="w-3.5 h-3.5 stroke-[3]" />}
+              <div class="space-y-2">
+                {activeDay.cooldown_stretches.map((stretch, idx) => {
+                  const thumb = stretch.media?.images?.[0] || '';
+                  return (
+                    <div
+                      key={idx}
+                      class={`p-2 rounded-xl transition flex items-center justify-between gap-3 ${
+                        stretch.completed ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-dark-850 hover:bg-white/5 border border-white/[0.04]'
+                      }`}
+                    >
+                      <div class="flex items-center space-x-3 flex-1 min-w-0">
+                        {thumb ? (
+                          <div
+                            onClick={() => stretch.media && onOpenExerciseGuide(stretch.media)}
+                            class="w-11 h-11 rounded-lg overflow-hidden bg-dark-950 shrink-0 border border-white/10 cursor-pointer relative group"
+                            title="Tap to see form guide"
+                          >
+                            <img src={thumb} alt={stretch.name} class="w-full h-full object-cover object-center group-hover:scale-105 transition" />
+                          </div>
+                        ) : (
+                          <div class="w-11 h-11 rounded-lg bg-dark-950 flex items-center justify-center shrink-0 border border-white/5 text-zinc-600">
+                            <Sparkles class="w-4 h-4 text-purple-400/60" />
+                          </div>
+                        )}
+
+                        <div class="flex-1 min-w-0">
+                          <h4 class={`text-xs truncate ${stretch.completed ? 'text-zinc-400 line-through' : 'text-zinc-200 font-semibold'}`}>
+                            {stretch.name}
+                          </h4>
+                          <span class="text-[10px] text-zinc-500 font-mono block">{stretch.reps_or_time} • ~3.2 kcal</span>
+                        </div>
                       </div>
-                      <span class={`text-xs ${stretch.completed ? 'text-zinc-400 line-through' : 'text-zinc-200 font-medium'}`}>
-                        {stretch.name}
-                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => toggleStretch('cooldown_stretches', idx)}
+                        class={`w-7 h-7 rounded-lg flex items-center justify-center transition active:scale-90 ${
+                          stretch.completed ? 'bg-emerald-400 text-dark-950 font-bold' : 'border border-zinc-700 hover:border-zinc-500 text-transparent'
+                        }`}
+                      >
+                        <Check class="w-4 h-4 stroke-[3]" />
+                      </button>
                     </div>
-                    <span class="text-[10px] text-zinc-500 font-mono">{stretch.reps_or_time}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -509,4 +649,3 @@ export default function WorkoutModal({
     </div>
   );
 }
-

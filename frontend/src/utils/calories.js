@@ -37,6 +37,11 @@ export function calculateSetCalories(name = '', weightKg = 91.5) {
   return Math.round(burn * 10) / 10;
 }
 
+export function calculateExerciseTotalCalories(name = '', setsCount = 3, weightKg = 91.5) {
+  const setBurn = calculateSetCalories(name, weightKg);
+  return Math.round(setBurn * setsCount);
+}
+
 export function calculateDayCalories(day, weightKg = 91.5) {
   if (!day) return { total_estimated_kcal: 350, total_completed_kcal: 0 };
 
