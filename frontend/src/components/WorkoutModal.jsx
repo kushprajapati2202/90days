@@ -5,6 +5,7 @@ import { sounds } from '../utils/sound';
 import { api } from '../services/api';
 import { calculateDayCalories, calculateSetCalories, calculateExerciseTotalCalories, getExerciseMet } from '../utils/calories';
 import { formatTimeOfDay, formatDuration, formatStopwatch } from '../utils/timeFormat';
+import CelebrationModal from './CelebrationModal';
 
 export default function WorkoutModal({
   day,
@@ -13,6 +14,7 @@ export default function WorkoutModal({
   onDayUpdated,
   onLaunchRestTimer,
   onOpenExerciseGuide,
+  stats,
 }) {
   if (!isOpen || !day) return null;
 
@@ -20,6 +22,7 @@ export default function WorkoutModal({
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState('saved'); // 'saved', 'saving', 'error'
   const [sessionSeconds, setSessionSeconds] = useState(0);
+  const [showCelebration, setShowCelebration] = useState(false);
   const autoSaveTimerRef = useRef(null);
 
   useEffect(() => {
@@ -151,22 +154,22 @@ export default function WorkoutModal({
     } catch (_) {
       clone.actual_duration_min = 45;
     }
-    confetti({
-      particleCount: 90,
-      spread: 75,
-      origin: { y: 0.6 },
-      colors: ['#CCFF00', '#10B981', '#ffffff'],
-    });
-    sounds.playTimerDone();
     triggerAutoSave(clone);
+    setShowCelebration(true);
   };
 
   // Toggle Warmup / Cooldown stretch
   const toggleStretch = (listKey, idx) => {
     const clone = stampActivityTimes(JSON.parse(JSON.stringify(activeDay)));
     clone[listKey][idx].completed = !clone[listKey][idx].completed;
-    clone.completion_percentage = calculateProgress(clone);
+    const newProgress = calculateProgress(clone);
+    clone.completion_percentage = newProgress;
     sounds.playSetCheck();
+    if (newProgress === 100 && !activeDay.completed) {
+      clone.completed = true;
+      clone.completed_at = new Date().toISOString();
+      setShowCelebration(true);
+    }
     triggerAutoSave(clone);
   };
 
@@ -200,7 +203,13 @@ export default function WorkoutModal({
       onLaunchRestTimer(90); // auto launch 90s rest
     }
 
-    clone.completion_percentage = calculateProgress(clone);
+    const newProgress = calculateProgress(clone);
+    clone.completion_percentage = newProgress;
+    if (newProgress === 100 && !activeDay.completed) {
+      clone.completed = true;
+      clone.completed_at = new Date().toISOString();
+      setShowCelebration(true);
+    }
     triggerAutoSave(clone);
   };
 
@@ -222,13 +231,7 @@ export default function WorkoutModal({
     if (checked) {
       clone.completion_percentage = 100;
       clone.completed_at = new Date().toISOString();
-      confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#CCFF00', '#10B981', '#ffffff'],
-      });
-      sounds.playTimerDone();
+      setShowCelebration(true);
     } else {
       clone.completed_at = null;
     }
@@ -778,6 +781,15 @@ export default function WorkoutModal({
           </div>
         </div>
       </div>
+
+      {/* 100% Completion Appreciation Celebration Modal */}
+      <CelebrationModal
+        isOpen={showCelebration}
+        onClose={() => setShowCelebration(false)}
+        day={activeDay}
+        stats={stats}
+        caloriesBurned={cal.total_completed_kcal || cal.total_estimated_kcal}
+      />
     </div>
   );
 }

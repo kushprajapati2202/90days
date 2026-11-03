@@ -36,3 +36,4 @@ export function formatStopwatch(totalSeconds) {
   }
   return `${mm}:${ss}`;
 }
+
