@@ -1,6 +1,6 @@
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.routes import router
@@ -47,6 +47,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def fix_vercel_path(request: Request, call_next):
+    # Restore original path if rewritten by Vercel serverless functions
+    matched_path = request.headers.get("x-matched-path") or request.headers.get("x-invoke-path")
+    if matched_path:
+        clean_path = matched_path.split("?")[0]
+        if not clean_path.startswith("/api") and not clean_path.startswith("/docs") and not clean_path.startswith("/openapi") and not clean_path.startswith("/static"):
+            clean_path = f"/api{clean_path}"
+        request.scope["path"] = clean_path
+    elif request.scope.get("path", "").startswith("/api/index.py"):
+        subpath = request.scope["path"][len("/api/index.py"):]
+        if not subpath.startswith("/api") and not subpath.startswith("/docs") and not subpath.startswith("/openapi") and not subpath.startswith("/static"):
+            subpath = f"/api{subpath}" if subpath else "/api"
+        request.scope["path"] = subpath
+    return await call_next(request)
 
 # Register API router
 app.include_router(router)
