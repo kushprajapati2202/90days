@@ -313,3 +313,4 @@ def get_vault_filters() -> Dict[str, Any]:
         "groups": groups,
         "equipment": equipment,
     }
+
