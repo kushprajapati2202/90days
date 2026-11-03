@@ -1418,12 +1418,19 @@ async function saveWorkoutModalData() {
 
 // 5. Weight Tracker Modal & Chart.js
 async function openWeightModal() {
+  const pending = allDays.find(d => !d.completed);
+  const targetDay = pending ? pending.day_number : 1;
+  const dayInput = document.getElementById('quick-weight-day');
+  if (dayInput) dayInput.value = targetDay;
+
   document.getElementById('weight-modal').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
   try {
     const res = await fetch('/api/weight-history');
     const data = await res.json();
-    renderWeightChart(data);
+    requestAnimationFrame(() => {
+      renderWeightChart(data);
+    });
     renderWeightHistoryList(data.logs || []);
   } catch (err) {
     console.error("Error loading weight history:", err);
@@ -1571,6 +1578,7 @@ async function submitQuickWeight() {
 // Exercise Form, Photos & Video Demonstration Modal
 async function openExerciseGuideModal(exerciseName) {
   try {
+    document.body.style.overflow = 'hidden';
     const res = await fetch(`/api/exercises/media?name=${encodeURIComponent(exerciseName)}`);
     const media = await res.json();
     
@@ -1635,6 +1643,10 @@ async function openExerciseGuideModal(exerciseName) {
 
 function closeExerciseGuideModal() {
   document.getElementById('exercise-guide-modal').classList.add('hidden');
+  const workoutModal = document.getElementById('workout-modal');
+  if (!workoutModal || workoutModal.classList.contains('hidden')) {
+    document.body.style.overflow = '';
+  }
 }
 
 // 6. Coaching Rules Modal
@@ -1648,21 +1660,33 @@ async function loadCoachingNotes() {
   }
 }
 
-function openCoachingModal() {
-  const container = document.getElementById('coaching-notes-container');
-  container.innerHTML = coachingNotes.map(n => `
-    <div class="bg-dark-900 border border-slate-800 p-3 rounded-xl flex items-start space-x-2.5">
-      <span class="w-5 h-5 rounded-md bg-amber-500/20 text-amber-400 font-extrabold flex items-center justify-center shrink-0 text-[11px]">
-        ${n.rule_number}
-      </span>
-      <p class="text-slate-200 leading-relaxed text-xs sm:text-sm">
-        ${n.text}
-      </p>
-    </div>
-  `).join('');
-
+async function openCoachingModal() {
   document.getElementById('rules-modal').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
+
+  if (!coachingNotes || coachingNotes.length === 0) {
+    await loadCoachingNotes();
+  }
+
+  const container = document.getElementById('coaching-notes-container');
+  if (coachingNotes && coachingNotes.length > 0) {
+    container.innerHTML = coachingNotes.map(n => `
+      <div class="bg-dark-900 border border-slate-800 p-3 rounded-xl flex items-start space-x-2.5">
+        <span class="w-5 h-5 rounded-md bg-amber-500/20 text-amber-400 font-extrabold flex items-center justify-center shrink-0 text-[11px]">
+          ${n.rule_number}
+        </span>
+        <p class="text-slate-200 leading-relaxed text-xs sm:text-sm">
+          ${n.text}
+        </p>
+      </div>
+    `).join('');
+  } else {
+    container.innerHTML = `
+      <div class="py-8 text-center text-slate-500">
+        <p class="text-xs">No coaching rules available. Please check MongoDB connection.</p>
+      </div>
+    `;
+  }
   lucide.createIcons();
 }
 

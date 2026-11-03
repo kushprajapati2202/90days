@@ -43,6 +43,11 @@ input, select, textarea {
   font-size: 16px !important;
 }
 
+/* Explicit Hidden State Support for Tailwind CDN Conflict Prevention */
+.hidden {
+  display: none !important;
+}
+
 @media (min-width: 640px) {
   input, select, textarea {
     font-size: 14px !important;
@@ -257,6 +262,8 @@ input, select, textarea {
 #floating-timer {
   bottom: calc(76px + env(safe-area-inset-bottom, 16px));
   right: 1rem;
+  max-width: calc(100vw - 2rem);
+  z-index: 46;
 }
 
 @media (min-width: 768px) {
@@ -266,28 +273,70 @@ input, select, textarea {
   }
 }
 
+/* Custom Routine Floating Tray Pill in Exercise Library */
+#routine-tray-pill {
+  bottom: calc(76px + env(safe-area-inset-bottom, 16px)) !important;
+  right: 1rem !important;
+  z-index: 46 !important;
+}
+
+@media (min-width: 768px) {
+  #routine-tray-pill {
+    bottom: 1.5rem !important;
+    right: 1.5rem !important;
+  }
+}
+
 /* Bottom Sheet on Mobile, Centered Modal on Desktop */
+@keyframes sheetSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0.85;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 @media (max-width: 640px) {
   .mobile-sheet-modal {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
+    position: relative !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
     top: auto !important;
-    max-height: 94vh !important;
-    height: 94vh !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: calc(100vh - 2rem - env(safe-area-inset-top, 0px)) !important;
+    max-height: calc(100dvh - 2rem - env(safe-area-inset-top, 0px)) !important;
+    height: auto !important;
     border-bottom-left-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
     border-top-left-radius: 24px !important;
     border-top-right-radius: 24px !important;
     margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    animation: sheetSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Safe Area Padding for Bottom Sheet Footers */
+  .mobile-sheet-modal > div:last-child {
+    padding-bottom: calc(0.85rem + env(safe-area-inset-bottom, 14px)) !important;
   }
 }
 
 @media (min-width: 641px) {
   .mobile-sheet-modal {
     max-height: 90vh !important;
+    max-height: 90dvh !important;
+    height: auto !important;
     border-radius: 20px !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 }
 
@@ -362,18 +411,31 @@ input, select, textarea {
   border-radius: 1.5rem !important;
 }
 
-/* Custom Routine Floating Tray & Drawer */
+/* Custom Routine Slide-Over Drawer */
 #routine-drawer-modal {
-  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: drawerFadeIn 0.2s ease;
+}
+
+#routine-drawer-modal > div {
+  animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (max-width: 640px) {
+  #routine-drawer-modal > div > div:last-child {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 14px)) !important;
+  }
+}
+
+@keyframes drawerFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideInRight {
   from {
-    opacity: 0;
     transform: translateX(100%);
   }
   to {
-    opacity: 1;
     transform: translateX(0);
   }
 }

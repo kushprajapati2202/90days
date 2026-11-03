@@ -15,11 +15,11 @@ function extractMuscleKeys(primaryMuscles = [], secondaryMuscles = [], fallbackT
     const isPrim = allPrimaries.some(pm => kws.some(k => pm.includes(k))) || (primaryKeys.length === 0 && kws.some(k => fallback.includes(k)));
     if (isPrim) {
       if (!primaryKeys.includes(key)) primaryKeys.push(key);
-    } else {
+   else {
       const isSec = allSecondaries.some(sm => kws.some(k => sm.includes(k)));
       if (isSec && !secondaryKeys.includes(key)) secondaryKeys.push(key);
-    }
-  });
+  
+);
 
   return { primaryKeys, secondaryKeys };
 }
@@ -28,7 +28,7 @@ function previewExerciseOnAvatar(name, pMuscles = [], sMuscles = [], category = 
   const { primaryKeys, secondaryKeys } = extractMuscleKeys(pMuscles, sMuscles, `${name} ${category}`);
   if (window.avatar3D && typeof window.avatar3D.highlightExerciseMuscles === 'function') {
     window.avatar3D.highlightExerciseMuscles(primaryKeys, secondaryKeys, name);
-  }
+
 }
 
 // -------------------------------------------------------------
@@ -39,10 +39,10 @@ function setEquipmentFilter(eq) {
   document.querySelectorAll('.eq-chip').forEach(c => {
     if (c.getAttribute('data-eq') === eq) {
       c.className = "eq-chip px-2.5 py-1 rounded-lg text-xs font-bold bg-cyan-500 text-dark-900 border border-cyan-400 shadow-sm transition";
-    } else {
+   else {
       c.className = "eq-chip px-2.5 py-1 rounded-lg text-xs font-semibold bg-dark-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition";
-    }
-  });
+  
+);
   applyActiveModeFilters();
 }
 
@@ -51,25 +51,25 @@ function setPatternFilter(pat) {
   document.querySelectorAll('.pat-chip').forEach(c => {
     if (c.getAttribute('data-pat') === pat) {
       c.className = "pat-chip px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white border border-indigo-500 shadow-sm transition";
-    } else {
+   else {
       c.className = "pat-chip px-2.5 py-1 rounded-lg text-xs font-semibold bg-dark-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition";
-    }
-  });
+  
+);
   applyActiveModeFilters();
 }
 
 function applyActiveModeFilters() {
   if (currentMode === 'plan') {
     applyPlanFilters();
-  } else if (currentMode === '876') {
+ else if (currentMode === '876') {
     fedbSkip = 0;
     fedbExercises = [];
     loadFedbExercises();
-  } else {
+ else {
     catalogSkip = 0;
     catalogExercises = [];
     loadCatalogExercises();
-  }
+
 }
 
 // -------------------------------------------------------------
@@ -80,7 +80,7 @@ function addToRoutine(item) {
   if (exists) {
     showToast(`"${item.name}" is already in your routine!`);
     return;
-  }
+
   customRoutine.push(item);
   saveRoutine();
   updateRoutineBadge();
@@ -118,11 +118,11 @@ function updateRoutineBadge() {
     if (count > 0) {
       pill.classList.remove('hidden');
       pill.classList.add('flex');
-    } else {
+   else {
       pill.classList.add('hidden');
       pill.classList.remove('flex');
-    }
-  }
+  
+
   if (badge) badge.innerText = count;
 }
 
@@ -131,9 +131,10 @@ function openRoutineDrawer() {
   if (modal) {
     modal.classList.remove('hidden');
     modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
     renderRoutineDrawer();
     if (window.lucide) window.lucide.createIcons();
-  }
+
 }
 
 function closeRoutineDrawer() {
@@ -141,7 +142,9 @@ function closeRoutineDrawer() {
   if (modal) {
     modal.classList.add('hidden');
     modal.classList.remove('flex');
-  }
+    document.body.style.overflow = '';
+    document.body.style.overflow = '';
+
 }
 
 function renderRoutineDrawer() {
@@ -151,7 +154,7 @@ function renderRoutineDrawer() {
 
   if (subtitle) {
     subtitle.innerText = `${customRoutine.length} exercise${customRoutine.length === 1 ? '' : 's'} in workout routine`;
-  }
+
 
   if (customRoutine.length === 0) {
     container.innerHTML = `
@@ -163,7 +166,7 @@ function renderRoutineDrawer() {
     `;
     if (window.lucide) window.lucide.createIcons();
     return;
-  }
+
 
   container.innerHTML = customRoutine.map((item, idx) => `
     <div class="p-3 rounded-xl bg-dark-950 border border-slate-800 flex items-center justify-between gap-2 hover:border-slate-700 transition">
@@ -199,30 +202,30 @@ function highlightRoutineOnAvatar() {
     const { primaryKeys, secondaryKeys } = extractMuscleKeys(item.primary, item.secondary, `${item.name} ${item.category}`);
     primaryKeys.forEach(k => allPrimaries.add(k));
     secondaryKeys.forEach(k => allSecondaries.add(k));
-  });
+);
 
   if (window.avatar3D && typeof window.avatar3D.highlightExerciseMuscles === 'function') {
     window.avatar3D.highlightExerciseMuscles(Array.from(allPrimaries), Array.from(allSecondaries), `Routine (${customRoutine.length} exercises)`);
     showToast(`Visualizing recruitment heatmap for all ${customRoutine.length} exercises!`);
-  }
+
 }
 
 function exportRoutineMarkdown() {
   if (customRoutine.length === 0) {
     showToast('Add exercises first to export!');
     return;
-  }
+
   let md = `# Custom Workout Routine (${customRoutine.length} Exercises)\n\n`;
   md += `| # | Exercise | Target Group | Equipment |\n`;
   md += `|---|---|---|---|\n`;
   customRoutine.forEach((ex, i) => {
     md += `| ${i+1} | ${ex.name} | ${ex.category} | ${ex.equipment || 'Gym'} |\n`;
-  });
+);
   md += `\n*Generated via 90Days 3D Muscular Anatomy Platform*`;
 
   navigator.clipboard.writeText(md).then(() => {
     showToast('Workout routine copied to clipboard in Markdown format!');
-  });
+);
 }
 
 function showToast(msg) {
@@ -232,14 +235,14 @@ function showToast(msg) {
     toast.id = 'global-toast';
     toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-dark-900 border border-cyan-500/50 text-cyan-300 text-xs font-bold shadow-2xl transition-all duration-300 pointer-events-none opacity-0';
     document.body.appendChild(toast);
-  }
+
   toast.innerText = msg;
   toast.style.opacity = '1';
   toast.style.transform = 'translate(-50%, -10px)';
   setTimeout(() => {
     toast.style.opacity = '0';
     toast.style.transform = 'translate(-50%, 0)';
-  }, 2500);
+, 2500);
 }
 
 // Tri-Mode Exercise Library Client Script with Interactive Front & Back Muscle Avatar:
@@ -298,98 +301,98 @@ const MUSCLE_MAP = {
     fedbCategory: 'Chest',
     catalogTarget: 'Pectorals',
     catalogBodyPart: 'Chest'
-  },
+,
   shoulders: {
     label: 'Shoulders (Deltoids)',
     keywords: ['delt', 'shoulder', 'rotator'],
     fedbCategory: 'Shoulders',
     catalogTarget: 'Delts',
     catalogBodyPart: 'Shoulders'
-  },
+,
   biceps: {
     label: 'Biceps (Arms)',
     keywords: ['bicep', 'brachii', 'brachialis'],
     fedbCategory: 'Biceps',
     catalogTarget: 'Biceps',
     catalogBodyPart: 'Upper Arms'
-  },
+,
   triceps: {
     label: 'Triceps (Arms)',
     keywords: ['tricep'],
     fedbCategory: 'Triceps',
     catalogTarget: 'Triceps',
     catalogBodyPart: 'Upper Arms'
-  },
+,
   forearms: {
     label: 'Forearms & Grip',
     keywords: ['forearm', 'wrist'],
     fedbCategory: 'Forearms',
     catalogTarget: 'Forearms',
     catalogBodyPart: 'Lower Arms'
-  },
+,
   abs: {
     label: 'Abs & Core',
     keywords: ['abdomin', 'core', 'waist', 'transverse', 'oblique', 'sit-up'],
     fedbCategory: 'Abdominals',
     catalogTarget: 'Abs',
     catalogBodyPart: 'Waist'
-  },
+,
   obliques: {
     label: 'External Obliques (Side Core)',
     keywords: ['oblique', 'side', 'twist', 'rotational', 'core', 'waist'],
     fedbCategory: 'Abdominals',
     catalogTarget: 'Abs',
     catalogBodyPart: 'Waist'
-  },
+,
   quads: {
     label: 'Quadriceps (Quads)',
     keywords: ['quad', 'quadriceps', 'squat', 'leg press'],
     fedbCategory: 'Quadriceps',
     catalogTarget: 'Quads',
     catalogBodyPart: 'Upper Legs'
-  },
+,
   hamstrings: {
     label: 'Hamstrings',
     keywords: ['hamstring', 'rdl', 'deadlift', 'leg curl'],
     fedbCategory: 'Hamstrings',
     catalogTarget: 'Hamstrings',
     catalogBodyPart: 'Upper Legs'
-  },
+,
   glutes: {
     label: 'Glutes (Hips)',
     keywords: ['glute', 'thrust', 'hip'],
     fedbCategory: 'Glutes',
     catalogTarget: 'Glutes',
     catalogBodyPart: 'Upper Legs'
-  },
+,
   calves: {
     label: 'Calves',
     keywords: ['calf', 'calves', 'gastrocnemius', 'soleus'],
     fedbCategory: 'Calves',
     catalogTarget: 'Calves',
     catalogBodyPart: 'Lower Legs'
-  },
+,
   lats: {
     label: 'Lats / Back',
     keywords: ['lat', 'back', 'row', 'pulldown', 'rhomboid'],
     fedbCategory: 'Lats',
     catalogTarget: 'Lats',
     catalogBodyPart: 'Back'
-  },
+,
   traps: {
     label: 'Traps (Upper Back/Neck)',
     keywords: ['trapezius', 'trap', 'shrug'],
     fedbCategory: 'Traps',
     catalogTarget: 'Traps',
     catalogBodyPart: 'Back'
-  },
+,
   lowerback: {
     label: 'Lower Back',
     keywords: ['lower back', 'erector', 'spine', 'hyperextension'],
     fedbCategory: 'Lower Back',
     catalogTarget: 'Spine',
     catalogBodyPart: 'Back'
-  }
+
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -400,10 +403,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (window.avatar3D && typeof window.avatar3D.init === 'function') {
     try {
       window.avatar3D.init('avatar-3d-viewport');
-    } catch (err) {
+   catch (err) {
       console.warn("Could not initialize 3D avatar viewport:", err);
-    }
-  }
+  
+
 
   await loadInitialData();
 
@@ -411,12 +414,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const modeParam = urlParams.get('mode');
   if (modeParam === '876' || modeParam === 'catalog') {
     switchLibraryMode(modeParam);
-  }
+
 
   const muscleParam = urlParams.get('muscle');
   if (muscleParam && MUSCLE_MAP[muscleParam.toLowerCase()]) {
     selectMuscle(muscleParam.toLowerCase());
-  }
+
 
   lucide.createIcons();
 });
@@ -433,22 +436,22 @@ function setupEventListeners() {
         if (clearBtn) {
           if (searchQuery) clearBtn.classList.remove('hidden');
           else clearBtn.classList.add('hidden');
-        }
+      
         
         if (currentMode === 'plan') {
           applyPlanFilters();
-        } else if (currentMode === '876') {
+       else if (currentMode === '876') {
           fedbSkip = 0;
           fedbExercises = [];
           loadFedbExercises();
-        } else {
+       else {
           catalogSkip = 0;
           catalogExercises = [];
           loadCatalogExercises();
-        }
-      }, 250);
-    });
-  }
+      
+    , 250);
+  );
+
 
   const equipSelect = document.getElementById('equipment-filter-select');
   if (equipSelect) {
@@ -456,17 +459,17 @@ function setupEventListeners() {
       activeEquipment = e.target.value;
       if (currentMode === 'plan') {
         applyPlanFilters();
-      } else if (currentMode === '876') {
+     else if (currentMode === '876') {
         fedbSkip = 0;
         fedbExercises = [];
         loadFedbExercises();
-      } else {
+     else {
         catalogSkip = 0;
         catalogExercises = [];
         loadCatalogExercises();
-      }
-    });
-  }
+    
+  );
+
 }
 
 function clearSearch() {
@@ -477,15 +480,15 @@ function clearSearch() {
   
   if (currentMode === 'plan') {
     applyPlanFilters();
-  } else if (currentMode === '876') {
+ else if (currentMode === '876') {
     fedbSkip = 0;
     fedbExercises = [];
     loadFedbExercises();
-  } else {
+ else {
     catalogSkip = 0;
     catalogExercises = [];
     loadCatalogExercises();
-  }
+
 }
 
 // -------------------------------------------------------------
@@ -499,30 +502,30 @@ function setupMuscleAvatarListeners() {
     p.addEventListener('mouseenter', () => {
       const title = p.getAttribute('data-title') || p.getAttribute('data-muscle');
       if (tooltip) tooltip.textContent = `Muscle: ${title}`;
-    });
+  );
 
     p.addEventListener('mouseleave', () => {
       if (tooltip) {
         if (selectedMuscle && MUSCLE_MAP[selectedMuscle]) {
           tooltip.textContent = `Active: ${MUSCLE_MAP[selectedMuscle].label}`;
-        } else {
+       else {
           tooltip.textContent = '';
-        }
-      }
-    });
+      
+    
+  );
 
     p.addEventListener('click', () => {
       const muscleKey = p.getAttribute('data-muscle');
       selectMuscle(muscleKey);
-    });
-  });
+  );
+);
 }
 
 function selectMuscle(muscleKey) {
   if (selectedMuscle === muscleKey) {
     clearMuscleFilter();
     return;
-  }
+
 
   selectedMuscle = muscleKey;
   const mInfo = MUSCLE_MAP[muscleKey];
@@ -532,28 +535,28 @@ function selectMuscle(muscleKey) {
   if (window.avatar3D) {
     if (window.avatar3D.selectedMuscleKey !== muscleKey) {
       window.avatar3D.selectMuscle(muscleKey, false);
-    } else if (typeof window.avatar3D.renderAnatomicalCard === 'function') {
+   else if (typeof window.avatar3D.renderAnatomicalCard === 'function') {
       window.avatar3D.renderAnatomicalCard(muscleKey);
-    }
-  }
+  
+
 
   // Update SVG active paths on both front and back
   document.querySelectorAll('.muscle-path').forEach(p => {
     if (p.getAttribute('data-muscle') === muscleKey) {
       p.classList.add('active');
-    } else {
+   else {
       p.classList.remove('active');
-    }
-  });
+  
+);
 
   // Highlight quick chip button
   document.querySelectorAll('.muscle-chip').forEach(c => {
     if (c.getAttribute('data-chip') === muscleKey) {
       c.className = "muscle-chip px-2.5 py-1 rounded-lg bg-cyan-500 text-dark-900 font-black border border-cyan-400 shadow-md shadow-cyan-500/30 transition";
-    } else {
+   else {
       c.className = "muscle-chip px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition";
-    }
-  });
+  
+);
 
   // Show active indicator badge
   const badge = document.getElementById('active-muscle-badge');
@@ -562,7 +565,7 @@ function selectMuscle(muscleKey) {
     text.innerText = mInfo.label;
     badge.classList.remove('hidden');
     badge.classList.add('flex');
-  }
+
 
   const tooltip = document.getElementById('svg-muscle-tooltip');
   if (tooltip) tooltip.textContent = `Active: ${mInfo.label}`;
@@ -570,15 +573,15 @@ function selectMuscle(muscleKey) {
   // Apply to current mode
   if (currentMode === 'plan') {
     applyPlanFilters();
-  } else if (currentMode === '876') {
+ else if (currentMode === '876') {
     fedbSkip = 0;
     fedbExercises = [];
     loadFedbExercises();
-  } else {
+ else {
     catalogSkip = 0;
     catalogExercises = [];
     loadCatalogExercises();
-  }
+
 }
 
 function clearMuscleFilter() {
@@ -588,37 +591,37 @@ function clearMuscleFilter() {
   if (window.avatar3D) {
     if (window.avatar3D.selectedMuscleKey !== null) {
       window.avatar3D.clearSelection(false);
-    }
+  
     if (typeof window.avatar3D.hideAnatomicalCard === 'function') {
       window.avatar3D.hideAnatomicalCard();
-    }
-  }
+  
+
 
   document.querySelectorAll('.muscle-path').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.muscle-chip').forEach(c => {
     c.className = "muscle-chip px-2.5 py-1 rounded-lg bg-dark-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition";
-  });
+);
 
   const badge = document.getElementById('active-muscle-badge');
   if (badge) {
     badge.classList.add('hidden');
     badge.classList.remove('flex');
-  }
+
 
   const tooltip = document.getElementById('svg-muscle-tooltip');
   if (tooltip) tooltip.textContent = '';
 
   if (currentMode === 'plan') {
     applyPlanFilters();
-  } else if (currentMode === '876') {
+ else if (currentMode === '876') {
     fedbSkip = 0;
     fedbExercises = [];
     loadFedbExercises();
-  } else {
+ else {
     catalogSkip = 0;
     catalogExercises = [];
     loadCatalogExercises();
-  }
+
 }
 
 // Expose muscle filters globally for 3D avatar two-way interaction
@@ -637,11 +640,11 @@ function toggleAvatarVisibility() {
     label.innerText = 'Hide';
     if (icon) icon.setAttribute('data-lucide', 'chevron-up');
     if (window.avatar3D) window.avatar3D.onResize();
-  } else {
+ else {
     wrapper.classList.add('hidden');
     label.innerText = 'Show Avatar';
     if (icon) icon.setAttribute('data-lucide', 'chevron-down');
-  }
+
   lucide.createIcons();
 }
 
@@ -658,13 +661,13 @@ function switchAvatarView(viewType) {
     if (btn2D) btn2D.className = "px-2.5 py-1 rounded-md text-[11px] font-bold text-slate-400 hover:text-white bg-transparent transition";
     if (window.avatar3D) {
       setTimeout(() => window.avatar3D.onResize(), 60);
-    }
-  } else {
+  
+ else {
     if (wrapper3D) wrapper3D.classList.add('hidden');
     if (wrapper2D) wrapper2D.classList.remove('hidden');
     if (btn2D) btn2D.className = "px-2.5 py-1 rounded-md text-[11px] font-bold bg-cyan-500 text-dark-900 border border-cyan-400 shadow-sm transition";
     if (btn3D) btn3D.className = "px-2.5 py-1 rounded-md text-[11px] font-bold text-slate-400 hover:text-white bg-transparent transition";
-  }
+
 }
 
 async function loadInitialData() {
@@ -697,21 +700,21 @@ function switchLibraryMode(mode) {
     renderPlanCategoryTabs();
     populatePlanEquipment();
     applyPlanFilters();
-  } else if (mode === '876') {
+ else if (mode === '876') {
     btn876.className = "py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-emerald-600 text-white shadow-md shadow-emerald-600/30";
     renderFedbCategoryTabs();
     populateFedbEquipment();
     fedbSkip = 0;
     fedbExercises = [];
     loadFedbExercises();
-  } else if (mode === 'catalog') {
+ else if (mode === 'catalog') {
     btnCatalog.className = "py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-cyan-600 text-white shadow-md shadow-cyan-600/30";
     renderCatalogCategoryTabs();
     populateCatalogEquipment();
     catalogSkip = 0;
     catalogExercises = [];
     loadCatalogExercises();
-  }
+
 }
 
 // -------------------------------------------------------------
@@ -726,10 +729,10 @@ async function loadPlanExercises() {
       renderPlanCategoryTabs();
       populatePlanEquipment();
       applyPlanFilters();
-    }
-  } catch (err) {
+  
+ catch (err) {
     console.error("Error loading plan exercises:", err);
-  }
+
 }
 
 function renderPlanCategoryTabs() {
@@ -740,7 +743,7 @@ function renderPlanCategoryTabs() {
   planExercises.forEach(ex => {
     const bg = ex.body_group || 'Other';
     counts[bg] = (counts[bg] || 0) + 1;
-  });
+);
 
   container.innerHTML = PLAN_GROUPS.map(g => {
     const count = counts[g] || 0;
@@ -753,14 +756,14 @@ function renderPlanCategoryTabs() {
           isActive 
             ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25' 
             : 'bg-dark-900/90 text-slate-300 hover:text-white border border-slate-800'
-        }">
+      ">
         <span>${g}</span>
         <span class="px-1.5 py-0.2 rounded-full text-[10px] ${
           isActive ? 'bg-dark-950/40 text-white font-black' : 'bg-dark-800 text-slate-400'
-        }">${count}</span>
+      ">${count}</span>
       </button>
     `;
-  }).join('');
+).join('');
 }
 
 function setPlanGroupFilter(group) {
@@ -779,9 +782,9 @@ function populatePlanEquipment() {
       ex.equipment.split(/[/,&]/).forEach(e => {
         const clean = e.trim();
         if (clean && clean.length > 2) equipSet.add(clean);
-      });
-    }
-  });
+    );
+  
+);
 
   const sorted = Array.from(equipSet).sort();
   equipSelect.innerHTML = `<option value="All">All Equipment (${planExercises.length})</option>` + 
@@ -796,21 +799,21 @@ function applyPlanFilters() {
       const allText = `${ex.name} ${ex.display_name} ${(ex.primary_muscles || []).join(' ')} ${(ex.secondary_muscles || []).join(' ')} ${ex.category} ${ex.body_group}`.toLowerCase();
       const matches = mInfo.keywords.some(k => allText.includes(k));
       if (!matches) return false;
-    }
+  
 
     // 2. Category Tab Filter
     if (activePlanGroup !== 'All') {
       if ((ex.body_group || '').toLowerCase() !== activePlanGroup.toLowerCase()) {
         return false;
-      }
-    }
+    
+  
 
     // 3. Equipment Filter
     if (activeEquipment !== 'All') {
       if (!ex.equipment || !ex.equipment.toLowerCase().includes(activeEquipment.toLowerCase())) {
         return false;
-      }
-    }
+    
+  
 
     // 4. Movement Pattern Filter (Push / Pull / Legs / Core)
     if (activePattern !== 'All') {
@@ -819,7 +822,7 @@ function applyPlanFilters() {
       if (activePattern === 'Pull' && !['back', 'lat', 'bicep', 'pull', 'row'].some(k => allText.includes(k))) return false;
       if (activePattern === 'Legs' && !['leg', 'quad', 'hamstring', 'glute', 'calf', 'squat', 'lunge'].some(k => allText.includes(k))) return false;
       if (activePattern === 'Core' && !['core', 'ab', 'plank', 'crunch'].some(k => allText.includes(k))) return false;
-    }
+  
 
     // 4. Search Filter
     if (searchQuery) {
@@ -836,9 +839,9 @@ function applyPlanFilters() {
         pMuscles.includes(searchQuery) ||
         sMuscles.includes(searchQuery) ||
         cues.includes(searchQuery);
-    }
+  
     return true;
-  });
+);
 
   renderPlanGrid();
 }
@@ -850,7 +853,7 @@ function renderPlanGrid() {
 
   if (countBadge) {
     countBadge.innerText = `${musclePrefix}Showing ${filteredPlanExercises.length} of ${planExercises.length} plan exercises`;
-  }
+
 
   if (filteredPlanExercises.length === 0) {
     container.innerHTML = `
@@ -865,7 +868,7 @@ function renderPlanGrid() {
     `;
     lucide.createIcons();
     return;
-  }
+
 
   container.innerHTML = filteredPlanExercises.map(ex => {
     const images = ex.images || [];
@@ -963,7 +966,7 @@ function renderPlanGrid() {
         </div>
       </div>
     `;
-  }).join('');
+).join('');
 
   lucide.createIcons();
 }
@@ -977,9 +980,9 @@ async function loadFedbMetadata() {
     const data = await res.json();
     fedbCategories = ['All', ...(data.categories || [])];
     fedbTotal = data.total_exercises || 876;
-  } catch (err) {
+ catch (err) {
     console.error("Error loading 876 metadata:", err);
-  }
+
 }
 
 function renderFedbCategoryTabs() {
@@ -996,11 +999,11 @@ function renderFedbCategoryTabs() {
           isActive 
             ? 'bg-emerald-500 text-dark-900 shadow-md shadow-emerald-500/25 font-extrabold' 
             : 'bg-dark-900/90 text-slate-300 hover:text-white border border-slate-800'
-        }">
+      ">
         <span>${cat}</span>
       </button>
     `;
-  }).join('');
+).join('');
 }
 
 function setFedbCategoryFilter(cat) {
@@ -1021,9 +1024,9 @@ async function populateFedbEquipment() {
     const sorted = data.equipment || [];
     equipSelect.innerHTML = `<option value="All">All Equipment (876)</option>` + 
       sorted.map(eq => `<option value="${eq}">${eq}</option>`).join('');
-  } catch (err) {
+ catch (err) {
     console.error("Error populating 876 equipment:", err);
-  }
+
 }
 
 async function loadFedbExercises(append = false) {
@@ -1037,13 +1040,13 @@ async function loadFedbExercises(append = false) {
       </div>
     `;
     lucide.createIcons();
-  }
+
 
   try {
     const params = new URLSearchParams({
       limit: FEDB_PAGE_SIZE,
       skip: fedbSkip
-    });
+  );
 
     if (activeFedbCategory !== 'All') params.set('category', activeFedbCategory);
     if (activeEquipment !== 'All') params.set('equipment', activeEquipment);
@@ -1051,10 +1054,10 @@ async function loadFedbExercises(append = false) {
     // Muscle Avatar filter
     if (selectedMuscle && MUSCLE_MAP[selectedMuscle]) {
       params.set('muscle', MUSCLE_MAP[selectedMuscle].fedbCategory);
-    }
+  
     if (searchQuery) {
       params.set('search', searchQuery);
-    }
+  
 
     const res = await fetch(`/api/catalog-876?${params.toString()}`);
     const data = await res.json();
@@ -1064,14 +1067,14 @@ async function loadFedbExercises(append = false) {
 
     if (append) {
       fedbExercises = [...fedbExercises, ...newItems];
-    } else {
+   else {
       fedbExercises = newItems;
-    }
+  
 
     renderFedbGrid();
-  } catch (err) {
+ catch (err) {
     console.error("Error querying 876 dataset:", err);
-  }
+
 }
 
 function renderFedbGrid() {
@@ -1081,7 +1084,7 @@ function renderFedbGrid() {
 
   if (countBadge) {
     countBadge.innerText = `${musclePrefix}Showing ${fedbExercises.length} of ${fedbTotal} exercises (Free-Exercise-DB 876)`;
-  }
+
 
   if (fedbExercises.length === 0) {
     container.innerHTML = `
@@ -1096,7 +1099,7 @@ function renderFedbGrid() {
     `;
     lucide.createIcons();
     return;
-  }
+
 
   container.innerHTML = fedbExercises.map((ex, idx) => {
     const images = ex.images || [];
@@ -1195,7 +1198,7 @@ function renderFedbGrid() {
         </div>
       </div>
     `;
-  }).join('');
+).join('');
 
   if (fedbExercises.length < fedbTotal) {
     const loadMoreHtml = `
@@ -1209,7 +1212,7 @@ function renderFedbGrid() {
       </div>
     `;
     container.insertAdjacentHTML('beforeend', loadMoreHtml);
-  }
+
 
   lucide.createIcons();
 }
@@ -1239,7 +1242,7 @@ function openFedbModal(idx) {
         </div>
       </div>
     `).join('');
-  }
+
 
   const videoBtn = document.getElementById('guide-modal-video-link');
   const query = encodeURIComponent(ex.video_query || `how to do ${ex.name} exercise proper form`);
@@ -1278,9 +1281,9 @@ async function loadCatalogMetadata() {
     const data = await res.json();
     catalogBodyParts = ['All', ...(data.body_parts || [])];
     catalogTotal = data.total_exercises || 1324;
-  } catch (err) {
+ catch (err) {
     console.error("Error loading catalog metadata:", err);
-  }
+
 }
 
 function renderCatalogCategoryTabs() {
@@ -1297,11 +1300,11 @@ function renderCatalogCategoryTabs() {
           isActive 
             ? 'bg-cyan-500 text-dark-900 shadow-md shadow-cyan-500/25 font-extrabold' 
             : 'bg-dark-900/90 text-slate-300 hover:text-white border border-slate-800'
-        }">
+      ">
         <span>${part}</span>
       </button>
     `;
-  }).join('');
+).join('');
 }
 
 function setCatalogPartFilter(part) {
@@ -1322,9 +1325,9 @@ async function populateCatalogEquipment() {
     const sorted = data.equipment || [];
     equipSelect.innerHTML = `<option value="All">All Equipment (1,324)</option>` + 
       sorted.map(eq => `<option value="${eq}">${eq}</option>`).join('');
-  } catch (err) {
+ catch (err) {
     console.error("Error populating catalog equipment:", err);
-  }
+
 }
 
 async function loadCatalogExercises(append = false) {
@@ -1338,13 +1341,13 @@ async function loadCatalogExercises(append = false) {
       </div>
     `;
     lucide.createIcons();
-  }
+
 
   try {
     const params = new URLSearchParams({
       limit: CATALOG_PAGE_SIZE,
       skip: catalogSkip
-    });
+  );
 
     if (activeCatalogPart !== 'All') params.set('body_part', activeCatalogPart);
     if (activeEquipment !== 'All') params.set('equipment', activeEquipment);
@@ -1354,10 +1357,10 @@ async function loadCatalogExercises(append = false) {
       const mInfo = MUSCLE_MAP[selectedMuscle];
       if (mInfo.catalogTarget) params.set('target', mInfo.catalogTarget);
       if (mInfo.catalogBodyPart) params.set('body_part', mInfo.catalogBodyPart);
-    }
+  
     if (searchQuery) {
       params.set('search', searchQuery);
-    }
+  
 
     const res = await fetch(`/api/catalog?${params.toString()}`);
     const data = await res.json();
@@ -1367,14 +1370,14 @@ async function loadCatalogExercises(append = false) {
 
     if (append) {
       catalogExercises = [...catalogExercises, ...newItems];
-    } else {
+   else {
       catalogExercises = newItems;
-    }
+  
 
     renderCatalogGrid();
-  } catch (err) {
+ catch (err) {
     console.error("Error querying ExerciseDB catalog:", err);
-  }
+
 }
 
 function renderCatalogGrid() {
@@ -1384,7 +1387,7 @@ function renderCatalogGrid() {
 
   if (countBadge) {
     countBadge.innerText = `${musclePrefix}Showing ${catalogExercises.length} of ${catalogTotal} global exercises (ExerciseDB)`;
-  }
+
 
   if (catalogExercises.length === 0) {
     container.innerHTML = `
@@ -1399,7 +1402,7 @@ function renderCatalogGrid() {
     `;
     lucide.createIcons();
     return;
-  }
+
 
   container.innerHTML = catalogExercises.map((ex, idx) => {
     const gifUrl = ex.gif_url || '';
@@ -1493,7 +1496,7 @@ function renderCatalogGrid() {
         </div>
       </div>
     `;
-  }).join('');
+).join('');
 
   if (catalogExercises.length < catalogTotal) {
     const loadMoreHtml = `
@@ -1507,7 +1510,7 @@ function renderCatalogGrid() {
       </div>
     `;
     container.insertAdjacentHTML('beforeend', loadMoreHtml);
-  }
+
 
   lucide.createIcons();
 }
@@ -1536,13 +1539,13 @@ function openCatalogModal(idx) {
         </span>
       </div>
     `;
-  } else {
+ else {
     photosContainer.innerHTML = `
       <div class="col-span-2 py-8 text-center text-slate-500 bg-dark-900/60 rounded-xl border border-slate-800">
         <p class="text-xs">Visual demonstration available in video guide.</p>
       </div>
     `;
-  }
+
 
   const videoBtn = document.getElementById('guide-modal-video-link');
   const query = encodeURIComponent(ex.video_query || `how to do ${ex.name} exercise proper form`);
@@ -1591,13 +1594,13 @@ async function openExerciseGuideModal(exerciseName) {
           </div>
         </div>
       `).join('');
-    } else {
+   else {
       photosContainer.innerHTML = `
         <div class="col-span-2 py-8 text-center text-slate-500 bg-dark-900/60 rounded-xl border border-slate-800">
           <p class="text-xs">Visual demonstration available in video guide.</p>
         </div>
       `;
-    }
+  
 
     const videoBtn = document.getElementById('guide-modal-video-link');
     const query = encodeURIComponent(media.video_query || `how to do ${exerciseName} exercise proper form`);
@@ -1625,9 +1628,9 @@ async function openExerciseGuideModal(exerciseName) {
     document.getElementById('exercise-guide-modal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     lucide.createIcons();
-  } catch (err) {
+ catch (err) {
     console.error("Error opening exercise guide:", err);
-  }
+
 }
 
 function closeExerciseGuideModal() {
@@ -1638,5 +1641,26 @@ function closeExerciseGuideModal() {
 function handleBackdropClick(event, modalId) {
   if (event.target.id === modalId) {
     if (modalId === 'exercise-guide-modal') closeExerciseGuideModal();
+    else if (modalId === 'routine-drawer-modal') closeRoutineDrawer();
+    else if (modalId === 'routine-drawer-modal') closeRoutineDrawer();
+
+}
+
+// Global Escape Key to close modals
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeExerciseGuideModal();
+    closeRoutineDrawer();
   }
+});
+
+// Global Escape Key to close modals
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeExerciseGuideModal();
+    closeRoutineDrawer();
+
+});
+
+
 }

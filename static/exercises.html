@@ -375,9 +375,14 @@
   </nav>
 
   <!-- EXERCISE FORM, PHOTOS & VIDEO DEMO MODAL -->
-  <div id="exercise-guide-modal" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/90 backdrop-blur-md overflow-hidden" onclick="handleBackdropClick(event, 'exercise-guide-modal')">
+  <div id="exercise-guide-modal" class="fixed inset-0 z-[60] hidden flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/90 backdrop-blur-md overflow-hidden" onclick="handleBackdropClick(event, 'exercise-guide-modal')">
     <div class="mobile-sheet-modal glass-panel bg-dark-850 max-w-2xl w-full flex flex-col border border-cyan-500/30 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
       
+      <!-- Mobile Sheet Drag Handle -->
+      <div class="sm:hidden pt-2.5 pb-1 cursor-grab" onclick="closeExerciseGuideModal()">
+        <div class="w-12 h-1.5 bg-slate-600 rounded-full mx-auto"></div>
+      </div>
+
       <!-- Modal Header -->
       <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-dark-900/80 shrink-0">
         <div class="flex items-center space-x-2.5">
@@ -475,8 +480,8 @@
   </div>
 
   <!-- Custom Routine Slide-Over Drawer Modal -->
-  <div id="routine-drawer-modal" class="hidden fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm flex justify-end">
-    <div class="relative w-full max-w-md bg-dark-900 border-l border-slate-800 h-full flex flex-col justify-between shadow-2xl">
+  <div id="routine-drawer-modal" class="hidden fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm flex justify-end" onclick="handleBackdropClick(event, 'routine-drawer-modal')">
+    <div class="relative w-full max-w-md bg-dark-900 border-l border-slate-800 h-full flex flex-col justify-between shadow-2xl" onclick="event.stopPropagation()">
       <!-- Header -->
       <div class="p-4 border-b border-slate-800 flex items-center justify-between">
         <div class="flex items-center space-x-2.5">
