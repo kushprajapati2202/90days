@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+@theme {
+  --color-volt: #CCFF00;
+  --color-brand-volt: #CCFF00;
+  --color-brand-emerald: #10B981;
+  --color-brand-cyan: #06B6D4;
+  --color-brand-amber: #F59E0B;
+  --color-brand-rose: #F43F5E;
+  --color-dark-950: #05070D;
+  --color-dark-900: #09090D;
+  --color-dark-850: #121217;
+  --color-dark-800: #1A1A22;
+  --color-dark-750: #22222E;
+  --color-dark-700: #2D2D3B;
+  --color-dark-600: #3F3F50;
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: Outfit, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+:root {
+  --bg-main: #09090D;
+  --bg-card: #121217;
+  --volt: #CCFF00;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: #f4f4f5;
+  min-height: 100vh;
+  padding-bottom: calc(74px + env(safe-area-inset-bottom, 16px));
+  overflow-x: hidden;
+}
+
+@media (min-width: 768px) {
+  body {
+    padding-bottom: 2rem;
+  }
+}
+
+/* Prevent auto-zoom on inputs in iOS */
+input, select, textarea {
+  font-size: 16px !important;
+}
+@media (min-width: 640px) {
+  input, select, textarea {
+    font-size: 14px !important;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #09090D;
+}
+::-webkit-scrollbar-thumb {
+  background: #22222E;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3F3F50;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

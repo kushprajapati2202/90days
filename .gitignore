@@ -6,4 +6,7 @@ env/
 venv/
 .idea/
 .vscode/
+node_modules/
+frontend/node_modules/
+static_legacy/
 
