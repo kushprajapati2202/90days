@@ -399,21 +399,75 @@ def update_day(day_number: int, data: DayUpdateModel):
     db.workout_days.update_one({"day_number": day_number}, {"$set": update_fields})
     updated = db.workout_days.find_one({"day_number": day_number}, {"_id": 0})
     if updated:
-        updated["completion_percentage"] = calculate_day_completion(updated)
+        pct = calculate_day_completion(updated)
+        # AUTO-SYNC: If exercises are 100% completed, automatically consider day as completed
+        if pct >= 100.0:
+            if not updated.get("completed"):
+                now_iso = datetime.now(timezone.utc).isoformat()
+                db.workout_days.update_one(
+                    {"day_number": day_number},
+                    {"$set": {"completed": True, "completed_at": now_iso}}
+                )
+                updated["completed"] = True
+                updated["completed_at"] = now_iso
+        else:
+            # If exercises are not 100% completed, day is not considered completed
+            warmups = updated.get("warmup_stretches") or []
+            exercises = updated.get("parsed_exercises") or []
+            cooldowns = updated.get("cooldown_stretches") or []
+            has_items = bool(warmups or exercises or cooldowns or updated.get("bodyweight_conditioning") or updated.get("cardio"))
+            if has_items and updated.get("completed"):
+                db.workout_days.update_one(
+                    {"day_number": day_number},
+                    {"$set": {"completed": False, "completed_at": None}}
+                )
+                updated["completed"] = False
+                updated["completed_at"] = None
+
+        updated["completion_percentage"] = pct
     return {"status": "success", "day": updated}
 
 @router.post("/days/{day_number}/toggle")
 def toggle_day_completion(day_number: int):
-    """Quick toggle day completion."""
+    """Quick toggle day completion.
+    When marked completed, marks all exercises/sets/stretches done (100%).
+    When unmarked, resets them to incomplete (0%)."""
     db = get_db()
     day = db.workout_days.find_one({"day_number": day_number})
     if not day:
         raise HTTPException(status_code=404, detail=f"Day {day_number} not found")
 
     new_status = not day.get("completed", False)
+
+    warmups = day.get("warmup_stretches") or []
+    for w in warmups:
+        w["completed"] = new_status
+
+    exercises = day.get("parsed_exercises") or []
+    for ex in exercises:
+        sets = ex.get("logged_sets") or []
+        if not sets:
+            target = ex.get("target") or ""
+            m = re.match(r"^(\d+)", target)
+            planned = int(m.group(1)) if m else 3
+            sets = [{"set_num": i + 1, "weight_kg": "", "reps": "", "completed": new_status} for i in range(planned)]
+            ex["logged_sets"] = sets
+        else:
+            for s in sets:
+                s["completed"] = new_status
+
+    cooldowns = day.get("cooldown_stretches") or []
+    for c in cooldowns:
+        c["completed"] = new_status
+
     update = {
         "completed": new_status,
-        "completed_at": datetime.now(timezone.utc).isoformat() if new_status else None
+        "completed_at": datetime.now(timezone.utc).isoformat() if new_status else None,
+        "warmup_stretches": warmups,
+        "parsed_exercises": exercises,
+        "cooldown_stretches": cooldowns,
+        "conditioning_completed": new_status,
+        "cardio_completed": new_status,
     }
     db.workout_days.update_one({"day_number": day_number}, {"$set": update})
     updated_day = db.workout_days.find_one({"day_number": day_number}, {"_id": 0})
@@ -423,7 +477,8 @@ def toggle_day_completion(day_number: int):
         "day_number": day_number,
         "completed": new_status,
         "completed_at": update["completed_at"],
-        "completion_percentage": pct
+        "completion_percentage": pct,
+        "day": updated_day
     }
 
 @router.get("/stats")

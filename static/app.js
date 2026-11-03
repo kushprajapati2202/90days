@@ -646,13 +646,20 @@ async function toggleDayCompletionDirect(dayNumber, event) {
       if (data.completion_percentage !== undefined) {
         d.completion_percentage = data.completion_percentage;
       }
+      if (data.day) {
+        d.warmup_stretches = data.day.warmup_stretches;
+        d.parsed_exercises = data.day.parsed_exercises;
+        d.cooldown_stretches = data.day.cooldown_stretches;
+        d.conditioning_completed = data.day.conditioning_completed;
+        d.cardio_completed = data.day.cardio_completed;
+      }
     }
     
     renderSingleCard(dayNumber);
     recalculateStatsOnTheFly();
     
     if (data.completed) {
-      showToast(`Day ${dayNumber} completed! Keep going Kush 🔥`, 'success');
+      showToast(`Day ${dayNumber} 100% completed! Keep going Kush 🔥`, 'success');
     } else {
       showToast(`Day ${dayNumber} set to pending`, 'info');
     }
@@ -707,7 +714,13 @@ function openWorkoutModal(dayNumber) {
   document.getElementById('input-modal-rpe').value = rpeVal;
   updateRpeLabel(rpeVal);
 
-  document.getElementById('modal-completed-checkbox').checked = !!day.completed;
+  const initialStats = getDayCompletionStats(currentModalDay);
+  if (initialStats.percentage === 100) {
+    currentModalDay.completed = true;
+    document.getElementById('modal-completed-checkbox').checked = true;
+  } else {
+    document.getElementById('modal-completed-checkbox').checked = !!day.completed;
+  }
 
   // Initialize auto-save indicator
   const indicator = document.getElementById('modal-autosave-indicator');
@@ -731,10 +744,29 @@ let hasPendingModalSave = false;
 function triggerModalAutoSave(immediate = false) {
   if (!currentModalDay) return;
 
-  // 1. Synchronize form inputs into currentModalDay
+  // 1. Calculate granular completion percentage from exercises/stretches
+  const stats = getDayCompletionStats(currentModalDay);
+  const wasCompleted = !!currentModalDay.completed;
   const chk = document.getElementById('modal-completed-checkbox');
-  if (chk) currentModalDay.completed = chk.checked;
 
+  // AUTO-COMPLETION RULE:
+  // If exercises reach 100%, automatically consider the day as completed!
+  // If exercises are below 100% and there are items, mark as incomplete.
+  if (stats.percentage === 100) {
+    currentModalDay.completed = true;
+    if (chk) chk.checked = true;
+    if (!wasCompleted) {
+      showToast(`🎉 100% Completed! Day ${currentModalDay.day_number} marked as Completed!`, 'success');
+    }
+  } else if (stats.totalItems > 0) {
+    currentModalDay.completed = false;
+    if (chk) chk.checked = false;
+  } else if (chk) {
+    // Pure rest day with 0 items: defer to checkbox
+    currentModalDay.completed = chk.checked;
+  }
+
+  // 2. Synchronize form inputs into currentModalDay
   const wInput = document.getElementById('input-modal-weight');
   if (wInput) currentModalDay.actual_weight_kg = wInput.value ? parseFloat(wInput.value) : null;
 
@@ -750,7 +782,7 @@ function triggerModalAutoSave(immediate = false) {
   const nInput = document.getElementById('input-modal-notes');
   if (nInput) currentModalDay.user_notes = nInput.value || '';
 
-  // 2. Synchronize to allDays in memory
+  // 3. Synchronize to allDays in memory
   const day = allDays.find(d => d.day_number === currentModalDay.day_number);
   if (day) {
     day.completed = currentModalDay.completed;
@@ -765,21 +797,21 @@ function triggerModalAutoSave(immediate = false) {
     day.conditioning_completed = currentModalDay.conditioning_completed;
     day.cardio_completed = currentModalDay.cardio_completed;
     day._conditioning_items = currentModalDay._conditioning_items;
-    day.completion_percentage = getDayCompletionStats(day).percentage;
+    day.completion_percentage = stats.percentage;
   }
 
-  // 3. Update UI on the fly
+  // 4. Update UI on the fly
   updateModalProgress();
   renderSingleCard(currentModalDay.day_number);
   recalculateStatsOnTheFly();
 
-  // 4. Update status indicator
+  // 5. Update status indicator
   const indicator = document.getElementById('modal-autosave-indicator');
   if (indicator) {
     indicator.innerHTML = `<span class="text-amber-400 flex items-center space-x-1"><svg class="animate-spin w-3 h-3 text-amber-400 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg><span>Saving...</span></span>`;
   }
 
-  // 5. Debounce or execute save
+  // 6. Debounce or execute save
   if (modalAutoSaveTimer) {
     clearTimeout(modalAutoSaveTimer);
     modalAutoSaveTimer = null;
@@ -811,7 +843,7 @@ async function performModalSave() {
   const indicator = document.getElementById('modal-autosave-indicator');
 
   try {
-    const isCompleted = document.getElementById('modal-completed-checkbox')?.checked ?? !!currentModalDay.completed;
+    const isCompleted = !!currentModalDay.completed;
     const weightVal = document.getElementById('input-modal-weight')?.value;
     const stepsVal = document.getElementById('input-modal-steps')?.value;
     const durationVal = document.getElementById('input-modal-duration')?.value;
@@ -844,7 +876,12 @@ async function performModalSave() {
     const idx = allDays.findIndex(d => d.day_number === dayNumber);
     if (idx !== -1 && data.day) {
       allDays[idx] = data.day;
+      if (currentModalDay && currentModalDay.day_number === dayNumber) {
+        currentModalDay.completed = data.day.completed;
+      }
     }
+    renderSingleCard(dayNumber);
+    recalculateStatsOnTheFly();
 
     if (indicator) {
       indicator.innerHTML = `<span class="text-emerald-400 flex items-center space-x-1"><i data-lucide="cloud-check" class="w-3.5 h-3.5 text-emerald-400"></i><span>Auto-saved</span></span>`;
@@ -879,11 +916,7 @@ function closeWorkoutModal() {
 function updateModalProgress() {
   if (!currentModalDay) return;
 
-  const chk = document.getElementById('modal-completed-checkbox');
-  const isDone = chk ? chk.checked : !!currentModalDay.completed;
-  
-  const tempDay = { ...currentModalDay, completed: isDone };
-  const stats = getDayCompletionStats(tempDay);
+  const stats = getDayCompletionStats(currentModalDay);
   const pct = stats.percentage;
 
   const pctEl = document.getElementById('modal-progress-pct');
@@ -918,7 +951,59 @@ function updateModalProgress() {
 
 function handleModalCompletedToggle(checked) {
   if (!currentModalDay) return;
+
+  // When manually toggling completed:
+  // If checked = true: mark all warmups, sets, conditioning, cardio, cooldowns as completed (100%)
+  // If checked = false: mark all items as incomplete (0%)
+  if (currentModalDay.warmup_stretches) {
+    currentModalDay.warmup_stretches.forEach(s => { s.completed = checked; });
+  }
+
+  if (currentModalDay.parsed_exercises) {
+    currentModalDay.parsed_exercises.forEach(ex => {
+      if (!ex.logged_sets || ex.logged_sets.length === 0) {
+        let planned = 3;
+        if (ex.target) {
+          const m = ex.target.match(/^(\d+)/);
+          if (m) planned = parseInt(m[1]);
+        }
+        ex.logged_sets = Array.from({ length: planned }, (_, i) => ({
+          set_num: i + 1,
+          weight_kg: '',
+          reps: '',
+          completed: checked
+        }));
+      } else {
+        ex.logged_sets.forEach(s => { s.completed = checked; });
+      }
+    });
+  }
+
+  if (currentModalDay._conditioning_items) {
+    currentModalDay._conditioning_items.forEach(i => { i.completed = checked; });
+  }
+  currentModalDay.conditioning_completed = checked;
+  currentModalDay.cardio_completed = checked;
+
+  if (currentModalDay.cooldown_stretches) {
+    currentModalDay.cooldown_stretches.forEach(c => { c.completed = checked; });
+  }
+
   currentModalDay.completed = checked;
+
+  // Re-render modal sections to reflect the new state immediately
+  renderModalWarmupStretches(currentModalDay);
+  renderModalExercises(currentModalDay);
+  renderModalConditioning(currentModalDay);
+  renderModalCardio(currentModalDay);
+  renderModalCooldownStretches(currentModalDay);
+
+  if (checked) {
+    showToast(`Day ${currentModalDay.day_number} 100% completed! Keep it up Kush 🔥`, 'success');
+  } else {
+    showToast(`Day ${currentModalDay.day_number} reset to pending`, 'info');
+  }
+
   triggerModalAutoSave(true);
 }
 
