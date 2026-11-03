@@ -128,6 +128,21 @@ export const api = {
     }
   },
 
+  // Unified Movement Vault (2,200+ exercises)
+  async getVaultExercises({ group = 'All', equipment = 'All', search = '', page = 1, limit = 48 } = {}) {
+    const params = new URLSearchParams();
+    if (group && group !== 'All') params.append('group', group);
+    if (equipment && equipment !== 'All') params.append('equipment', equipment);
+    if (search && search.trim()) params.append('search', search.trim());
+    params.append('page', page);
+    params.append('limit', limit);
+    return request(`/exercises/vault?${params.toString()}`);
+  },
+
+  async getVaultFilters() {
+    return request('/exercises/vault/filters');
+  },
+
   // Exercise Library
   async getExercises(group = 'All', category = 'All', search = '') {
     const params = new URLSearchParams();

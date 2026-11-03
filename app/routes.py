@@ -9,6 +9,7 @@ from app.models import DayUpdateModel, ProfileUpdateModel, WeightLogCreateModel
 from app.seeder import seed_database
 from app.exercise_media import EXERCISE_MEDIA_DATABASE, STRETCHES_AND_CARDIO_DATABASE, get_exercise_media
 from app.calories import calculate_day_calories, get_exercise_met, calculate_set_calories
+from app.catalog_service import query_vault, get_vault_filters
 
 logger = logging.getLogger("workout_app")
 router = APIRouter()
@@ -114,6 +115,25 @@ def get_exercises_media(name: Optional[str] = None):
     if name:
         return get_exercise_media(name)
     return EXERCISE_MEDIA_DATABASE
+
+@router.get("/exercises/vault")
+def get_vault_exercises_endpoint(
+    group: Optional[str] = None,
+    equipment: Optional[str] = None,
+    search: Optional[str] = None,
+    page: int = Query(1, ge=1),
+    limit: int = Query(48, ge=1, le=100)
+):
+    """Query the unified 2,200+ exercise library with pagination, muscle/group, and equipment filters."""
+    skip = (page - 1) * limit
+    res = query_vault(group=group, equipment=equipment, search=search, skip=skip, limit=limit)
+    res["page"] = page
+    return res
+
+@router.get("/exercises/vault/filters")
+def get_vault_filters_endpoint():
+    """Return live movement counts per category and equipment for the 2,200+ exercise library."""
+    return get_vault_filters()
 
 @router.get("/exercises")
 def get_all_exercises(

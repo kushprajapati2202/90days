@@ -15,77 +15,115 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
     : `https://www.youtube.com/results?search_query=${encodeURIComponent((exercise.display_name || exercise.name) + ' proper form')}`;
 
   return (
-    <div class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
-      <div class="w-full max-w-lg bg-dark-850 border border-white/[0.1] rounded-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+      <div className="w-full max-w-lg bg-dark-850 border border-white/[0.1] rounded-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
         {/* Header */}
-        <div class="p-3.5 sm:p-4 border-b border-white/[0.08] bg-dark-900 flex items-center justify-between shrink-0">
-          <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-volt">
-              {exercise.category || 'Strength Movement'}
-            </span>
-            <h3 class="text-sm sm:text-base font-bold text-white font-heading line-clamp-1">
+        <div className="p-3.5 sm:p-4 border-b border-white/[0.08] bg-dark-900 flex items-center justify-between shrink-0">
+          <div className="space-y-0.5">
+            <div className="flex items-center space-x-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-volt">
+                {exercise.body_group || exercise.category || 'Strength Movement'}
+              </span>
+              {exercise.is_plan && (
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-volt text-dark-950 uppercase">
+                  90-Day Plan Core
+                </span>
+              )}
+              {exercise.level && (
+                <span className="text-[10px] text-zinc-400 font-mono">
+                  • {exercise.level}
+                </span>
+              )}
+            </div>
+            <h3 className="text-sm sm:text-base font-bold text-white font-heading line-clamp-1">
               {exercise.display_name || exercise.name}
             </h3>
           </div>
-          <button onClick={onClose} class="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition">
-            <X class="w-5 h-5" />
+          <button
+            onClick={onClose}
+            className="text-zinc-400 hover:text-white p-1.5 rounded-xl hover:bg-white/5 transition"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Scrollable content */}
-        <div class="flex-1 overflow-y-auto p-4 space-y-4">
-          {/* Dual photo demonstration carousel */}
-          {photos.length > 0 && (
-            <div class="space-y-2">
-              <div class="w-full h-56 sm:h-64 rounded-2xl bg-dark-900 overflow-hidden border border-white/[0.06] relative">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Visual photo / GIF demonstration */}
+          {photos.length > 0 ? (
+            <div className="space-y-2">
+              <div className="w-full h-60 sm:h-68 rounded-2xl bg-black overflow-hidden border border-white/[0.08] relative flex items-center justify-center">
                 <img
-                  src={photos[activePhotoIdx]}
-                  alt="Exercise demonstration"
-                  class="w-full h-full object-cover object-center"
+                  src={photos[Math.min(activePhotoIdx, photos.length - 1)]}
+                  alt={exercise.name}
+                  className="max-h-full max-w-full object-contain"
                 />
-                <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-dark-950/80 backdrop-blur-md text-[10px] font-bold text-zinc-300">
-                  {activePhotoIdx === 0 ? 'Phase 1: Starting Setup' : 'Phase 2: Peak Contraction'}
+                <span className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-md bg-dark-950/85 backdrop-blur-md text-[10px] font-bold text-zinc-200 border border-white/10">
+                  {photos.length > 1
+                    ? (activePhotoIdx === 0 ? 'Phase 1: Starting Setup' : 'Phase 2: Peak Contraction')
+                    : 'Movement Demonstration'}
                 </span>
               </div>
 
               {photos.length > 1 && (
-                <div class="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   {photos.map((src, i) => (
                     <button
                       key={i}
                       onClick={() => setActivePhotoIdx(i)}
-                      class={`p-1 rounded-xl border text-left flex items-center space-x-2 transition ${
+                      className={`p-1.5 rounded-xl border text-left flex items-center space-x-2.5 transition ${
                         activePhotoIdx === i
                           ? 'border-volt bg-volt/10 text-white font-bold'
                           : 'border-white/[0.06] bg-dark-900 text-zinc-400 hover:bg-white/5'
                       }`}
                     >
-                      <img src={src} alt="thumb" class="w-9 h-9 rounded-lg object-cover" />
-                      <span class="text-[11px]">{i === 0 ? 'Starting Setup' : 'Peak Contraction'}</span>
+                      <img src={src} alt="thumb" className="w-10 h-10 rounded-lg object-cover bg-black" />
+                      <div className="text-[11px] leading-tight">
+                        <span className="block font-semibold text-white">
+                          {i === 0 ? 'Phase 1: Setup' : 'Phase 2: Peak'}
+                        </span>
+                        <span className="text-[10px] text-zinc-400">Tap to inspect</span>
+                      </div>
                     </button>
                   ))}
                 </div>
               )}
             </div>
+          ) : (
+            <div className="w-full h-36 rounded-2xl bg-dark-900 border border-white/[0.06] flex flex-col items-center justify-center text-zinc-500 space-y-1">
+              <Dumbbell className="w-8 h-8 text-zinc-600" />
+              <span className="text-xs text-zinc-400">Visual demonstration available via Video Guide below</span>
+            </div>
           )}
 
           {/* Muscles & Equipment */}
-          <div class="p-3.5 rounded-2xl bg-dark-900 border border-white/[0.06] space-y-2">
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-zinc-400 font-bold">Equipment:</span>
-              <span class="text-white font-medium">{exercise.equipment || 'Gym Equipment'}</span>
+          <div className="p-3.5 rounded-2xl bg-dark-900 border border-white/[0.06] space-y-2.5">
+            <div className="flex items-center justify-between text-xs pb-2 border-b border-white/[0.04]">
+              <span className="text-zinc-400 font-bold">Equipment Needed:</span>
+              <span className="text-white font-semibold px-2 py-0.5 rounded bg-white/5 border border-white/10">
+                {exercise.equipment || exercise.raw_equipment || 'Bodyweight / Gym Equipment'}
+              </span>
             </div>
 
             <div>
-              <span class="text-[10px] font-bold uppercase text-zinc-500 block mb-1">Target Muscles</span>
-              <div class="flex flex-wrap gap-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1.5">
+                Target Muscles Worked
+              </span>
+              <div className="flex flex-wrap gap-1.5">
                 {primary.map((m, i) => (
-                  <span key={i} class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-volt/15 text-volt border border-volt/30 capitalize">
-                    {m}
+                  <span
+                    key={`p-${i}`}
+                    className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-volt/15 text-volt border border-volt/30 capitalize"
+                  >
+                    ★ {m}
                   </span>
                 ))}
                 {secondary.map((m, i) => (
-                  <span key={i} class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-white/5 text-zinc-400 capitalize">
+                  <span
+                    key={`s-${i}`}
+                    className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-white/5 text-zinc-300 border border-white/5 capitalize"
+                  >
                     {m}
                   </span>
                 ))}
@@ -95,12 +133,17 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
 
           {/* Execution Form Cues */}
           {cues.length > 0 && (
-            <div class="p-3.5 rounded-2xl bg-dark-900 border border-white/[0.06] space-y-2">
-              <h4 class="text-xs font-bold text-white font-heading">Form & Execution Protocol</h4>
-              <ul class="space-y-1.5">
+            <div className="p-3.5 rounded-2xl bg-dark-900 border border-white/[0.06] space-y-2.5">
+              <div className="flex items-center space-x-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-volt" />
+                <h4 className="text-xs font-bold text-white font-heading uppercase tracking-wider">
+                  Biomechanical Execution Protocol
+                </h4>
+              </div>
+              <ul className="space-y-2">
                 {cues.map((cue, i) => (
-                  <li key={i} class="text-xs text-zinc-300 flex items-start space-x-2 leading-relaxed">
-                    <span class="text-volt font-bold mt-0.5">•</span>
+                  <li key={i} className="text-xs text-zinc-300 flex items-start space-x-2.5 leading-relaxed">
+                    <span className="text-volt font-black text-xs mt-0.5 shrink-0">{i + 1}.</span>
                     <span>{cue}</span>
                   </li>
                 ))}
@@ -110,19 +153,18 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
         </div>
 
         {/* Footer */}
-        <div class="p-3 sm:p-4 border-t border-white/[0.08] bg-dark-900 shrink-0">
+        <div className="p-3 sm:p-4 border-t border-white/[0.08] bg-dark-900 shrink-0">
           <a
             href={videoUrl}
             target="_blank"
             rel="noopener noreferrer"
-            class="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white flex items-center justify-center space-x-2 transition"
+            className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-volt text-dark-950 hover:bg-volt-light flex items-center justify-center space-x-2 transition shadow-md shadow-volt/20"
           >
-            <span>Watch Video Form Demonstration</span>
-            <ExternalLink class="w-3.5 h-3.5" />
+            <span>Watch Form Demonstration on YouTube</span>
+            <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>
       </div>
     </div>
   );
 }
-
