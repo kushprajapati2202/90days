@@ -331,3 +331,46 @@ input, select, textarea {
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
+
+/* ==========================================================================
+   APP TAB NAVIGATION & HEVY BOTTOM DOCK
+   ========================================================================== */
+.app-tab-content {
+  animation: tabFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes tabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header-tab-btn.active {
+  color: #CCFF00 !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.nav-tab-btn.active {
+  color: #CCFF00 !important;
+}
+.nav-tab-btn.active svg {
+  color: #CCFF00 !important;
+  stroke: #CCFF00 !important;
+}
+
+.week-day-capsule {
+  transition: all 0.15s ease;
+}
+.week-day-capsule.done {
+  border-color: rgba(204, 255, 0, 0.4);
+  background: rgba(204, 255, 0, 0.08);
+}
+.week-day-capsule.current {
+  border-color: #CCFF00;
+  box-shadow: 0 0 12px rgba(204, 255, 0, 0.2);
+}

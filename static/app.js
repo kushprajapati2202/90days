@@ -446,6 +446,8 @@ function renderStats(s) {
     document.getElementById('hero-streak-count').innerText = s.current_streak;
     const topStreak = document.getElementById('top-bar-streak');
     if (topStreak) topStreak.innerText = s.current_streak;
+    const todayStreak = document.getElementById('today-streak-display');
+    if (todayStreak) todayStreak.innerText = s.current_streak;
   }
   
   if (s.weight_stats && s.weight_stats.current_weight_kg) {
@@ -502,6 +504,9 @@ async function loadDays() {
     const data = await res.json();
     allDays = data.days || [];
     renderWorkoutGrid();
+    renderTodayHero();
+    renderTodayWeekConsistency();
+    renderTodayExercises();
     loadStats();
     loadHealth();
   } catch (err) {
@@ -2600,23 +2605,15 @@ function toggleFloatingTimer() {
 
 // 8. Navigation & Jump to Today
 function jumpToToday() {
-  const pending = allDays.find(d => !d.completed);
-  const targetDay = pending ? pending.day_number : 1;
-  
-  const el = document.getElementById(`day-card-${targetDay}`);
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    el.classList.add('ring-2', 'ring-cyan-400');
-    setTimeout(() => el.classList.remove('ring-2', 'ring-cyan-400'), 2500);
-    showToast(`Navigated to Day ${targetDay}`, 'info');
-  } else {
-    resetFilters();
-    setTimeout(() => jumpToToday(), 200);
-  }
+  switchTab('today');
 }
 
 function navToSchedule() {
-  window.scrollTo({ top: 350, behavior: 'smooth' });
+  switchTab('workouts');
+}
+
+function scrollToWeightSection() {
+  switchTab('progress');
 }
 
 function clearSearch() {
@@ -2726,5 +2723,281 @@ function setupEventListeners() {
     chkModalCompleted.addEventListener('change', (e) => {
       handleModalCompletedToggle(e.target.checked);
     });
+  }
+}
+
+// ==========================================
+// HEVY / WHOOP APP-STYLE NAVIGATION & TABS
+// ==========================================
+let currentAppTab = 'today';
+
+function switchTab(tab) {
+  currentAppTab = tab;
+  
+  // Hide all tab containers
+  document.querySelectorAll('.app-tab-content').forEach(el => el.classList.add('hidden'));
+
+  // Show target tab container
+  const activeTabEl = document.getElementById(`tab-${tab}`);
+  if (activeTabEl) {
+    activeTabEl.classList.remove('hidden');
+  }
+
+  // Update desktop header tabs
+  document.querySelectorAll('.header-tab-btn').forEach(btn => {
+    if (btn.getAttribute('data-tab') === tab) {
+      btn.classList.add('active', 'text-[#CCFF00]', 'bg-white/5');
+      btn.classList.remove('text-zinc-400');
+    } else {
+      btn.classList.remove('active', 'text-[#CCFF00]', 'bg-white/5');
+      btn.classList.add('text-zinc-400');
+    }
+  });
+
+  // Update mobile bottom nav items
+  document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+    btn.classList.remove('active', 'text-[#CCFF00]');
+    btn.classList.add('text-zinc-400');
+  });
+  const mobBtn = document.getElementById(`nav-btn-${tab}`);
+  if (mobBtn) {
+    mobBtn.classList.add('active', 'text-[#CCFF00]');
+    mobBtn.classList.remove('text-zinc-400');
+  }
+
+  // Action hooks per tab
+  if (tab === 'today') {
+    renderTodayHero();
+    renderTodayWeekConsistency();
+    renderTodayExercises();
+  } else if (tab === 'progress') {
+    if (typeof updateInlineWeightKPIs === 'function') updateInlineWeightKPIs();
+    if (typeof renderInlineWeightChart === 'function') {
+      setTimeout(() => {
+        renderInlineWeightChart();
+        if (inlineChartInstance) inlineChartInstance.resize();
+      }, 50);
+    }
+  } else if (tab === 'workouts') {
+    renderWorkoutGrid();
+  }
+
+  if (window.lucide) lucide.createIcons();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function getTodayWorkoutDay() {
+  if (!allDays || allDays.length === 0) return null;
+  return allDays.find(d => !d.completed) || allDays[0];
+}
+
+function openTodayWorkoutModal() {
+  const today = getTodayWorkoutDay();
+  if (today) {
+    openWorkoutModal(today.day_number);
+  }
+}
+
+function renderTodayHero() {
+  const container = document.getElementById('today-hero-container');
+  if (!container || !allDays || allDays.length === 0) return;
+
+  const today = getTodayWorkoutDay();
+  if (!today) return;
+
+  const stats = getDayCompletionStats(today);
+  const pct = stats.percentage;
+  const isCompleted = !!today.completed;
+  const isDeload = !!today.is_deload;
+  const dayCal = calculateDayCaloriesClient(today);
+
+  let focusMuscles = [];
+  if (today.parsed_exercises) {
+    today.parsed_exercises.forEach(ex => {
+      if (ex.primary_muscles) focusMuscles.push(...ex.primary_muscles);
+    });
+  }
+  focusMuscles = [...new Set(focusMuscles)].slice(0, 4);
+
+  container.innerHTML = `
+    <!-- Top Status Strip -->
+    <div class="flex items-center justify-between gap-2 mb-3">
+      <div class="flex items-center space-x-2">
+        <span class="px-2.5 py-1 rounded-lg text-xs font-black font-heading ${isCompleted ? 'bg-[#CCFF00] text-[#09090D]' : 'bg-[#CCFF00]/15 text-[#CCFF00] border border-[#CCFF00]/30'}">
+          DAY ${today.day_number} OF 90
+        </span>
+        <span class="text-xs text-zinc-400 font-bold">${today.date_display} • W${today.week_number}</span>
+      </div>
+      <div class="flex items-center space-x-2">
+        ${isDeload ? `<span class="badge-deload px-2 py-0.5 rounded text-[10px] font-black">⚡ DELOAD</span>` : ''}
+        ${isCompleted ? `<span class="flex items-center space-x-1 text-[#CCFF00] text-xs font-black"><i data-lucide="check-circle-2" class="w-4 h-4"></i><span>DONE</span></span>` : ''}
+      </div>
+    </div>
+
+    <!-- Title & Focus -->
+    <div class="mb-4">
+      <h2 class="text-xl sm:text-3xl font-black text-white font-heading tracking-tight mb-1.5">${today.day_type}</h2>
+      <p class="text-xs sm:text-sm text-zinc-300 font-medium">${today.strength_workout || today.cardio || 'Active Recovery Routine'}</p>
+    </div>
+
+    <!-- Target Muscle Chips -->
+    ${focusMuscles.length > 0 ? `
+      <div class="flex flex-wrap gap-1.5 mb-4">
+        ${focusMuscles.map(m => `<span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-white/5 text-zinc-300 border border-white/5 capitalize">${m}</span>`).join('')}
+      </div>
+    ` : ''}
+
+    <!-- Workout Vitals (Calories, Exercises, Progress) -->
+    <div class="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-[#09090D]/80 border border-white/[0.06] mb-4 text-center">
+      <div>
+        <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Est. Energy</span>
+        <span class="text-sm sm:text-base font-black text-[#CCFF00] font-heading">~${dayCal} kcal</span>
+      </div>
+      <div>
+        <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Movements</span>
+        <span class="text-sm sm:text-base font-black text-white font-heading">${(today.parsed_exercises || []).length} Exercises</span>
+      </div>
+      <div>
+        <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Session</span>
+        <span class="text-sm sm:text-base font-black ${isCompleted ? 'text-[#CCFF00]' : 'text-amber-400'} font-heading">${pct}%</span>
+      </div>
+    </div>
+
+    <!-- Big Action Button (Hevy Style) -->
+    <button onclick="openWorkoutModal(${today.day_number})" class="w-full py-3.5 px-4 rounded-xl font-heading font-black text-sm uppercase tracking-wider transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg active:scale-[0.98] ${isCompleted ? 'bg-white/10 hover:bg-white/15 text-white border border-white/15' : 'bg-[#CCFF00] hover:bg-[#B8E600] text-[#09090D] shadow-[#CCFF00]/20'}">
+      <i data-lucide="${isCompleted ? 'eye' : 'play'}" class="w-4 h-4 fill-current"></i>
+      <span>${isCompleted ? 'Review Workout Log' : 'Start Today\'s Workout'}</span>
+    </button>
+  `;
+  if (window.lucide) lucide.createIcons();
+}
+
+function renderTodayWeekConsistency() {
+  const container = document.getElementById('today-week-consistency');
+  const label = document.getElementById('today-week-label');
+  if (!container || !allDays || allDays.length === 0) return;
+
+  const today = getTodayWorkoutDay();
+  const weekNum = today ? today.week_number : 1;
+  if (label) label.innerText = `Week ${weekNum} Consistency`;
+
+  const weekDays = allDays.filter(d => d.week_number === weekNum);
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  container.innerHTML = weekDays.map((d, idx) => {
+    const isDone = !!d.completed;
+    const isCurrent = today && d.day_number === today.day_number;
+    const name = dayNames[idx % 7] || `D${idx+1}`;
+    const isRecovery = d.day_type.toLowerCase().includes('recovery');
+
+    let stateClass = 'border-white/10 bg-[#14141A] text-zinc-400';
+    if (isDone) {
+      stateClass = 'border-[#CCFF00]/40 bg-[#CCFF00]/10 text-[#CCFF00] font-black shadow-sm';
+    } else if (isCurrent) {
+      stateClass = 'border-[#CCFF00] bg-white/5 text-white font-black ring-1 ring-[#CCFF00]/50';
+    }
+
+    return `
+      <div onclick="openWorkoutModal(${d.day_number})" class="week-day-capsule cursor-pointer p-2 rounded-xl border text-center transition flex flex-col items-center justify-between min-h-[58px] ${stateClass}">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">${name}</span>
+        <div class="my-0.5">
+          ${isDone ? `<i data-lucide="check" class="w-3.5 h-3.5 text-[#CCFF00]"></i>` : 
+            isRecovery ? `<i data-lucide="bed-double" class="w-3.5 h-3.5 text-zinc-500"></i>` :
+            `<span class="text-xs font-heading font-black">${d.day_number}</span>`}
+        </div>
+        <span class="text-[9px] font-mono">${isDone ? '100%' : (d.completion_percentage > 0 ? `${d.completion_percentage}%` : '—')}</span>
+      </div>
+    `;
+  }).join('');
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function renderTodayExercises() {
+  const container = document.getElementById('today-exercise-preview');
+  if (!container || !allDays || allDays.length === 0) return;
+
+  const today = getTodayWorkoutDay();
+  if (!today) return;
+
+  const exercises = today.parsed_exercises || [];
+  if (exercises.length === 0) {
+    container.innerHTML = `
+      <div class="p-4 rounded-xl bg-[#14141A] text-center text-zinc-400 text-xs">
+        <p>Rest & Recovery day. Focus on hydration, stretching, and 7,000+ daily steps.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = exercises.map((ex, idx) => {
+    const isDone = !!ex.completed;
+    const setsTarget = ex.target_sets || '3 sets';
+    const repsTarget = ex.target_reps || '8–12 reps';
+    const loggedSets = (ex.logged_sets || []).length;
+
+    return `
+      <div onclick="openWorkoutModal(${today.day_number})" class="p-3 rounded-xl bg-[#14141A] hover:bg-[#181822] border border-white/[0.06] flex items-center justify-between gap-3 cursor-pointer transition">
+        <div class="flex items-center space-x-3 min-w-0">
+          <div class="w-7 h-7 rounded-lg ${isDone ? 'bg-[#CCFF00] text-[#09090D]' : 'bg-white/5 text-zinc-400 border border-white/10'} flex items-center justify-center font-heading font-black text-xs shrink-0">
+            ${isDone ? '<i data-lucide="check" class="w-4 h-4"></i>' : (idx + 1)}
+          </div>
+          <div class="min-w-0">
+            <h4 class="text-xs sm:text-sm font-bold text-white truncate">${ex.name}</h4>
+            <div class="flex items-center space-x-2 text-[11px] text-zinc-400">
+              <span class="text-[#CCFF00] font-semibold">${setsTarget} • ${repsTarget}</span>
+              ${loggedSets > 0 ? `<span class="text-zinc-500">• ${loggedSets} sets logged</span>` : ''}
+            </div>
+          </div>
+        </div>
+
+        <div class="shrink-0 flex items-center space-x-1 text-zinc-500">
+          <span class="text-[10px] uppercase font-bold text-zinc-400">Log</span>
+          <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  if (window.lucide) lucide.createIcons();
+}
+
+async function submitQuickTodayWeight(event) {
+  event.preventDefault();
+  const input = document.getElementById('quick-today-weight-input');
+  const btn = document.getElementById('quick-today-weight-btn');
+  if (!input || !input.value) return;
+
+  const today = getTodayWorkoutDay();
+  const dayNum = today ? today.day_number : 1;
+  const weight = parseFloat(input.value);
+
+  btn.disabled = true;
+  btn.innerText = 'Saving...';
+
+  try {
+    const res = await fetch('/api/weight-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        day_number: dayNum,
+        weight_kg: weight,
+        notes: "Morning weigh-in (quick log)"
+      })
+    });
+
+    if (!res.ok) throw new Error("Failed to record weigh-in");
+    showToast(`Logged morning weight: ${weight} kg`, 'success');
+    input.value = '';
+
+    // Refresh history and stats
+    if (typeof loadWeightHistory === 'function') loadWeightHistory();
+    if (typeof loadStats === 'function') loadStats();
+    if (typeof loadDays === 'function') loadDays();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerText = 'Log';
   }
 }
