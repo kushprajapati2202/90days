@@ -381,7 +381,8 @@ export default function WorkoutModal({
 
               <div class="space-y-2">
                 {activeDay.warmup_stretches.map((stretch, idx) => {
-                  const thumb = stretch.media?.images?.[0] || '';
+                  const thumb = stretch.gif_url || stretch.media?.gif_url || stretch.media?.images?.[0] || '';
+                  const isGif = Boolean(stretch.gif_url || stretch.media?.gif_url || (thumb && thumb.toLowerCase().includes('.gif')));
                   return (
                     <div
                       key={idx}
@@ -393,11 +394,16 @@ export default function WorkoutModal({
                         {/* Thumbnail image if available */}
                         {thumb ? (
                           <div
-                            onClick={() => stretch.media && onOpenExerciseGuide(stretch.media)}
+                            onClick={() => (stretch.media || stretch) && onOpenExerciseGuide(stretch.media || stretch)}
                             class="w-11 h-11 rounded-lg overflow-hidden bg-dark-950 shrink-0 border border-white/10 cursor-pointer relative group"
                             title="Tap to see form guide"
                           >
                             <img src={thumb} alt={stretch.name} class="w-full h-full object-cover object-center group-hover:scale-105 transition" />
+                            {isGif && (
+                              <span class="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-volt text-dark-950 text-[7px] font-black uppercase shadow">
+                                GIF
+                              </span>
+                            )}
                           </div>
                         ) : (
                           <div class="w-11 h-11 rounded-lg bg-dark-950 flex items-center justify-center shrink-0 border border-white/5 text-zinc-600">
@@ -456,17 +462,18 @@ export default function WorkoutModal({
               const setBurn = calculateSetCalories(ex.name, userWeight);
               const exTotalCal = calculateExerciseTotalCalories(ex.name, sets.length, userWeight);
               const met = getExerciseMet(ex.name);
-              const thumbUrl = ex.media?.images?.[0] || '';
+              const thumbUrl = ex.gif_url || ex.media?.gif_url || ex.media?.images?.[0] || '';
+              const isGif = Boolean(ex.gif_url || ex.media?.gif_url || (thumbUrl && thumbUrl.toLowerCase().includes('.gif')));
 
               return (
                 <div key={exIdx} class="p-3 rounded-2xl bg-dark-850 border border-white/[0.06] space-y-2.5">
                   {/* Top Row: Exercise Thumbnail + Title + Calorie Burn */}
                   <div class="flex items-start justify-between gap-3">
                     <div class="flex items-center space-x-3 flex-1 min-w-0">
-                      {/* Photo Thumbnail (Tap to open full guide) */}
+                      {/* Photo / GIF Thumbnail (Tap to open full guide) */}
                       {thumbUrl ? (
                         <div
-                          onClick={() => ex.media && onOpenExerciseGuide(ex.media)}
+                          onClick={() => (ex.media || ex) && onOpenExerciseGuide(ex.media || ex)}
                           class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-dark-950 shrink-0 border border-white/10 hover:border-volt/80 transition cursor-pointer relative group shadow-md"
                           title="Tap to see proper form and muscle demonstration"
                         >
@@ -476,6 +483,11 @@ export default function WorkoutModal({
                             class="w-full h-full object-cover object-center group-hover:scale-105 transition"
                           />
                           <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition" />
+                          {isGif && (
+                            <span class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-volt text-dark-950 text-[8px] font-black tracking-wider uppercase shadow-md">
+                              GIF
+                            </span>
+                          )}
                         </div>
                       ) : (
                         <div class="w-14 h-14 rounded-xl bg-dark-950 flex items-center justify-center shrink-0 border border-white/10 text-zinc-600">
@@ -643,7 +655,8 @@ export default function WorkoutModal({
 
               <div class="space-y-2">
                 {activeDay.cooldown_stretches.map((stretch, idx) => {
-                  const thumb = stretch.media?.images?.[0] || '';
+                  const thumb = stretch.gif_url || stretch.media?.gif_url || stretch.media?.images?.[0] || '';
+                  const isGif = Boolean(stretch.gif_url || stretch.media?.gif_url || (thumb && thumb.toLowerCase().includes('.gif')));
                   return (
                     <div
                       key={idx}
@@ -654,11 +667,16 @@ export default function WorkoutModal({
                       <div class="flex items-center space-x-3 flex-1 min-w-0">
                         {thumb ? (
                           <div
-                            onClick={() => stretch.media && onOpenExerciseGuide(stretch.media)}
+                            onClick={() => (stretch.media || stretch) && onOpenExerciseGuide(stretch.media || stretch)}
                             class="w-11 h-11 rounded-lg overflow-hidden bg-dark-950 shrink-0 border border-white/10 cursor-pointer relative group"
                             title="Tap to see form guide"
                           >
                             <img src={thumb} alt={stretch.name} class="w-full h-full object-cover object-center group-hover:scale-105 transition" />
+                            {isGif && (
+                              <span class="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-volt text-dark-950 text-[7px] font-black uppercase shadow">
+                                GIF
+                              </span>
+                            )}
                           </div>
                         ) : (
                           <div class="w-11 h-11 rounded-lg bg-dark-950 flex items-center justify-center shrink-0 border border-white/5 text-zinc-600">

@@ -332,7 +332,8 @@ export default function TodayTab({
             const isAllDone = sets.length > 0 && doneSets === totalSets;
             const setPct = Math.round((doneSets / totalSets) * 100);
             const exCal = calculateExerciseTotalCalories(ex.name, totalSets, userWeight);
-            const thumbUrl = ex.media?.images?.[0] || '';
+            const thumbUrl = ex.gif_url || ex.media?.gif_url || ex.media?.images?.[0] || '';
+            const isGif = Boolean(ex.gif_url || ex.media?.gif_url || (thumbUrl && thumbUrl.toLowerCase().includes('.gif')));
 
             return (
               <div
@@ -341,15 +342,20 @@ export default function TodayTab({
                 class="flex items-center justify-between p-2.5 rounded-2xl bg-dark-900/80 border border-white/[0.04] hover:border-volt/30 transition cursor-pointer gap-3"
               >
                 <div class="flex items-center space-x-3 flex-1 min-w-0">
-                  {/* Photo thumbnail */}
+                  {/* Photo / Animated GIF thumbnail */}
                   {thumbUrl ? (
-                    <div class="w-12 h-12 rounded-xl overflow-hidden bg-dark-950 shrink-0 border border-white/10">
+                    <div class="w-12 h-12 rounded-xl overflow-hidden bg-dark-950 shrink-0 border border-white/10 relative">
                       <img
                         src={thumbUrl}
                         alt={ex.name}
                         loading="lazy"
                         class="w-full h-full object-cover object-center"
                       />
+                      {isGif && (
+                        <span class="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-volt text-dark-950 text-[7px] font-black uppercase shadow">
+                          GIF
+                        </span>
+                      )}
                     </div>
                   ) : (
                     <div class="w-12 h-12 rounded-xl bg-dark-950 flex items-center justify-center shrink-0 text-xs font-mono font-bold text-zinc-400 border border-white/5">

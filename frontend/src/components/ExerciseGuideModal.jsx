@@ -5,10 +5,21 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
   if (!isOpen || !exercise) return null;
 
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
-  const photos = exercise.images || [];
+
+  // Collect all photos and prioritize GIF demonstration if available
+  let rawPhotos = Array.isArray(exercise.images) ? [...exercise.images] : [];
+  const gifCandidate = exercise.gif_url || exercise.media?.gif_url;
+  if (gifCandidate && !rawPhotos.includes(gifCandidate)) {
+    rawPhotos = [gifCandidate, ...rawPhotos];
+  }
+  const photos = rawPhotos;
+
   const cues = exercise.form_cues || [];
   const primary = exercise.primary_muscles || [];
   const secondary = exercise.secondary_muscles || [];
+
+  const activeSrc = photos[Math.min(activePhotoIdx, Math.max(0, photos.length - 1))] || '';
+  const isCurrentGif = activeSrc.toLowerCase().includes('.gif');
 
   const videoUrl = exercise.video_query
     ? `https://www.youtube.com/results?search_query=${encodeURIComponent(exercise.video_query)}`
@@ -27,6 +38,11 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
               {exercise.is_plan && (
                 <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-volt text-dark-950 uppercase">
                   90-Day Plan Core
+                </span>
+              )}
+              {photos.some((p) => p.toLowerCase().includes('.gif')) && (
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-cyan-400 text-dark-950 uppercase flex items-center space-x-0.5">
+                  <span>⚡ Animated GIF</span>
                 </span>
               )}
               {exercise.level && (
@@ -50,43 +66,66 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
 
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {/* Visual photo / GIF demonstration */}
+          {/* Visual photo / Animated GIF demonstration */}
           {photos.length > 0 ? (
             <div className="space-y-2">
-              <div className="w-full h-60 sm:h-68 rounded-2xl bg-black overflow-hidden border border-white/[0.08] relative flex items-center justify-center">
+              <div className="w-full h-64 sm:h-72 rounded-2xl bg-black overflow-hidden border border-white/[0.08] relative flex items-center justify-center">
                 <img
-                  src={photos[Math.min(activePhotoIdx, photos.length - 1)]}
+                  src={activeSrc}
                   alt={exercise.name}
                   className="max-h-full max-w-full object-contain"
                 />
-                <span className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-md bg-dark-950/85 backdrop-blur-md text-[10px] font-bold text-zinc-200 border border-white/10">
-                  {photos.length > 1
-                    ? (activePhotoIdx === 0 ? 'Phase 1: Starting Setup' : 'Phase 2: Peak Contraction')
-                    : 'Movement Demonstration'}
-                </span>
+                <div className="absolute top-2.5 left-2.5 flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-dark-950/85 backdrop-blur-md text-[10px] font-bold text-zinc-200 border border-white/10">
+                  {isCurrentGif ? (
+                    <>
+                      <span className="w-2 h-2 rounded-full bg-volt animate-ping" />
+                      <span className="text-volt font-black">⚡ LIVE ANIMATED EXECUTION</span>
+                    </>
+                  ) : (
+                    <span>
+                      {photos.length > 1
+                        ? (activePhotoIdx === (photos[0]?.includes('.gif') ? 1 : 0) ? 'Phase 1: Starting Setup' : 'Phase 2: Peak Contraction')
+                        : 'Movement Demonstration'}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {photos.length > 1 && (
-                <div className="grid grid-cols-2 gap-2">
-                  {photos.map((src, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setActivePhotoIdx(i)}
-                      className={`p-1.5 rounded-xl border text-left flex items-center space-x-2.5 transition ${
-                        activePhotoIdx === i
-                          ? 'border-volt bg-volt/10 text-white font-bold'
-                          : 'border-white/[0.06] bg-dark-900 text-zinc-400 hover:bg-white/5'
-                      }`}
-                    >
-                      <img src={src} alt="thumb" className="w-10 h-10 rounded-lg object-cover bg-black" />
-                      <div className="text-[11px] leading-tight">
-                        <span className="block font-semibold text-white">
-                          {i === 0 ? 'Phase 1: Setup' : 'Phase 2: Peak'}
-                        </span>
-                        <span className="text-[10px] text-zinc-400">Tap to inspect</span>
-                      </div>
-                    </button>
-                  ))}
+                <div className={`grid gap-2 ${photos.length >= 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                  {photos.map((src, i) => {
+                    const isGif = src.toLowerCase().includes('.gif');
+                    const label = isGif
+                      ? '⚡ Animated GIF'
+                      : (i === (photos[0]?.includes('.gif') ? 1 : 0) ? 'Phase 1: Setup' : 'Phase 2: Peak');
+
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => setActivePhotoIdx(i)}
+                        className={`p-1.5 rounded-xl border text-left flex items-center space-x-2 transition ${
+                          activePhotoIdx === i
+                            ? 'border-volt bg-volt/10 text-white font-bold ring-1 ring-volt/40'
+                            : 'border-white/[0.06] bg-dark-900 text-zinc-400 hover:bg-white/5'
+                        }`}
+                      >
+                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-black shrink-0 relative">
+                          <img src={src} alt="thumb" className="w-full h-full object-cover" />
+                          {isGif && (
+                            <span className="absolute bottom-0 right-0 px-1 py-0.2 rounded bg-volt text-dark-950 text-[7px] font-black uppercase">
+                              GIF
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10px] leading-tight min-w-0">
+                          <span className="block font-semibold text-white truncate">
+                            {label}
+                          </span>
+                          <span className="text-[9px] text-zinc-400">Tap to inspect</span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>

@@ -95,6 +95,7 @@ def build_unified_catalog() -> List[Dict[str, Any]]:
             "primary_muscles": v.get("primary_muscles") or [],
             "secondary_muscles": v.get("secondary_muscles") or [],
             "images": v.get("images") or [],
+            "gif_url": v.get("gif_url"),
             "form_cues": split_cues(v.get("form_cues") or v.get("instructions")),
             "video_query": v.get("video_query") or f"how to do {name} proper form",
             "is_plan": True,
@@ -116,6 +117,7 @@ def build_unified_catalog() -> List[Dict[str, Any]]:
                 "primary_muscles": v.get("primary_muscles") or [],
                 "secondary_muscles": v.get("secondary_muscles") or [],
                 "images": v.get("images") or [],
+                "gif_url": v.get("gif_url"),
                 "form_cues": split_cues(v.get("form_cues") or v.get("instructions")),
                 "video_query": v.get("video_query") or f"how to do {name} proper form",
                 "is_plan": True,
@@ -193,9 +195,9 @@ def build_unified_catalog() -> List[Dict[str, Any]]:
                 item = catalog_map[key]
                 if d.get("gif_url"):
                     item["gif_url"] = d["gif_url"]
-                    # If item has no images or only 1, insert GIF
-                    if d["gif_url"] not in item["images"]:
-                        item["images"].append(d["gif_url"])
+                    if d["gif_url"] in item["images"]:
+                        item["images"].remove(d["gif_url"])
+                    item["images"].insert(0, d["gif_url"])
                 if not item.get("form_cues") and cues:
                     item["form_cues"] = cues
             else:

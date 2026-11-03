@@ -202,14 +202,20 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
                 {exercises.length > 0 && (
                   <div class="flex items-center space-x-1.5 mb-3 overflow-x-auto no-scrollbar">
                     {exercises.slice(0, 4).map((ex, i) => {
-                      const thumb = ex.media?.images?.[0];
+                      const thumb = ex.gif_url || ex.media?.gif_url || ex.media?.images?.[0];
+                      const isGif = Boolean(ex.gif_url || ex.media?.gif_url || (thumb && thumb.toLowerCase().includes('.gif')));
                       return thumb ? (
                         <div
                           key={i}
-                          class="w-9 h-9 rounded-lg overflow-hidden bg-dark-950 border border-white/10 shrink-0"
+                          class="w-9 h-9 rounded-lg overflow-hidden bg-dark-950 border border-white/10 shrink-0 relative"
                           title={ex.name}
                         >
                           <img src={thumb} alt={ex.name} class="w-full h-full object-cover" />
+                          {isGif && (
+                            <span class="absolute bottom-0 right-0 px-0.5 rounded bg-volt text-dark-950 text-[6px] font-black uppercase shadow">
+                              GIF
+                            </span>
+                          )}
                         </div>
                       ) : (
                         <div

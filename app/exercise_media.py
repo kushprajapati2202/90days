@@ -1001,6 +1001,68 @@ STRETCHES_AND_CARDIO_DATABASE = {
     }
 }
 
+# High-precision verified animated demonstration GIFs from ExerciseDB dataset
+PLAN_EXERCISE_GIFS = {
+    "Bench press": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0025-EIeI8Vf.gif",
+    "incline DB press": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0289-SpYC0Kp.gif",
+    "machine chest press": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1301-wDN97Ca.gif",
+    "lateral raise": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0334-DsgkuIt.gif",
+    "triceps pushdown": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0199-PskORrA.gif",
+    "Lat pulldown": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1325-CmEr4pM.gif",
+    "seated cable row": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0159-kesXOpB.gif",
+    "chest-supported row": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0293-6oV1F5S.gif",
+    "face pull": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0177-CuaWCmC.gif",
+    "DB curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1650-J74XlNf.gif",
+    "hammer curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0313-slDvUAU.gif",
+    "Squat or goblet squat": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0024-Y7YcmIJ.gif",
+    "leg press": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1425-WWD6FzI.gif",
+    "Romanian deadlift": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0085-wQ2c4XD.gif",
+    "leg curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0586-17lJ1kr.gif",
+    "calf raise": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1372-8ozhUIZ.gif",
+    "Shoulder press": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/3547-OeL23VY.gif",
+    "incline chest press": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1289-PDaMuyV.gif",
+    "cable/pec fly": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0154-aqvSOQE.gif",
+    "rope pushdown": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0200-dU605di.gif",
+    "Assisted pull-up": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0017-kiJ4Z2K.gif",
+    "one-arm DB row": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0292-C0MA9bC.gif",
+    "close-grip pulldown": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/3117-4LoWllp.gif",
+    "reverse pec deck": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0176-B32i3zY.gif",
+    "EZ curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1682-Dsfz0Id.gif",
+    "cable curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1634-otqIxU4.gif",
+    "Leg press or hack squat": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1385-IeDEXTe.gif",
+    "split squat": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0410-qx4fgX7.gif",
+    "hip thrust": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0043-sM9sL6l.gif",
+    "seated leg curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1679-84sESNy.gif"
+}
+
+STRETCH_GIFS = {
+    "glute bridge": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1409-qKBpF7I.gif",
+    "push-ups": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0662-I4hDWkc.gif",
+    "plank": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/3544-5VXmnV5.gif",
+    "mountain climbers": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0630-RJgzwny.gif",
+    "bodyweight squat": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/3168-3xK09Sk.gif",
+    "overhead triceps": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0092-5uFK1xr.gif",
+    "quad stretch": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1512-qBcKorM.gif",
+    "hamstring stretch": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1560-yRYyfdA.gif",
+    "treadmill": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/3666-rjiM4L3.gif",
+    "cross trainer": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/2331-XSCHmiI.gif"
+}
+
+# Prioritize animated GIFs across all strength exercises
+for key, gif in PLAN_EXERCISE_GIFS.items():
+    if key in EXERCISE_MEDIA_DATABASE:
+        item = EXERCISE_MEDIA_DATABASE[key]
+        item["gif_url"] = gif
+        item["images"] = [gif] + [img for img in item.get("images", []) if img != gif]
+
+# Prioritize animated GIFs across warmups and stretches
+for key, gif in STRETCH_GIFS.items():
+    for sk in STRETCHES_AND_CARDIO_DATABASE:
+        if key in sk.lower():
+            item = STRETCHES_AND_CARDIO_DATABASE[sk]
+            item["gif_url"] = gif
+            item["images"] = [gif] + [img for img in item.get("images", []) if img != gif]
+
 def get_exercise_media(name: str) -> dict:
     """Find media, photos, and form cues for any exercise, stretch, cardio, or bodyweight drill."""
     clean = name.strip()

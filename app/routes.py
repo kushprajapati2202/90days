@@ -328,6 +328,36 @@ def get_coaching_notes():
     notes = list(db.coaching_notes.find({}, {"_id": 0}).sort("rule_number", 1))
     return {"notes": notes}
 
+def enrich_day_exercise_gifs(d: dict) -> dict:
+    """Enrich day exercises, warmups, and cooldowns with high-quality animated GIFs."""
+    if not d:
+        return d
+    exercises = d.get("parsed_exercises") or []
+    for ex in exercises:
+        name = ex.get("name", "")
+        media = get_exercise_media(name)
+        if media:
+            ex_media = dict(ex.get("media") or media)
+            if media.get("gif_url"):
+                ex_media["gif_url"] = media["gif_url"]
+                ex["gif_url"] = media["gif_url"]
+                imgs = [media["gif_url"]] + [img for img in (ex_media.get("images") or media.get("images") or []) if img != media["gif_url"]]
+                ex_media["images"] = imgs
+            ex["media"] = ex_media
+    for stretch_list in ["warmup_stretches", "cooldown_stretches"]:
+        for s in d.get(stretch_list) or []:
+            name = s.get("name", "")
+            media = get_exercise_media(name)
+            if media:
+                s_media = dict(s.get("media") or media)
+                if media.get("gif_url"):
+                    s_media["gif_url"] = media["gif_url"]
+                    s["gif_url"] = media["gif_url"]
+                    imgs = [media["gif_url"]] + [img for img in (s_media.get("images") or media.get("images") or []) if img != media["gif_url"]]
+                    s_media["images"] = imgs
+                s["media"] = s_media
+    return d
+
 @router.get("/days")
 def get_days(
     week: Optional[int] = Query(None, ge=1, le=13),
@@ -362,6 +392,7 @@ def get_days(
             seed_database()
             days = list(db.workout_days.find({}, {"_id": 0}).sort("day_number", 1))
         for d in days:
+            enrich_day_exercise_gifs(d)
             d["completion_percentage"] = calculate_day_completion(d)
             w = float(d.get("actual_weight_kg") or 90.0)
             d["calories"] = calculate_day_calories(d, w)
@@ -382,6 +413,7 @@ def get_day(day_number: int):
     day = db.workout_days.find_one({"day_number": day_number}, {"_id": 0})
     if not day:
         raise HTTPException(status_code=404, detail=f"Day {day_number} not found")
+    enrich_day_exercise_gifs(day)
     w = float(day.get("actual_weight_kg") or 90.0)
     day["completion_percentage"] = calculate_day_completion(day)
     day["calories"] = calculate_day_calories(day, w)
@@ -492,6 +524,7 @@ def update_day(day_number: int, data: DayUpdateModel):
                 updated["completed"] = False
                 updated["completed_at"] = None
 
+        enrich_day_exercise_gifs(updated)
         updated["completion_percentage"] = pct
         w = float(updated.get("actual_weight_kg") or 90.0)
         updated["calories"] = calculate_day_calories(updated, w)
@@ -512,6 +545,7 @@ def start_workout_session(day_number: int):
 
     db.workout_days.update_one({"day_number": day_number}, {"$set": update})
     updated = db.workout_days.find_one({"day_number": day_number}, {"_id": 0})
+    enrich_day_exercise_gifs(updated)
     w = float(updated.get("actual_weight_kg") or 90.0)
     updated["completion_percentage"] = calculate_day_completion(updated)
     updated["calories"] = calculate_day_calories(updated, w)

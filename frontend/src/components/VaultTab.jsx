@@ -266,9 +266,11 @@ export default function VaultTab({ onSelectExerciseGuide }) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {exercises.map((ex, idx) => {
-            const photos = ex.images || [];
+            const rawPhotos = ex.images || [];
+            const photos = ex.gif_url && !rawPhotos.includes(ex.gif_url) ? [ex.gif_url, ...rawPhotos] : rawPhotos;
             const primary = (ex.primary_muscles || []).slice(0, 2).join(', ');
-            const thumbnail = photos[0];
+            const thumbnail = ex.gif_url || photos[0];
+            const isGif = Boolean(thumbnail && thumbnail.toLowerCase().includes('.gif'));
 
             return (
               <div
@@ -300,6 +302,13 @@ export default function VaultTab({ onSelectExerciseGuide }) {
                     <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-dark-950/85 backdrop-blur-md text-[10px] font-bold text-zinc-300 border border-white/10">
                       {ex.equipment || 'Equipment'}
                     </span>
+
+                    {/* Animated GIF badge */}
+                    {isGif && (
+                      <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md bg-cyan-400 text-dark-950 text-[9px] font-black uppercase tracking-wider shadow">
+                        ⚡ GIF
+                      </span>
+                    )}
 
                     {/* 90-Day Plan Core Badge */}
                     {ex.is_plan && (
