@@ -1,6 +1,7 @@
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.routes import router
@@ -48,24 +49,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.middleware("http")
-async def fix_vercel_path(request: Request, call_next):
-    # Restore original path if rewritten by Vercel serverless functions
-    matched_path = request.headers.get("x-matched-path") or request.headers.get("x-invoke-path")
-    if matched_path:
-        clean_path = matched_path.split("?")[0]
-        if not clean_path.startswith("/api") and not clean_path.startswith("/docs") and not clean_path.startswith("/openapi") and not clean_path.startswith("/static"):
-            clean_path = f"/api{clean_path}"
-        request.scope["path"] = clean_path
-    elif request.scope.get("path", "").startswith("/api/index.py"):
-        subpath = request.scope["path"][len("/api/index.py"):]
-        if not subpath.startswith("/api") and not subpath.startswith("/docs") and not subpath.startswith("/openapi") and not subpath.startswith("/static"):
-            subpath = f"/api{subpath}" if subpath else "/api"
-        request.scope["path"] = subpath
-    return await call_next(request)
+@app.get("/api")
+@app.get("/api/index.py")
+def root_api():
+    return {"status": "connected", "message": "90-Day Tracker API is online"}
 
-# Register API router
-app.include_router(router)
+# Register API router across standard and serverless prefixes
+app.include_router(router, prefix="/api")
+app.include_router(router, prefix="")
+app.include_router(router, prefix="/api/index.py/api")
+app.include_router(router, prefix="/api/index.py")
+
+@app.exception_handler(404)
+async def custom_404_handler(request: Request, exc):
+    return JSONResponse(
+        status_code=404,
+        content={
+            "detail": f"Route '{request.scope.get('path')}' not found on server",
+            "scope_path": request.scope.get("path")
+        }
+    )
 
 # Mount static files (support both /style.css and /static/style.css)
 STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")

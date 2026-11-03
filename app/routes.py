@@ -11,7 +11,7 @@ from app.exercise_media import EXERCISE_MEDIA_DATABASE, STRETCHES_AND_CARDIO_DAT
 from app.calories import calculate_day_calories, get_exercise_met, calculate_set_calories
 
 logger = logging.getLogger("workout_app")
-router = APIRouter(prefix="/api")
+router = APIRouter()
 
 def classify_exercise_group(ex: dict) -> str:
     cat = ex.get('category', '')

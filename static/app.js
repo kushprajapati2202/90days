@@ -130,12 +130,16 @@ async function refreshAllData() {
 async function loadHealth() {
   try {
     const res = await fetch('/api/health');
+    if (!res.ok) return;
     const data = await res.json();
     const statusText = document.getElementById('db-status-text');
-    if (data.status === 'connected') {
-      statusText.innerHTML = `Atlas: <span class="text-emerald-400 font-bold">Connected (${data.counts.days} Days)</span>`;
-    } else {
-      statusText.innerHTML = `Atlas: <span class="text-rose-400 font-bold">Offline</span>`;
+    if (statusText && data) {
+      if (data.status === 'connected') {
+        const count = data.counts && data.counts.days !== undefined ? data.counts.days : 90;
+        statusText.innerHTML = `Atlas: <span class="text-emerald-400 font-bold">Connected (${count} Days)</span>`;
+      } else {
+        statusText.innerHTML = `Atlas: <span class="text-rose-400 font-bold">Offline</span>`;
+      }
     }
   } catch (err) {
     console.error("Health check error:", err);
@@ -146,6 +150,7 @@ async function loadHealth() {
 async function loadProfile() {
   try {
     const res = await fetch('/api/profile');
+    if (!res.ok) return;
     profileData = await res.json();
   } catch (err) {
     console.error("Error loading profile:", err);
@@ -156,8 +161,12 @@ async function loadProfile() {
 async function loadStats() {
   try {
     const res = await fetch('/api/stats');
-    statsData = await res.json();
-    renderStats(statsData);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data && typeof data === 'object' && data.completed_days !== undefined) {
+      statsData = data;
+      renderStats(statsData);
+    }
   } catch (err) {
     console.error("Error loading stats:", err);
   }
@@ -394,7 +403,7 @@ function getDayCompletionStats(day) {
 
 function updateWeekPillsProgress(s) {
   const allPill = document.querySelector('.week-pill[data-week=""]');
-  if (allPill && s) {
+  if (allPill && s && s.completion_percentage !== undefined) {
     allPill.innerText = `All (90 Days • ${s.completion_percentage}%)`;
   }
 
@@ -423,19 +432,23 @@ function updateWeekPillsProgress(s) {
 
   // Update filter pill counts
   const compFilter = document.querySelector('.filter-pill[data-filter="completed"]');
-  if (compFilter && s) compFilter.innerText = `Completed (${s.completed_days})`;
+  if (compFilter && s && s.completed_days !== undefined) compFilter.innerText = `Completed (${s.completed_days})`;
   const pendFilter = document.querySelector('.filter-pill[data-filter="pending"]');
-  if (pendFilter && s) pendFilter.innerText = `Pending (${s.remaining_days})`;
+  if (pendFilter && s && s.remaining_days !== undefined) pendFilter.innerText = `Pending (${s.remaining_days})`;
 }
 
 function renderStats(s) {
-  if (!s) return;
-  document.getElementById('hero-days-completed').innerText = s.completed_days;
-  document.getElementById('hero-streak-count').innerText = s.current_streak;
-  const topStreak = document.getElementById('top-bar-streak');
-  if (topStreak) topStreak.innerText = s.current_streak;
+  if (!s || typeof s !== 'object') return;
+  if (s.completed_days !== undefined) {
+    document.getElementById('hero-days-completed').innerText = s.completed_days;
+  }
+  if (s.current_streak !== undefined) {
+    document.getElementById('hero-streak-count').innerText = s.current_streak;
+    const topStreak = document.getElementById('top-bar-streak');
+    if (topStreak) topStreak.innerText = s.current_streak;
+  }
   
-  if (s.weight_stats) {
+  if (s.weight_stats && s.weight_stats.current_weight_kg) {
     document.getElementById('hero-current-weight').innerText = s.weight_stats.current_weight_kg;
   }
   if (s.total_calories_burned !== undefined) {
@@ -443,8 +456,10 @@ function renderStats(s) {
     if (heroCalEl) heroCalEl.innerText = Number(s.total_calories_burned).toLocaleString();
   }
   
-  document.getElementById('overall-progress-pct').innerText = `${s.completion_percentage}%`;
-  document.getElementById('overall-progress-bar').style.width = `${s.completion_percentage}%`;
+  if (s.completion_percentage !== undefined) {
+    document.getElementById('overall-progress-pct').innerText = `${s.completion_percentage}%`;
+    document.getElementById('overall-progress-bar').style.width = `${s.completion_percentage}%`;
+  }
   
   if (s.phases && s.phases.phase1) {
     document.getElementById('p1-count').innerText = `${s.phases.phase1.completed}/${s.phases.phase1.total} Done (${s.phases.phase1.pct}%)`;
@@ -470,35 +485,62 @@ async function loadDays() {
   try {
     const res = await fetch('/api/days');
     if (!res.ok) {
-      let msg = "Failed to load workout days from MongoDB.";
+      let isMongo = res.status === 503;
+      let msg = "Failed to load workout days.";
       try {
         const errJson = await res.json();
-        if (errJson && errJson.detail) msg = errJson.detail;
+        if (errJson && errJson.detail) {
+          msg = errJson.detail;
+          if (msg.toLowerCase().includes("mongo") || msg.toLowerCase().includes("atlas")) isMongo = true;
+        }
       } catch (e) {}
-      throw new Error(msg);
+      const err = new Error(msg);
+      err.isMongo = isMongo;
+      err.status = res.status;
+      throw err;
     }
     const data = await res.json();
     allDays = data.days || [];
     renderWorkoutGrid();
+    loadStats();
+    loadHealth();
   } catch (err) {
     console.error("Error loading days:", err);
-    document.getElementById('workout-grid').innerHTML = `
-      <div class="col-span-full py-10 px-4 text-center bg-dark-900/80 rounded-2xl border border-rose-500/30 max-w-xl mx-auto my-6">
-        <i data-lucide="alert-triangle" class="w-10 h-10 text-rose-500 mx-auto mb-3"></i>
-        <h3 class="text-base font-bold text-white mb-2">MongoDB Connection Required</h3>
-        <p class="text-xs text-rose-300 mb-4 leading-relaxed">${err.message || 'Unable to connect to MongoDB Atlas.'}</p>
-        <div class="bg-dark-950 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-300 text-left mb-4 space-y-1">
-          <p class="font-bold text-amber-400">💡 If hosted on Vercel:</p>
-          <p>1. Open <a href="https://cloud.mongodb.com" target="_blank" class="text-cyan-400 underline font-semibold">MongoDB Atlas</a> &gt; Security &gt; <b>Network Access</b>.</p>
-          <p>2. Click <b>+ Add IP Address</b> and choose <b>Allow Access from Anywhere (0.0.0.0/0)</b>.</p>
-          <p>3. Wait 30 seconds for it to become Active, then tap Retry below.</p>
+    const grid = document.getElementById('workout-grid');
+    if (!grid) return;
+
+    if (err.isMongo) {
+      grid.innerHTML = `
+        <div class="col-span-full py-10 px-4 text-center bg-[#121217] rounded-2xl border border-rose-500/30 max-w-xl mx-auto my-6 shadow-2xl">
+          <i data-lucide="alert-triangle" class="w-10 h-10 text-rose-500 mx-auto mb-3"></i>
+          <h3 class="text-base font-bold text-white mb-2">MongoDB Atlas Connection Required</h3>
+          <p class="text-xs text-rose-300 mb-4 leading-relaxed">${err.message || 'Unable to connect to MongoDB Atlas.'}</p>
+          <div class="bg-[#09090D] p-3.5 rounded-xl border border-slate-800 text-[11px] text-slate-300 text-left mb-4 space-y-1.5 font-mono">
+            <p class="font-bold text-amber-400">💡 MongoDB Atlas Configuration:</p>
+            <p>1. Open <a href="https://cloud.mongodb.com" target="_blank" class="text-[#CCFF00] underline font-semibold">cloud.mongodb.com</a> &gt; Security &gt; <b>Network Access</b>.</p>
+            <p>2. Ensure <b>0.0.0.0/0</b> is Active (allows cloud serverless connections).</p>
+            <p>3. Tap Retry Connection below once verified.</p>
+          </div>
+          <button onclick="loadDays()" class="px-5 py-2.5 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-extrabold text-xs transition shadow-lg shadow-[#CCFF00]/20">
+            Retry Connection
+          </button>
         </div>
-        <button onclick="loadDays()" class="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-dark-950 font-bold text-xs transition shadow-lg shadow-cyan-500/20">
-          Retry Connection
-        </button>
-      </div>
-    `;
-    lucide.createIcons();
+      `;
+    } else {
+      grid.innerHTML = `
+        <div class="col-span-full py-10 px-4 text-center bg-[#121217] rounded-2xl border border-slate-800 max-w-xl mx-auto my-6 shadow-2xl">
+          <div class="w-8 h-8 border-2 border-[#CCFF00] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <h3 class="text-base font-bold text-white mb-2">Connecting to Transformation Engine</h3>
+          <p class="text-xs text-slate-400 mb-4 leading-relaxed">${err.message || 'Initializing service connection...'}</p>
+          <button onclick="loadDays()" class="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition">
+            Retry Now
+          </button>
+        </div>
+      `;
+      // Auto-retry once in case of cold-start
+      setTimeout(loadDays, 3000);
+    }
+    if (window.lucide) lucide.createIcons();
   }
 }
 
