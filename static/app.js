@@ -19,6 +19,13 @@ let weightChartInstance = null;
 let inlineWeightChartInstance = null;
 let activeInlineWeightScope = 'all';
 
+function toggleControlDrawer() {
+  const drawer = document.getElementById('control-drawer');
+  if (!drawer) return;
+  drawer.classList.toggle('hidden');
+  lucide.createIcons();
+}
+
 // Audio alert using Web Audio API
 let audioCtx = null;
 function playTimerAlert() {
@@ -425,6 +432,8 @@ function renderStats(s) {
   if (!s) return;
   document.getElementById('hero-days-completed').innerText = s.completed_days;
   document.getElementById('hero-streak-count').innerText = s.current_streak;
+  const topStreak = document.getElementById('top-bar-streak');
+  if (topStreak) topStreak.innerText = s.current_streak;
   
   if (s.weight_stats) {
     document.getElementById('hero-current-weight').innerText = s.weight_stats.current_weight_kg;
@@ -493,7 +502,7 @@ async function loadDays() {
   }
 }
 
-// Helper: Build single day card HTML
+// Helper: Build single day card HTML (Whoop / Hevy Athletic Titanium Style)
 function buildDayCardHTML(day) {
   const isCompleted = !!day.completed;
   const isRecovery = day.day_type.toLowerCase().includes('recovery');
@@ -508,37 +517,37 @@ function buildDayCardHTML(day) {
   else if (day.day_type.toLowerCase().includes('legs')) badgeClass = 'badge-legs';
   else if (isRecovery) badgeClass = 'badge-recovery';
 
-  let cardBorder = 'border-slate-800 bg-dark-850';
+  let cardBorder = 'border-white/[0.07] bg-[#131319]';
   if (pct === 100) {
-    cardBorder = 'border-emerald-500/40 bg-emerald-950/15 shadow-[0_0_15px_-4px_rgba(16,185,129,0.2)]';
+    cardBorder = 'border-[#CCFF00]/40 bg-[#161614] shadow-[0_0_15px_-4px_rgba(204,255,0,0.15)]';
   } else if (pct > 0) {
-    cardBorder = 'border-cyan-500/40 bg-cyan-950/15 shadow-[0_0_15px_-4px_rgba(6,182,212,0.2)]';
+    cardBorder = 'border-white/20 bg-[#15151D]';
   } else if (isDeload) {
-    cardBorder = 'border-amber-500/35 bg-amber-950/10';
+    cardBorder = 'border-amber-500/30 bg-[#191612]';
   }
 
   const warmupCount = (day.warmup_stretches || []).length || 5;
   const cooldownCount = (day.cooldown_stretches || []).length || 5;
 
-  let pctBadgeClass = 'bg-dark-900 text-slate-500 border border-slate-700/80';
+  let pctBadgeClass = 'bg-[#181822] text-zinc-400 border border-white/5';
   if (pct === 100) {
-    pctBadgeClass = 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-black';
+    pctBadgeClass = 'bg-[#CCFF00] text-[#09090D] font-black';
   } else if (pct > 0) {
-    pctBadgeClass = 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-black';
+    pctBadgeClass = 'bg-white/10 text-white font-black border border-white/10';
   }
 
   return `
-    <div id="day-card-${day.day_number}" class="glass-card rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between border ${cardBorder} relative active:border-cyan-500/50 transition-all duration-200" onclick="handleCardClick(${day.day_number}, event)">
+    <div id="day-card-${day.day_number}" class="athletic-card rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between border ${cardBorder} relative active:border-[#CCFF00]/50 transition-all duration-200" onclick="handleCardClick(${day.day_number}, event)">
       
       <div>
         <!-- Top Row: Day #, Date, Phase, Deload Tag, Progress %, Checkbox -->
-        <div class="flex items-center justify-between gap-1.5 mb-2">
+        <div class="flex items-center justify-between gap-1.5 mb-2.5">
           <div class="flex items-center space-x-1.5">
-            <span class="px-2 py-0.5 rounded-md text-[11px] font-black font-heading tracking-wide ${isCompleted ? 'bg-emerald-500 text-dark-900' : 'bg-dark-900 text-cyan-400 border border-slate-700'}">
+            <span class="px-2 py-0.5 rounded-md text-[11px] font-black font-heading tracking-wide ${isCompleted ? 'bg-[#CCFF00] text-[#09090D]' : 'bg-[#181822] text-white border border-white/10'}">
               DAY ${day.day_number}
             </span>
-            <span class="text-xs font-semibold text-slate-200">${day.date_display}</span>
-            <span class="text-[10px] text-slate-500 font-medium">W${day.week_number}</span>
+            <span class="text-xs font-semibold text-zinc-200">${day.date_display}</span>
+            <span class="text-[10px] text-zinc-500 font-bold">W${day.week_number}</span>
           </div>
 
           <!-- Deload & Completion Badge & Checkbox -->
@@ -563,72 +572,72 @@ function buildDayCardHTML(day) {
         </div>
 
         <!-- Day Completion Progress Bar -->
-        <div class="mb-2.5 bg-dark-900/60 p-2 rounded-xl border border-slate-800/80">
+        <div class="mb-2.5 bg-[#0E0E14] p-2 rounded-xl border border-white/5">
           <div class="flex items-center justify-between text-[11px] mb-1 font-semibold">
-            <span class="text-slate-400 flex items-center space-x-1">
-              <i data-lucide="${pct === 100 ? 'check-circle-2' : (pct > 0 ? 'clock' : 'circle')}" class="w-3 h-3 ${pct === 100 ? 'text-emerald-400' : (pct > 0 ? 'text-cyan-400' : 'text-slate-500')}"></i>
-              <span class="${pct === 100 ? 'text-emerald-300 font-bold' : (pct > 0 ? 'text-cyan-300 font-semibold' : 'text-slate-400')}">
+            <span class="text-zinc-400 flex items-center space-x-1">
+              <i data-lucide="${pct === 100 ? 'check-circle-2' : (pct > 0 ? 'clock' : 'circle')}" class="w-3 h-3 ${pct === 100 ? 'text-[#CCFF00]' : (pct > 0 ? 'text-white' : 'text-zinc-600')}"></i>
+              <span class="${pct === 100 ? 'text-[#CCFF00] font-bold' : (pct > 0 ? 'text-white font-semibold' : 'text-zinc-400')}">
                 ${pct === 100 ? 'Completed (100%)' : (isCompleted ? `Logged (${pct}%)` : (pct > 0 ? 'In Progress' : 'Pending'))}
               </span>
             </span>
-            <span class="font-black font-mono text-xs ${pct === 100 ? 'text-emerald-400' : (pct > 0 ? 'text-cyan-400' : 'text-slate-500')}">
+            <span class="font-black font-mono text-xs ${pct === 100 ? 'text-[#CCFF00]' : (pct > 0 ? 'text-white' : 'text-zinc-500')}">
               ${pct}%
             </span>
           </div>
-          <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-slate-800/50">
-            <div class="h-full rounded-full transition-all duration-500 ${pct === 100 ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : (pct > 0 ? 'bg-gradient-to-r from-cyan-500 to-indigo-500 shadow-[0_0_8px_rgba(6,182,212,0.4)]' : 'bg-transparent')}" style="width: ${pct}%"></div>
+          <div class="w-full bg-[#181822] rounded-full h-1.5 overflow-hidden border border-white/5">
+            <div class="h-full rounded-full transition-all duration-500 ${pct === 100 ? 'bg-[#CCFF00]' : (pct > 0 ? 'bg-white/80' : 'bg-transparent')}" style="width: ${pct}%"></div>
           </div>
         </div>
 
         <!-- Strength Lifts Preview -->
-        <div class="text-xs text-slate-300 bg-dark-900/70 p-2.5 rounded-xl border border-slate-800/80 mb-2 min-h-[48px] line-clamp-2">
+        <div class="text-xs text-zinc-300 bg-[#16161F] p-2.5 rounded-xl border border-white/5 mb-2 min-h-[48px] line-clamp-2">
           ${day.strength_workout}
         </div>
 
         <!-- Stretches & Protocol Chips -->
-        <div class="flex items-center justify-between text-[10px] text-slate-400 bg-dark-900/40 p-2 rounded-lg border border-slate-800/60 mb-2.5">
-          <span class="flex items-center space-x-1 text-cyan-400 font-semibold">
-            <i data-lucide="wind" class="w-3 h-3"></i>
+        <div class="flex items-center justify-between text-[10px] text-zinc-400 bg-[#14141A] p-2 rounded-lg border border-white/5 mb-2.5">
+          <span class="flex items-center space-x-1 text-zinc-300 font-semibold">
+            <i data-lucide="wind" class="w-3 h-3 text-[#CCFF00]"></i>
             <span>${warmupCount} Dynamic Stretches</span>
           </span>
-          <span class="text-slate-600">•</span>
-          <span class="flex items-center space-x-1 text-indigo-400 font-semibold">
-            <i data-lucide="heart-pulse" class="w-3 h-3"></i>
+          <span class="text-zinc-600">•</span>
+          <span class="flex items-center space-x-1 text-zinc-300 font-semibold">
+            <i data-lucide="heart-pulse" class="w-3 h-3 text-white"></i>
             <span>${cooldownCount} Static Stretches</span>
           </span>
         </div>
 
         <!-- Quick Meta Chips: Time, Steps, Effort, Validated Calories -->
-        <div class="grid grid-cols-4 gap-1 text-[10px] text-slate-400 mb-2.5">
-          <div class="bg-dark-900/60 px-1.5 py-1 rounded border border-slate-800 text-center truncate" title="Duration">
+        <div class="grid grid-cols-4 gap-1 text-[10px] text-zinc-400 mb-2.5">
+          <div class="bg-[#181822] px-1.5 py-1 rounded border border-white/5 text-center truncate" title="Duration">
             ⏱️ ${day.target_duration.replace(' min', 'm')}
           </div>
-          <div class="bg-dark-900/60 px-1.5 py-1 rounded border border-slate-800 text-center truncate" title="Daily Steps">
+          <div class="bg-[#181822] px-1.5 py-1 rounded border border-white/5 text-center truncate" title="Daily Steps">
             👟 ${day.daily_steps_target}
           </div>
-          <div class="bg-dark-900/60 px-1.5 py-1 rounded border border-slate-800 text-center truncate" title="Effort">
+          <div class="bg-[#181822] px-1.5 py-1 rounded border border-white/5 text-center truncate" title="Effort">
             ⚡ ${day.effort_target.replace('RPE ', '')}
           </div>
-          <div class="bg-dark-900/60 px-1.5 py-1 rounded border border-slate-800 text-center truncate text-amber-400 font-bold" title="Scientifically estimated calorie burn">
+          <div class="bg-[#181822] px-1.5 py-1 rounded border border-white/5 text-center truncate text-[#CCFF00] font-black" title="Estimated burn">
             🔥 ${dayCal.total_estimated_kcal}k
           </div>
         </div>
       </div>
 
       <!-- Action Footer -->
-      <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+      <div class="pt-2 border-t border-white/[0.06] flex items-center justify-between">
         <div class="text-[11px]">
           ${day.actual_weight_kg 
-            ? `<span class="text-emerald-400 font-bold">⚖️ ${day.actual_weight_kg} kg • ${pct}% • 🔥 ${dayCal.total_completed_kcal} kcal</span>` 
+            ? `<span class="text-[#CCFF00] font-bold">⚖️ ${day.actual_weight_kg} kg • ${pct}% • 🔥 ${dayCal.total_completed_kcal} kcal</span>` 
             : (pct === 100 
-                ? `<span class="text-emerald-400 font-semibold flex items-center space-x-1"><i data-lucide="check" class="w-3.5 h-3.5 inline"></i><span>100% Done • 🔥 ${dayCal.total_completed_kcal} kcal</span></span>` 
-                : (pct > 0 ? `<span class="text-cyan-400 font-semibold">${pct}% Done • 🔥 ${dayCal.total_completed_kcal} kcal</span>` : `<span class="text-slate-500">🔥 ~${dayCal.total_estimated_kcal} kcal plan</span>`)
+                ? `<span class="text-[#CCFF00] font-bold flex items-center space-x-1"><i data-lucide="check" class="w-3.5 h-3.5 inline"></i><span>100% Done • 🔥 ${dayCal.total_completed_kcal} kcal</span></span>` 
+                : (pct > 0 ? `<span class="text-white font-semibold">${pct}% Done • 🔥 ${dayCal.total_completed_kcal} kcal</span>` : `<span class="text-zinc-500">🔥 ~${dayCal.total_estimated_kcal} kcal plan</span>`)
               )
           }
         </div>
-        <button type="button" class="px-2.5 py-1 rounded-lg text-xs font-bold text-cyan-400 hover:text-cyan-300 bg-dark-900 hover:bg-slate-800 border border-slate-700 flex items-center space-x-1">
-          <span>View Full Plan</span>
-          <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+        <button type="button" class="px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-[#181822] hover:bg-[#20202C] border border-white/10 flex items-center space-x-1 active:scale-95 transition">
+          <span>View Plan</span>
+          <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-[#CCFF00]"></i>
         </button>
       </div>
 
@@ -1694,9 +1703,9 @@ function scrollToWeightSection() {
     lucide.createIcons();
   }
   section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  section.classList.add('ring-2', 'ring-emerald-500/80', 'shadow-2xl', 'shadow-emerald-500/20');
+  section.classList.add('ring-2', 'ring-[#CCFF00]/80', 'shadow-2xl', 'shadow-[#CCFF00]/10');
   setTimeout(() => {
-    section.classList.remove('ring-2', 'ring-emerald-500/80', 'shadow-2xl', 'shadow-emerald-500/20');
+    section.classList.remove('ring-2', 'ring-[#CCFF00]/80', 'shadow-2xl', 'shadow-[#CCFF00]/10');
   }, 1800);
 }
 
@@ -1715,9 +1724,9 @@ function setInlineWeightScope(scope) {
   activeInlineWeightScope = scope;
   document.querySelectorAll('.inline-weight-scope-btn').forEach(btn => {
     if (btn.getAttribute('data-scope') === scope) {
-      btn.className = 'inline-weight-scope-btn active px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500 text-dark-900 shadow-md shadow-emerald-500/20';
+      btn.className = 'inline-weight-scope-btn active px-2.5 py-1 rounded-lg text-xs font-black bg-[#CCFF00] text-[#09090D]';
     } else {
-      btn.className = 'inline-weight-scope-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-dark-800 text-slate-300 hover:bg-slate-700';
+      btn.className = 'inline-weight-scope-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-[#14141A] text-zinc-400 hover:text-white';
     }
   });
   if (lastWeightData) {
@@ -1764,13 +1773,13 @@ function renderInlineWeightChart(data, scope = activeInlineWeightScope) {
   if (elLost) {
     if (diffKg > 0) {
       elLost.innerText = `-${diffKg} kg`;
-      elLost.className = 'text-base sm:text-lg font-black font-heading text-emerald-400';
+      elLost.className = 'text-base sm:text-lg font-black font-heading text-[#CCFF00]';
     } else if (diffKg < 0) {
       elLost.innerText = `+${Math.abs(diffKg)} kg`;
       elLost.className = 'text-base sm:text-lg font-black font-heading text-rose-400';
     } else {
       elLost.innerText = `0.0 kg`;
-      elLost.className = 'text-base sm:text-lg font-black font-heading text-slate-300';
+      elLost.className = 'text-base sm:text-lg font-black font-heading text-zinc-300';
     }
   }
 
@@ -1781,7 +1790,7 @@ function renderInlineWeightChart(data, scope = activeInlineWeightScope) {
       elRem.className = 'text-base sm:text-lg font-black font-heading text-amber-400';
     } else {
       elRem.innerText = `Goal Hit! 🏆`;
-      elRem.className = 'text-base sm:text-lg font-black font-heading text-emerald-400';
+      elRem.className = 'text-base sm:text-lg font-black font-heading text-[#CCFF00]';
     }
   }
 
@@ -1847,11 +1856,11 @@ function renderInlineWeightChart(data, scope = activeInlineWeightScope) {
   const yAxisMin = Math.max(70, Math.floor(minObserved - 1.0));
   const yAxisMax = Math.min(120, Math.ceil(maxObserved + 1.0));
 
-  // 4. Vibrant Gradient Area
+  // 4. Vibrant Volt Area
   const areaGradient = ctx.createLinearGradient(0, 0, 0, 320);
-  areaGradient.addColorStop(0, 'rgba(16, 185, 129, 0.40)');
-  areaGradient.addColorStop(0.65, 'rgba(16, 185, 129, 0.08)');
-  areaGradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+  areaGradient.addColorStop(0, 'rgba(204, 255, 0, 0.28)');
+  areaGradient.addColorStop(0.65, 'rgba(204, 255, 0, 0.04)');
+  areaGradient.addColorStop(1, 'rgba(204, 255, 0, 0.0)');
 
   // 5. Construct High-Visibility Chart
   inlineWeightChartInstance = new Chart(ctx, {
@@ -1862,32 +1871,32 @@ function renderInlineWeightChart(data, scope = activeInlineWeightScope) {
         {
           label: `Goal Target (➔ ${targetKg} kg)`,
           data: idealData,
-          borderColor: '#06b6d4',
-          borderWidth: 2.5,
-          borderDash: [6, 4],
+          borderColor: 'rgba(255, 255, 255, 0.35)',
+          borderWidth: 2,
+          borderDash: [5, 4],
           pointRadius: (ctx) => {
             const idx = ctx.dataIndex;
             return (idx === 0 || idx === daysLabels.length - 1) ? 4 : 0;
           },
-          pointBackgroundColor: '#06b6d4',
-          pointBorderColor: '#ffffff',
-          pointBorderWidth: 1.5,
+          pointBackgroundColor: '#FFFFFF',
+          pointBorderColor: '#09090D',
+          pointBorderWidth: 2,
           fill: false,
           tension: 0.1
         },
         {
           label: 'Your Logged Weight (kg)',
           data: actualData,
-          borderColor: '#10b981',
+          borderColor: '#CCFF00',
           borderWidth: 3.5,
           backgroundColor: areaGradient,
           fill: true,
           tension: 0.3,
           spanGaps: true,
-          pointRadius: 7,
-          pointHoverRadius: 10,
-          pointBackgroundColor: '#ffffff',
-          pointBorderColor: '#10b981',
+          pointRadius: 6,
+          pointHoverRadius: 9,
+          pointBackgroundColor: '#09090D',
+          pointBorderColor: '#CCFF00',
           pointBorderWidth: 3,
           pointHitRadius: 18
         }
@@ -2586,20 +2595,21 @@ function resetFilters() {
   document.querySelectorAll('.week-pill').forEach(btn => {
     const isAll = btn.dataset.week === '';
     btn.classList.toggle('active', isAll);
-    btn.classList.toggle('bg-cyan-500', isAll);
-    btn.classList.toggle('text-dark-900', isAll);
-    btn.classList.toggle('border-cyan-400', isAll);
+    btn.classList.toggle('bg-[#CCFF00]', isAll);
+    btn.classList.toggle('text-[#09090D]', isAll);
     if (!isAll) {
-      btn.className = `week-pill px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-dark-800 text-slate-300 border border-slate-700/80 hover:bg-slate-700`;
+      btn.className = `week-pill px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 bg-[#14141A] text-zinc-300 border border-white/5 hover:bg-[#1C1C26]`;
     }
   });
 
   document.querySelectorAll('.filter-pill').forEach(btn => {
     const isAll = btn.dataset.filter === 'all';
     btn.classList.toggle('active', isAll);
-    btn.classList.toggle('bg-cyan-500/20', isAll);
-    btn.classList.toggle('text-cyan-300', isAll);
-    btn.classList.toggle('border-cyan-500/40', isAll);
+    btn.classList.toggle('bg-[#CCFF00]', isAll);
+    btn.classList.toggle('text-[#09090D]', isAll);
+    if (!isAll) {
+      btn.className = `filter-pill px-3 py-1.5 rounded-lg bg-[#14141A] text-zinc-400 border border-white/5 shrink-0 font-bold hover:text-white`;
+    }
   });
 
   renderWorkoutGrid();
@@ -2617,29 +2627,29 @@ function setupEventListeners() {
     renderWorkoutGrid();
   });
 
-  // Week Pills
+  // Week Pills (Whoop Volt Theme)
   document.querySelectorAll('.week-pill').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.week-pill').forEach(b => {
-        b.classList.remove('active', 'bg-cyan-500', 'text-dark-900', 'border-cyan-400');
-        b.classList.add('bg-dark-800', 'text-slate-300', 'border-slate-700/80');
+        b.classList.remove('active', 'bg-[#CCFF00]', 'text-[#09090D]', 'bg-cyan-500');
+        b.classList.add('bg-[#14141A]', 'text-zinc-300');
       });
-      btn.classList.add('active', 'bg-cyan-500', 'text-dark-900', 'border-cyan-400');
-      btn.classList.remove('bg-dark-800', 'text-slate-300', 'border-slate-700/80');
+      btn.classList.add('active', 'bg-[#CCFF00]', 'text-[#09090D]');
+      btn.classList.remove('bg-[#14141A]', 'text-zinc-300');
       currentWeek = btn.dataset.week;
       renderWorkoutGrid();
     });
   });
 
-  // Filter Pills
+  // Filter Pills (Whoop Volt Theme)
   document.querySelectorAll('.filter-pill').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.filter-pill').forEach(b => {
-        b.classList.remove('active', 'bg-cyan-500/20', 'text-cyan-300', 'border-cyan-500/40');
-        b.classList.add('bg-dark-800', 'text-slate-400', 'border-slate-700');
+        b.classList.remove('active', 'bg-[#CCFF00]', 'text-[#09090D]', 'bg-cyan-500/20', 'text-cyan-300', 'border-cyan-500/40');
+        b.classList.add('bg-[#14141A]', 'text-zinc-400');
       });
-      btn.classList.add('active', 'bg-cyan-500/20', 'text-cyan-300', 'border-cyan-500/40');
-      btn.classList.remove('bg-dark-800', 'text-slate-400', 'border-slate-700');
+      btn.classList.add('active', 'bg-[#CCFF00]', 'text-[#09090D]');
+      btn.classList.remove('bg-[#14141A]', 'text-zinc-400');
       currentFilter = btn.dataset.filter;
       renderWorkoutGrid();
     });

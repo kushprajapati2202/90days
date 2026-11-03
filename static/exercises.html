@@ -42,39 +42,39 @@
   <!-- Custom Mobile-First Stylesheet -->
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-dark-900 text-slate-100 min-h-screen flex flex-col antialiased">
+<body class="bg-[#09090D] text-slate-100 min-h-screen flex flex-col antialiased selection:bg-[#CCFF00] selection:text-[#09090D]">
 
   <!-- TOP STICKY APP HEADER -->
-  <header class="sticky top-0 z-40 bg-dark-950/90 backdrop-blur-md border-b border-slate-800/80 px-3 sm:px-6 py-2.5">
+  <header class="sticky top-0 z-40 bg-[#09090D]/95 backdrop-blur-md border-b border-white/[0.08] px-3.5 sm:px-6 py-2.5">
     <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
       
       <!-- Brand & Back Button -->
       <div class="flex items-center space-x-2.5">
-        <a href="index.html" class="p-2 rounded-xl bg-dark-850 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 active:scale-95 transition" title="Back to Workout Schedule">
+        <a href="index.html" class="p-2 rounded-xl bg-[#14141A] hover:bg-[#1C1C26] text-zinc-300 hover:text-white border border-white/10 active:scale-95 transition" title="Back to Workout Schedule">
           <i data-lucide="arrow-left" class="w-4 h-4"></i>
         </a>
         <div class="flex items-center space-x-2 cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
-          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center shadow-md shadow-indigo-500/20 shrink-0">
-            <i data-lucide="book-marked" class="w-4 h-4 text-white"></i>
+          <div class="w-8 h-8 rounded-xl bg-[#14141A] text-[#CCFF00] flex items-center justify-center border border-white/10 shrink-0 shadow-sm">
+            <i data-lucide="dumbbell" class="w-4 h-4 text-[#CCFF00]"></i>
           </div>
           <div>
             <div class="flex items-center space-x-1.5">
-              <h1 class="text-sm sm:text-base font-extrabold tracking-tight text-white font-heading">EXERCISE LIBRARY</h1>
-              <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-800">
+              <h1 class="text-sm sm:text-base font-black tracking-tight text-white font-heading">EXERCISE VAULT</h1>
+              <span class="px-1.5 py-0.2 rounded text-[9px] font-black tracking-wider bg-white/10 text-white border border-white/10">
                 2,200+ MOVES
               </span>
             </div>
-            <p class="text-[11px] text-slate-400 hidden sm:block">Plan Routine, 876 Photo Library & 1,324 Animated GIFs</p>
+            <p class="text-[11px] text-zinc-400 hidden sm:block">Plan Routine, 876 Photo Library & 1,324 Animated Guides</p>
           </div>
         </div>
       </div>
 
       <!-- Action Buttons -->
       <div class="flex items-center space-x-2">
-        <a href="index.html" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/25 active:scale-95 transition">
+        <a href="index.html" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#CCFF00] text-[#09090D] hover:bg-[#B8E600] active:scale-95 transition">
           <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
           <span class="hidden sm:inline">Workout Schedule</span>
-          <span class="sm:hidden">Workouts</span>
+          <span class="sm:hidden">Schedule</span>
         </a>
       </div>
 

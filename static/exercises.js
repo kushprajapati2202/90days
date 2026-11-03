@@ -731,19 +731,19 @@ function switchLibraryMode(mode) {
   btnCatalog.className = defaultBtn;
 
   if (mode === 'plan') {
-    btnPlan.className = "py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-indigo-600 text-white shadow-md shadow-indigo-600/30";
+    btnPlan.className = "py-2 px-3 rounded-lg text-xs font-black transition flex items-center justify-center space-x-1.5 bg-[#CCFF00] text-[#09090D] shadow-sm";
     renderPlanCategoryTabs();
     populatePlanEquipment();
     applyPlanFilters();
- else if (mode === '876') {
-    btn876.className = "py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-emerald-600 text-white shadow-md shadow-emerald-600/30";
+  } else if (mode === '876') {
+    btn876.className = "py-2 px-3 rounded-lg text-xs font-black transition flex items-center justify-center space-x-1.5 bg-[#CCFF00] text-[#09090D] shadow-sm";
     renderFedbCategoryTabs();
     populateFedbEquipment();
     fedbSkip = 0;
     fedbExercises = [];
     loadFedbExercises();
- else if (mode === 'catalog') {
-    btnCatalog.className = "py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-cyan-600 text-white shadow-md shadow-cyan-600/30";
+  } else if (mode === 'catalog') {
+    btnCatalog.className = "py-2 px-3 rounded-lg text-xs font-black transition flex items-center justify-center space-x-1.5 bg-[#CCFF00] text-[#09090D] shadow-sm";
     renderCatalogCategoryTabs();
     populateCatalogEquipment();
     catalogSkip = 0;
