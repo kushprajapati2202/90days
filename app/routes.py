@@ -895,10 +895,13 @@ def create_weight_log(data: WeightLogCreateModel):
     day = db.workout_days.find_one({"day_number": day_num})
     date_display = data.date_display or (day.get("date_display", "") if day else "")
 
+    time_of_day = (data.time_of_day or "morning").lower()
+
     doc = {
         "day_number": day_num,
         "date_display": date_display,
         "weight_kg": data.weight_kg,
+        "time_of_day": time_of_day,
         "notes": data.notes or "",
         "recorded_at": datetime.now(timezone.utc).isoformat()
     }

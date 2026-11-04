@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Calendar, Check } from 'lucide-react';
+import { X, Calendar, Check, Sun, Moon } from 'lucide-react';
 import { FaWeightScale } from 'react-icons/fa6';
 import { api } from '../services/api';
 import { getIndianTodayIsoDate } from '../utils/timeFormat';
@@ -8,6 +8,7 @@ export default function WeightModal({ isOpen, onClose, currentWeight, onWeightLo
   if (!isOpen) return null;
 
   const [weight, setWeight] = useState(currentWeight || '');
+  const [timeOfDay, setTimeOfDay] = useState('morning');
   const [date, setDate] = useState(getIndianTodayIsoDate());
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,7 +21,7 @@ export default function WeightModal({ isOpen, onClose, currentWeight, onWeightLo
     setError('');
 
     try {
-      await api.logWeight(weight, notes, date);
+      await api.logWeight(weight, notes, date, timeOfDay);
       if (onWeightLogged) onWeightLogged();
       onClose();
     } catch (err) {
@@ -38,7 +39,7 @@ export default function WeightModal({ isOpen, onClose, currentWeight, onWeightLo
             <div class="w-8 h-8 rounded-xl bg-volt/10 text-volt flex items-center justify-center">
               <FaWeightScale class="w-4 h-4 text-volt" />
             </div>
-            <h3 class="text-sm font-bold text-white font-heading">Log Morning Weigh-In</h3>
+            <h3 class="text-sm font-bold text-white font-heading">Log Body Weight</h3>
           </div>
           <button onClick={onClose} class="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition">
             <X class="w-4 h-4" />
@@ -72,6 +73,36 @@ export default function WeightModal({ isOpen, onClose, currentWeight, onWeightLo
                 class="w-full bg-dark-900 border border-white/10 rounded-xl pl-3 pr-8 py-2.5 text-sm font-mono font-bold text-white focus:outline-none focus:border-volt"
               />
               <span class="absolute right-3 top-2.5 text-xs text-zinc-500 font-bold">kg</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-zinc-400 mb-1 uppercase">Timing</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setTimeOfDay('morning')}
+                class={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition ${
+                  timeOfDay === 'morning'
+                    ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30'
+                    : 'bg-dark-900 text-zinc-400 border border-white/5 hover:text-white'
+                }`}
+              >
+                <Sun class="w-3.5 h-3.5 text-amber-400" />
+                <span>Morning</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimeOfDay('evening')}
+                class={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition ${
+                  timeOfDay === 'evening'
+                    ? 'bg-indigo-400/20 text-indigo-300 border border-indigo-400/30'
+                    : 'bg-dark-900 text-zinc-400 border border-white/5 hover:text-white'
+                }`}
+              >
+                <Moon class="w-3.5 h-3.5 text-indigo-400" />
+                <span>Evening</span>
+              </button>
             </div>
           </div>
 

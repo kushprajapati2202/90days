@@ -56,6 +56,7 @@ export default function App() {
 
   // Modals
   const [selectedWorkout, setSelectedWorkout] = useState(null);
+  const [selectedDayNumber, setSelectedDayNumber] = useState(null);
   const [selectedExerciseGuide, setSelectedExerciseGuide] = useState(null);
   const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
 
@@ -159,9 +160,35 @@ export default function App() {
   };
 
   // Determine Today's Workout Day
-  // Use today's calendar date offset or first pending day
+  // Priority:
+  // 1. User selected day number (e.g. tapped from weekly consistency capsules)
+  // 2. Exact match of today's calendar date in Indian Standard Time (Asia/Kolkata)
+  // 3. First non-completed day (or day 1 if all done)
   const getTodayDay = () => {
     if (allDays.length === 0) return null;
+    if (selectedDayNumber) {
+      const found = allDays.find((d) => d.day_number === selectedDayNumber);
+      if (found) return found;
+    }
+    try {
+      const formatter = new Intl.DateTimeFormat('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        timeZone: 'Asia/Kolkata',
+      });
+      const parts = formatter.formatToParts(new Date());
+      const day = parts.find((p) => p.type === 'day')?.value;
+      const month = parts.find((p) => p.type === 'month')?.value;
+      if (day && month) {
+        const todayDateStr = `${day} ${month}`.toLowerCase();
+        const matchToday = allDays.find(
+          (d) => d.date_display && d.date_display.trim().toLowerCase() === todayDateStr
+        );
+        if (matchToday) return matchToday;
+      }
+    } catch (e) {
+      console.warn('Date matching error:', e);
+    }
     const pendingDay = allDays.find((d) => !d.completed);
     return pendingDay || allDays[0];
   };
@@ -189,8 +216,8 @@ export default function App() {
     }).catch(() => {});
   };
 
-  const handleQuickLogWeight = async (weightKg) => {
-    await api.logWeight(weightKg);
+  const handleQuickLogWeight = async (weightKg, timeOfDay = 'morning', dayNum = null) => {
+    await api.logWeight(weightKg, '', null, timeOfDay, dayNum);
     const [statsRes, weightRes] = await Promise.all([
       api.getStats(),
       api.getWeightHistory(),
@@ -268,7 +295,10 @@ export default function App() {
                 onOpenWorkoutModal={(d) => setSelectedWorkout(d)}
                 onOpenWeightModal={() => setIsWeightModalOpen(true)}
                 onQuickLogWeight={handleQuickLogWeight}
-                onSelectDay={(d) => setSelectedWorkout(d)}
+                onSelectDay={(d) => setSelectedDayNumber(d.day_number)}
+                onDayUpdated={handleDayUpdated}
+                onLaunchRestTimer={launchRestTimer}
+                onOpenExerciseGuide={(ex) => setSelectedExerciseGuide(ex)}
               />
             </div>
 

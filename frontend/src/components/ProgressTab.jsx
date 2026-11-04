@@ -153,6 +153,17 @@ export default function ProgressTab({ stats, weightHistory, onOpenWeightModal, o
                 <div>
                   <span className="text-zinc-300 font-semibold">{log.date_display || log.date || 'Today'}</span>
                   {log.day_number && <span className="text-zinc-500 text-[10px] ml-1.5">(Day {log.day_number})</span>}
+                  {log.time_of_day && (
+                    <span
+                      className={`text-[9px] px-1.5 py-0.5 rounded ml-1.5 font-bold uppercase ${
+                        log.time_of_day === 'morning'
+                          ? 'bg-amber-400/10 text-amber-300 border border-amber-400/20'
+                          : 'bg-indigo-400/10 text-indigo-300 border border-indigo-400/20'
+                      }`}
+                    >
+                      {log.time_of_day === 'morning' ? '☀️ Morning' : '🌙 Evening'}
+                    </span>
+                  )}
                   {log.notes && <span className="text-zinc-400 ml-2 italic text-[11px]">"{log.notes}"</span>}
                 </div>
                 <div className="flex items-center space-x-2">

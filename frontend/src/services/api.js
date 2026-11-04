@@ -117,24 +117,23 @@ export const api = {
     }
   },
 
-  async logWeight(weightKg, notes = '', date = null) {
+  async logWeight(weightKg, notes = '', date = null, timeOfDay = 'morning', dayNumber = null) {
+    const payload = {
+      weight_kg: Number(weightKg),
+      notes: notes || '',
+      date_display: date || new Date().toISOString().split('T')[0],
+      time_of_day: timeOfDay || 'morning',
+    };
+    if (dayNumber) payload.day_number = Number(dayNumber);
     try {
       return await request('/weight-log', {
         method: 'POST',
-        body: JSON.stringify({
-          weight_kg: Number(weightKg),
-          notes: notes || '',
-          date_display: date || new Date().toISOString().split('T')[0],
-        }),
+        body: JSON.stringify(payload),
       });
     } catch (e) {
       return await request('/weight', {
         method: 'POST',
-        body: JSON.stringify({
-          weight_kg: Number(weightKg),
-          notes: notes || '',
-          date_display: date || new Date().toISOString().split('T')[0],
-        }),
+        body: JSON.stringify(payload),
       });
     }
   },
