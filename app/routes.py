@@ -329,6 +329,63 @@ def get_coaching_notes():
     notes = list(db.coaching_notes.find({}, {"_id": 0}).sort("rule_number", 1))
     return {"notes": notes}
 
+def parse_and_enrich_conditioning_and_cardio(d: dict):
+    if not d:
+        return
+    cond_raw = d.get("bodyweight_conditioning") or ""
+    parsed_cond = []
+    if cond_raw and "no conditioning" not in cond_raw.lower() and "optional relaxed" not in cond_raw.lower():
+        clean = re.sub(r"^\d+\s+easy\s+rounds:\s*", "", cond_raw, flags=re.IGNORECASE)
+        clean = re.sub(r"Rest as needed\.?", "", clean, flags=re.IGNORECASE)
+        parts = [p.strip() for p in clean.split(";") if p.strip()]
+        for idx, p in enumerate(parts):
+            s = p.strip(" .;")
+            if not s or "optional" in s.lower() or "skip " in s.lower():
+                continue
+            m = re.search(r"(\d+[\s\u00d7xX*–-]\S+.*|\d+\s*(?:sec|min|each|reps?).*)", s, re.IGNORECASE)
+            if m:
+                name = s[:m.start()].strip(" :;,")
+                presc = s[m.start():].strip(" .;")
+            else:
+                name = s
+                presc = "Controlled pace"
+            media = get_exercise_media(name) or {}
+            thumb = media.get("gif_url") or (media.get("images", [None])[0] if media.get("images") else "")
+            parsed_cond.append({
+                "id": f"cond_{idx}",
+                "name": media.get("display_name") or name.title(),
+                "prescription": presc,
+                "media": media,
+                "gif_url": thumb,
+                "calories": 35,
+                "type": "conditioning"
+            })
+    d["parsed_conditioning"] = parsed_cond
+
+    cardio_raw = d.get("cardio") or ""
+    parsed_cardio = []
+    if cardio_raw and "none" not in cardio_raw.lower() and "optional" not in cardio_raw.lower():
+        s = cardio_raw.strip(" .;")
+        m = re.search(r"(\d+[\s\u00d7xX*–-].*)", s, re.IGNORECASE)
+        if m:
+            name = s[:m.start()].strip(" :;,")
+            presc = s[m.start():].strip(" .;")
+        else:
+            name = s
+            presc = "15–20 min steady"
+        media = get_exercise_media(name) or {}
+        thumb = media.get("gif_url") or (media.get("images", [None])[0] if media.get("images") else "")
+        parsed_cardio.append({
+            "id": "cardio_0",
+            "name": media.get("display_name") or name.title(),
+            "prescription": presc,
+            "media": media,
+            "gif_url": thumb,
+            "calories": 75,
+            "type": "cardio"
+        })
+    d["parsed_cardio"] = parsed_cardio
+
 def enrich_day_exercise_gifs(d: dict) -> dict:
     """Enrich day exercises, warmups, and cooldowns with high-quality animated GIFs."""
     if not d:
@@ -357,6 +414,7 @@ def enrich_day_exercise_gifs(d: dict) -> dict:
                     imgs = [media["gif_url"]] + [img for img in (s_media.get("images") or media.get("images") or []) if img != media["gif_url"]]
                     s_media["images"] = imgs
                 s["media"] = s_media
+    parse_and_enrich_conditioning_and_cardio(d)
     return d
 
 _DAYS_CACHE = None

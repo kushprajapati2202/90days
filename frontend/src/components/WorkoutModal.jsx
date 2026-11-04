@@ -8,6 +8,7 @@ import { api } from '../services/api';
 import { calculateDayCalories, calculateSetCalories, calculateExerciseTotalCalories, getExerciseMet } from '../utils/calories';
 import { formatTimeOfDay, formatDuration, formatStopwatch } from '../utils/timeFormat';
 import { getExerciseHistory, getPreviousSet, checkSetProgress } from '../utils/progressiveOverload';
+import { parseConditioningAndCardio } from '../utils/conditioning';
 import CelebrationModal from './CelebrationModal';
 
 export default function WorkoutModal({
@@ -102,6 +103,12 @@ export default function WorkoutModal({
     if (d.bodyweight_conditioning && !d.bodyweight_conditioning.toLowerCase().includes('no conditioning')) {
       total++;
       if (d.conditioning_completed) done++;
+    }
+
+    // cardio
+    if (d.cardio && !d.cardio.toLowerCase().includes('none') && !d.cardio.toLowerCase().includes('optional relaxed')) {
+      total++;
+      if (d.cardio_completed) done++;
     }
 
     // cooldowns
@@ -199,6 +206,52 @@ export default function WorkoutModal({
       setShowCelebration(true);
     }
     triggerAutoSave(clone);
+  };
+
+  // Toggle Conditioning Drill or Cardio Item
+  const toggleConditioningCardioItem = (item) => {
+    const clone = stampActivityTimes(JSON.parse(JSON.stringify(activeDay)));
+    sounds.playSetCheck();
+
+    if (item.type === 'cardio') {
+      clone.cardio_completed = !clone.cardio_completed;
+    } else {
+      const condItems = parseConditioningAndCardio(clone).filter((it) => it.type === 'conditioning');
+      const allDrillIndices = condItems.map((_, i) => i);
+      let currentDrills = Array.isArray(clone.conditioning_drills)
+        ? [...clone.conditioning_drills]
+        : (clone.conditioning_completed ? allDrillIndices : []);
+
+      if (currentDrills.includes(item.index)) {
+        currentDrills = currentDrills.filter((i) => i !== item.index);
+      } else {
+        currentDrills.push(item.index);
+      }
+      clone.conditioning_drills = currentDrills;
+      clone.conditioning_completed = condItems.length > 0 && condItems.every((_, i) => currentDrills.includes(i));
+    }
+
+    const newProgress = calculateProgress(clone);
+    clone.completion_percentage = newProgress;
+    if (newProgress === 100 && !activeDay.completed) {
+      const nowIso = new Date().toISOString();
+      clone.completed = true;
+      clone.completed_at = nowIso;
+      clone.ended_at = nowIso;
+      setShowCelebration(true);
+    }
+    triggerAutoSave(clone);
+  };
+
+  const isConditioningItemCompleted = (item) => {
+    if (item.type === 'cardio') {
+      return !!activeDay.cardio_completed;
+    }
+    if (activeDay.conditioning_completed) return true;
+    if (Array.isArray(activeDay.conditioning_drills)) {
+      return activeDay.conditioning_drills.includes(item.index);
+    }
+    return false;
   };
 
   // Log or Toggle Set
@@ -760,42 +813,92 @@ export default function WorkoutModal({
           </div>
 
           {/* 3. CONDITIONING & CARDIO */}
-          {activeDay.bodyweight_conditioning && (
-            <div class="p-3.5 rounded-2xl bg-dark-900 border border-white/[0.06]">
-              <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center space-x-1.5 text-xs font-bold text-white font-heading">
-                  <span class="w-5 h-5 rounded-md bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-[10px] font-bold">3</span>
-                  <FaPersonRunning class="w-4 h-4 text-cyan-400" />
-                  <span>Conditioning & Cardio</span>
-                </div>
-                <span class="text-[10px] text-amber-400 font-mono font-bold">~95 kcal</span>
-              </div>
+          {(() => {
+            const condCardioItems = parseConditioningAndCardio(activeDay);
+            if (condCardioItems.length === 0) return null;
+            const totalKcal = condCardioItems.reduce((acc, it) => acc + (it.calories || 40), 0);
+            const doneCount = condCardioItems.filter((it) => isConditioningItemCompleted(it)).length;
 
-              <div
-                onClick={() => {
-                  const clone = stampActivityTimes(JSON.parse(JSON.stringify(activeDay)));
-                  clone.conditioning_completed = !clone.conditioning_completed;
-                  clone.completion_percentage = calculateProgress(clone);
-                  sounds.playSetCheck();
-                  triggerAutoSave(clone);
-                }}
-                class={`p-2.5 rounded-xl cursor-pointer transition flex items-center justify-between ${
-                  activeDay.conditioning_completed
-                    ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'
-                    : 'bg-dark-850 hover:bg-white/5 border border-white/[0.04] text-zinc-300'
-                }`}
-              >
-                <div class="flex items-center space-x-2">
-                  <div class={`w-5 h-5 rounded-md flex items-center justify-center ${
-                    activeDay.conditioning_completed ? 'bg-emerald-400 text-dark-950' : 'border border-zinc-600'
-                  }`}>
-                    {activeDay.conditioning_completed && <Check class="w-3.5 h-3.5 stroke-[3]" />}
+            return (
+              <div class="p-3.5 rounded-2xl bg-dark-900 border border-white/[0.06]">
+                <div class="flex items-center justify-between mb-2.5">
+                  <div class="flex items-center space-x-1.5 text-xs font-bold text-white font-heading">
+                    <span class="w-5 h-5 rounded-md bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-[10px] font-bold">3</span>
+                    <FaPersonRunning class="w-4 h-4 text-cyan-400" />
+                    <span>Conditioning & Cardio</span>
                   </div>
-                  <p class="text-xs font-medium leading-relaxed">{activeDay.bodyweight_conditioning}</p>
+                  <div class="flex items-center space-x-2 text-[10px] font-mono">
+                    <span class="text-amber-400 font-bold">~{totalKcal} kcal</span>
+                    <span class="text-zinc-400">
+                      {doneCount}/{condCardioItems.length} Done
+                    </span>
+                  </div>
+                </div>
+
+                <div class="space-y-2">
+                  {condCardioItems.map((item) => {
+                    const isDone = isConditioningItemCompleted(item);
+                    const thumb = item.gif_url || item.media?.gif_url || item.media?.images?.[0] || '';
+                    return (
+                      <div
+                        key={item.id}
+                        class={`p-2 rounded-xl transition flex items-center justify-between gap-3 ${
+                          isDone ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-dark-850 hover:bg-white/5 border border-white/[0.04]'
+                        }`}
+                      >
+                        <div class="flex items-center space-x-3 flex-1 min-w-0">
+                          {thumb ? (
+                            <div
+                              onClick={() => item.media && onOpenExerciseGuide(item.media)}
+                              class="w-11 h-11 rounded-lg overflow-hidden bg-dark-950 shrink-0 border border-white/10 cursor-pointer relative group"
+                              title="Tap to see form guide"
+                            >
+                              <img
+                                src={thumb}
+                                alt={item.name}
+                                class="w-full h-full object-cover object-center group-hover:scale-105 transition"
+                                onError={(e) => {
+                                  const staticImg = item.media?.images?.find((p) => !p.toLowerCase().includes('.gif'));
+                                  if (staticImg && e.currentTarget.src !== staticImg) {
+                                    e.currentTarget.src = staticImg;
+                                  } else {
+                                    e.currentTarget.style.display = 'none';
+                                  }
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <div class="w-11 h-11 rounded-lg bg-dark-950 flex items-center justify-center shrink-0 border border-white/5 text-cyan-400">
+                              <FaPersonRunning class="w-5 h-5" />
+                            </div>
+                          )}
+
+                          <div class="flex-1 min-w-0">
+                            <h4 class={`text-xs truncate ${isDone ? 'text-zinc-400 line-through' : 'text-zinc-200 font-semibold'}`}>
+                              {item.name}
+                            </h4>
+                            <span class="text-[10px] text-zinc-500 font-mono block">
+                              {item.prescription} • ~{item.calories} kcal
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => toggleConditioningCardioItem(item)}
+                          class={`w-7 h-7 rounded-lg flex items-center justify-center transition active:scale-90 ${
+                            isDone ? 'bg-emerald-400 text-dark-950 font-bold' : 'border border-zinc-700 hover:border-zinc-500 text-transparent'
+                          }`}
+                        >
+                          <Check class="w-4 h-4 stroke-[3]" />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* 4. COOL-DOWN STRETCHES (WITH PHOTOS) */}
           {activeDay.cooldown_stretches && activeDay.cooldown_stretches.length > 0 && (
