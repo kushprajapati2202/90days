@@ -15,6 +15,15 @@ export default function CelebrationModal({
 }) {
   if (!isOpen || !day) return null;
 
+  // Escape key listener to close modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   useEffect(() => {
     if (isOpen) {
       // Multi-stage celebratory confetti explosion
@@ -63,7 +72,14 @@ export default function CelebrationModal({
   const progressPct = Math.round((totalCompletedDays / 90) * 100);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-300">
+    <div
+      role="dialog"
+      aria-modal="true"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-300"
+    >
       <div className="w-full max-w-md bg-dark-850 border border-volt/30 rounded-3xl p-5 sm:p-6 shadow-2xl relative overflow-hidden text-center space-y-4">
         {/* Ambient Top Glow */}
         <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-64 h-64 bg-volt/20 rounded-full blur-3xl pointer-events-none" />
@@ -71,7 +87,8 @@ export default function CelebrationModal({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-zinc-400 hover:text-white p-1 rounded-xl hover:bg-white/5 transition"
+          className="absolute right-3 top-3 text-zinc-400 hover:text-white w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/5 transition"
+          aria-label="Close dialog"
         >
           <X className="w-5 h-5" />
         </button>

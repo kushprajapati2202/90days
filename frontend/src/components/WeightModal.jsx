@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Calendar, Check, Sun, Moon } from 'lucide-react';
 import { FaWeightScale } from 'react-icons/fa6';
 import { api } from '../services/api';
@@ -14,6 +14,15 @@ export default function WeightModal({ isOpen, onClose, currentWeight, onWeightLo
   const [error, setError] = useState('');
 
   const autoTimeOfDay = getAutoTimeOfDay();
+
+  // Escape key dismiss listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,30 +42,42 @@ export default function WeightModal({ isOpen, onClose, currentWeight, onWeightLo
   };
 
   return (
-    <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div class="w-full max-w-sm bg-dark-850 border border-white/[0.1] rounded-3xl p-5 shadow-2xl relative">
-        <div class="flex items-center justify-between pb-3 border-b border-white/[0.08] mb-4">
-          <div class="flex items-center space-x-2">
-            <div class="w-8 h-8 rounded-xl bg-volt/10 text-volt flex items-center justify-center">
-              <FaWeightScale class="w-4 h-4 text-volt" />
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="weight-modal-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+    >
+      <div className="w-full max-w-sm bg-dark-850 border border-white/[0.1] rounded-3xl p-5 shadow-2xl relative">
+        <div className="flex items-center justify-between pb-3 border-b border-white/[0.08] mb-4">
+          <div className="flex items-center space-x-2">
+            <div className="w-9 h-9 rounded-xl bg-volt/10 text-volt flex items-center justify-center">
+              <FaWeightScale className="w-4 h-4 text-volt" />
             </div>
-            <h3 class="text-sm font-bold text-white font-heading">Log Body Weight</h3>
+            <h3 id="weight-modal-title" className="text-sm font-bold text-white font-heading">Log Body Weight</h3>
           </div>
-          <button onClick={onClose} class="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition">
-            <X class="w-4 h-4" />
+          <button
+            onClick={onClose}
+            className="w-10 h-10 flex items-center justify-center text-zinc-400 hover:text-white rounded-xl hover:bg-white/5 transition"
+            aria-label="Close dialog"
+          >
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {error && (
-          <div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs mb-3">
+          <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs mb-3">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} class="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
-            <label class="block text-[11px] font-bold text-zinc-400 mb-1 uppercase">Weight (kg)</label>
-            <div class="relative">
+            <label className="block text-[11px] font-bold text-zinc-400 mb-1 uppercase tracking-wider">Weight (kg)</label>
+            <div className="relative">
               <input
                 type="number"
                 step="0.05"
@@ -71,62 +92,62 @@ export default function WeightModal({ isOpen, onClose, currentWeight, onWeightLo
                   }
                 }}
                 placeholder="91.5"
-                class="w-full bg-dark-900 border border-white/10 rounded-xl pl-3 pr-8 py-2.5 text-sm font-mono font-bold text-white focus:outline-none focus:border-volt"
+                className="w-full bg-dark-900 border border-white/10 rounded-xl pl-3 pr-8 py-3 text-base font-mono font-bold text-white focus:outline-none focus:border-volt"
               />
-              <span class="absolute right-3 top-2.5 text-xs text-zinc-500 font-bold">kg</span>
+              <span className="absolute right-3.5 top-3.5 text-xs text-zinc-500 font-bold">kg</span>
             </div>
           </div>
 
           <div>
-            <label class="block text-[11px] font-bold text-zinc-400 mb-1 uppercase">Timing</label>
-            <div class="flex items-center space-x-2 p-2 rounded-xl bg-dark-900 border border-white/10 text-xs">
+            <label className="block text-[11px] font-bold text-zinc-400 mb-1 uppercase tracking-wider">Timing</label>
+            <div className="flex items-center space-x-2 p-2.5 rounded-xl bg-dark-900 border border-white/10 text-xs">
               {autoTimeOfDay === 'morning' ? (
                 <>
-                  <Sun class="w-4 h-4 text-amber-400" />
-                  <span class="font-bold text-amber-300">Morning Weigh-In</span>
+                  <Sun className="w-4 h-4 text-amber-400" />
+                  <span className="font-bold text-amber-300">Morning Weigh-In</span>
                 </>
               ) : (
                 <>
-                  <Moon class="w-4 h-4 text-indigo-400" />
-                  <span class="font-bold text-indigo-300">Evening Weigh-In</span>
+                  <Moon className="w-4 h-4 text-indigo-400" />
+                  <span className="font-bold text-indigo-300">Evening Weigh-In</span>
                 </>
               )}
             </div>
           </div>
 
           <div>
-            <label class="block text-[11px] font-bold text-zinc-400 mb-1 uppercase">Date</label>
+            <label className="block text-[11px] font-bold text-zinc-400 mb-1 uppercase tracking-wider">Date</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              class="w-full bg-dark-900 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-volt"
+              className="w-full bg-dark-900 border border-white/10 rounded-xl px-3 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-volt"
             />
           </div>
 
           <div>
-            <label class="block text-[11px] font-bold text-zinc-400 mb-1 uppercase">Notes (Optional)</label>
+            <label className="block text-[11px] font-bold text-zinc-400 mb-1 uppercase tracking-wider">Notes (Optional)</label>
             <input
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="e.g. Fasting, post-workout, good sleep"
-              class="w-full bg-dark-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-volt"
+              className="w-full bg-dark-900 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-volt"
             />
           </div>
 
-          <div class="pt-2 flex items-center space-x-2">
+          <div className="pt-2 flex items-center space-x-2">
             <button
               type="button"
               onClick={onClose}
-              class="w-1/2 py-2.5 rounded-xl text-xs font-bold bg-dark-900 hover:bg-white/5 text-zinc-300 border border-white/10 transition"
+              className="w-1/2 py-3 rounded-xl text-xs font-bold bg-dark-900 hover:bg-white/5 text-zinc-300 border border-white/10 transition min-h-[44px]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              class="w-1/2 py-2.5 rounded-xl text-xs font-black bg-volt text-dark-950 hover:bg-[#b8e600] active:scale-95 transition disabled:opacity-50 shadow-lg shadow-volt/20"
+              className="w-1/2 py-3 rounded-xl text-xs font-black bg-volt text-dark-950 hover:bg-[#b8e600] active:scale-95 transition disabled:opacity-50 shadow-lg shadow-volt/20 min-h-[44px]"
             >
               {isSubmitting ? 'Saving...' : 'Save Record'}
             </button>
@@ -136,4 +157,3 @@ export default function WeightModal({ isOpen, onClose, currentWeight, onWeightLo
     </div>
   );
 }
-

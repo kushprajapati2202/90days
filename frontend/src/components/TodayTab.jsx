@@ -99,36 +99,36 @@ export default function TodayTab({
   };
 
   return (
-    <div class="space-y-4 max-w-3xl mx-auto animate-in fade-in duration-300">
+    <div className="space-y-4 max-w-3xl mx-auto animate-in fade-in duration-300">
       {/* 1. TODAY HERO CARD */}
-      <div class="p-4 sm:p-6 rounded-3xl bg-dark-850 border border-white/[0.08] shadow-2xl relative overflow-hidden">
+      <div className="p-4 sm:p-6 rounded-3xl bg-dark-850 border border-white/[0.08] shadow-2xl relative overflow-hidden">
         {/* Subtle background ambient glow */}
-        <div class="absolute -right-16 -top-16 w-48 h-48 bg-volt/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -right-16 -top-16 w-48 h-48 bg-volt/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Top Header Strip */}
-        <div class="flex items-center justify-between gap-2 mb-3">
-          <div class="flex items-center space-x-2">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center space-x-2">
             <span
-              class={`px-2.5 py-1 rounded-lg text-xs font-black font-heading ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-black font-heading ${
                 isCompleted ? 'bg-volt text-dark-950' : 'bg-volt/15 text-volt border border-volt/30'
               }`}
             >
               DAY {todayDay.day_number} OF 90
             </span>
-            <span class="text-xs text-zinc-400 font-bold">
+            <span className="text-xs text-zinc-400 font-bold">
               {todayDay.date_display} • Week {todayDay.week_number}
             </span>
           </div>
 
-          <div class="flex items-center space-x-1.5">
+          <div className="flex items-center space-x-1.5">
             {isDeload && (
-              <span class="px-2 py-0.5 rounded text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">
                 ⚡ DELOAD
               </span>
             )}
             {isCompleted && (
-              <span class="flex items-center space-x-1 text-volt text-xs font-black">
-                <CheckCircle2 class="w-4 h-4 fill-volt/20 text-volt" />
+              <span className="flex items-center space-x-1 text-volt text-xs font-black">
+                <CheckCircle2 className="w-4 h-4 fill-volt/20 text-volt" />
                 <span>COMPLETED</span>
               </span>
             )}
@@ -136,22 +136,22 @@ export default function TodayTab({
         </div>
 
         {/* Main Workout Title */}
-        <div class="mb-3">
-          <h1 class="text-2xl sm:text-3xl font-black text-white font-heading tracking-tight mb-1">
+        <div className="mb-3">
+          <h1 className="text-2xl sm:text-3xl font-black text-white font-heading tracking-tight mb-1">
             {todayDay.day_type}
           </h1>
-          <p class="text-xs sm:text-sm text-zinc-300 font-medium line-clamp-2 leading-relaxed">
+          <p className="text-xs sm:text-sm text-zinc-300 font-medium line-clamp-2 leading-relaxed">
             {todayDay.strength_workout || todayDay.cardio || 'Active Recovery Routine'}
           </p>
         </div>
 
         {/* Muscle Focus Chips */}
         {primaryMuscles.length > 0 && (
-          <div class="flex flex-wrap gap-1.5 mb-4">
+          <div className="flex flex-wrap gap-1.5 mb-4">
             {primaryMuscles.map((muscle, idx) => (
               <span
                 key={idx}
-                class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-white/5 text-zinc-300 border border-white/5 capitalize"
+                className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-white/5 text-zinc-300 border border-white/5 capitalize"
               >
                 {muscle}
               </span>
@@ -160,47 +160,47 @@ export default function TodayTab({
         )}
 
         {/* Workout Vitals Strip */}
-        <div class="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-dark-900/90 border border-white/[0.06] mb-3 text-center">
+        <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-dark-900/90 border border-white/[0.06] mb-3 text-center">
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Est. Energy</span>
-            <span class="text-sm sm:text-base font-black text-volt font-heading">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Est. Energy</span>
+            <span className="text-sm sm:text-base font-black text-volt font-heading">
               ~{cal.total_estimated_kcal.toLocaleString()} kcal
             </span>
             {cal.total_completed_kcal > 0 && (
-              <span class="text-[10px] text-emerald-400 font-mono block mt-0.5">
+              <span className="text-[10px] text-emerald-400 font-mono block mt-0.5">
                 🔥 {cal.total_completed_kcal} kcal burned
               </span>
             )}
           </div>
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Movements</span>
-            <span class="text-sm sm:text-base font-black text-white font-heading">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Movements</span>
+            <span className="text-sm sm:text-base font-black text-white font-heading">
               {(todayDay.parsed_exercises || []).length} Lifts
             </span>
-            <span class="text-[10px] text-zinc-500 font-mono block mt-0.5">
+            <span className="text-[10px] text-zinc-500 font-mono block mt-0.5">
               + Warmup & Stretch
             </span>
           </div>
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Completion</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Completion</span>
             <span
-              class={`text-sm sm:text-base font-black font-heading ${
+              className={`text-sm sm:text-base font-black font-heading ${
                 isCompleted || pct === 100 ? 'text-volt' : pct > 0 ? 'text-cyan-400' : 'text-zinc-400'
               }`}
             >
               {pct}% Done
             </span>
-            <span class="text-[10px] text-zinc-500 font-mono block mt-0.5">
+            <span className="text-[10px] text-zinc-500 font-mono block mt-0.5">
               {isCompleted ? 'Target Reached ✓' : 'In Progress'}
             </span>
           </div>
         </div>
 
         {/* Today's Workout Progress Bar */}
-        <div class="mb-4">
-          <div class="w-full h-2 rounded-full bg-dark-950 border border-white/[0.06] overflow-hidden">
+        <div className="mb-4">
+          <div className="w-full h-2 rounded-full bg-dark-950 border border-white/[0.06] overflow-hidden">
             <div
-              class="h-full rounded-full bg-gradient-to-r from-volt to-emerald-400 transition-all duration-500"
+              className="h-full rounded-full bg-gradient-to-r from-volt to-emerald-400 transition-all duration-500"
               style={{ width: `${Math.min(100, Math.max(pct > 0 ? 5 : 0, pct))}%` }}
             />
           </div>
@@ -232,8 +232,8 @@ export default function TodayTab({
 
         {/* Main Action Button - Appropriate for completed state (does NOT jump forward) */}
         {isCompleted ? (
-          <div class="w-full py-3 px-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-heading font-black text-sm flex items-center justify-center space-x-2">
-            <CheckCircle2 class="w-4 h-4 text-emerald-400" />
+          <div className="w-full py-3 px-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-heading font-black text-sm flex items-center justify-center space-x-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             <span>Today's Workout Complete ✓</span>
           </div>
         ) : (
@@ -252,16 +252,16 @@ export default function TodayTab({
       </div>
 
       {/* 2. WEEKLY CONSISTENCY CAPSULES (Shows Month + Dates) */}
-      <div class="p-4 rounded-2xl bg-dark-850 border border-white/[0.06]">
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center space-x-2">
-            <span class="text-xs font-bold text-white font-heading">Week {currentWeekNum} Consistency</span>
-            <span class="text-[10px] text-zinc-400">({weekDays.filter((d) => d.completed).length}/7 Done)</span>
+      <div className="p-4 rounded-2xl bg-dark-850 border border-white/[0.06]">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-2">
+            <span className="text-xs font-bold text-white font-heading">Week {currentWeekNum} Consistency</span>
+            <span className="text-[10px] text-zinc-400">({weekDays.filter((d) => d.completed).length}/7 Done)</span>
           </div>
-          <span class="text-[11px] font-mono text-volt font-bold flex items-center space-x-1">
+          <span className="text-[11px] font-mono text-volt font-bold flex items-center space-x-1">
             {stats?.current_streak ? (
               <>
-                <FaFireFlameCurved class="w-3.5 h-3.5 text-amber-400" />
+                <FaFireFlameCurved className="w-3.5 h-3.5 text-amber-400" />
                 <span>{stats.current_streak} Day Streak</span>
               </>
             ) : (
@@ -270,7 +270,7 @@ export default function TodayTab({
           </span>
         </div>
 
-        <div class="grid grid-cols-7 gap-1.5 sm:gap-2 text-center">
+        <div className="grid grid-cols-7 gap-1.5 sm:gap-2 text-center">
           {weekDays.map((d) => {
             const isToday = d.day_number === todayDay.day_number;
             const isDone = !!d.completed;
@@ -283,7 +283,7 @@ export default function TodayTab({
                 key={d.day_number}
                 type="button"
                 onClick={() => onSelectDay && onSelectDay(d)}
-                class={`py-2 px-1 rounded-xl transition flex flex-col items-center justify-center relative ${
+                className={`py-2 px-1 rounded-xl transition flex flex-col items-center justify-center relative ${
                   isToday
                     ? 'bg-volt/15 border-2 border-volt text-volt font-black shadow-lg shadow-volt/10'
                     : isDone
@@ -292,24 +292,24 @@ export default function TodayTab({
                 }`}
               >
                 {/* Month with Date */}
-                <div class="flex items-center space-x-0.5 text-[10px] font-bold uppercase mb-1">
+                <div className="flex items-center space-x-0.5 text-[10px] font-bold uppercase mb-1">
                   <span>{dayDate}</span>
-                  {dayMonth && <span class="text-zinc-500 text-[9px] font-semibold">{dayMonth}</span>}
+                  {dayMonth && <span className="text-zinc-500 text-[9px] font-semibold">{dayMonth}</span>}
                 </div>
 
                 {/* Status Circle */}
-                <div class="w-6 h-6 rounded-full flex items-center justify-center my-0.5">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center my-0.5">
                   {isDone ? (
-                    <CheckCircle2 class="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
                   ) : (
-                    <span class={`text-[11px] font-mono font-bold ${isToday ? 'text-volt font-black' : 'text-zinc-500'}`}>
+                    <span className={`text-[11px] font-mono font-bold ${isToday ? 'text-volt font-black' : 'text-zinc-500'}`}>
                       D{d.day_number}
                     </span>
                   )}
                 </div>
 
                 {/* Day focus chip */}
-                <span class="text-[8px] font-mono font-bold truncate max-w-full px-1 text-zinc-400 mt-0.5">
+                <span className="text-[8px] font-mono font-bold truncate max-w-full px-1 text-zinc-400 mt-0.5">
                   {d.day_type ? d.day_type.split(' ')[0] : 'Rest'}
                 </span>
               </button>
@@ -319,22 +319,22 @@ export default function TodayTab({
       </div>
 
       {/* 3. AUTO-SAVING WEIGH-IN ROW (Timing automatically decided by entry time) */}
-      <div class="p-4 rounded-2xl bg-dark-850 border border-white/[0.06] space-y-3">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-xl bg-volt/10 border border-volt/20 flex items-center justify-center text-volt shrink-0">
-              <FaWeightScale class="w-5 h-5 text-volt" />
+      <div className="p-4 rounded-2xl bg-dark-850 border border-white/[0.06] space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-volt/10 border border-volt/20 flex items-center justify-center text-volt shrink-0">
+              <FaWeightScale className="w-5 h-5 text-volt" />
             </div>
             <div>
-              <div class="flex items-center space-x-2">
-                <span class="text-xs font-bold text-white font-heading">Body Weight Tracker</span>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-bold text-white font-heading">Body Weight Tracker</span>
                 {stats?.weight_stats?.total_loss_kg > 0 && (
-                  <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
                     -{stats.weight_stats.total_loss_kg} kg overall
                   </span>
                 )}
               </div>
-              <p class="text-[11px] text-zinc-400">
+              <p className="text-[11px] text-zinc-400">
                 {quickWeight
                   ? `Day ${todayDay.day_number} (${todayDay.date_display}) reading`
                   : `No weigh-in logged for Day ${todayDay.day_number}`}
@@ -343,24 +343,24 @@ export default function TodayTab({
           </div>
 
           {/* Morning / Evening Badge */}
-          <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-dark-900 border border-white/10 self-start sm:self-center">
+          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-dark-900 border border-white/10 self-start sm:self-center">
             {activeTimeOfDay === 'morning' ? (
               <>
-                <Sun class="w-3.5 h-3.5 text-amber-400" />
-                <span class="text-[11px] font-bold text-amber-300">Morning Weigh-In</span>
+                <Sun className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-[11px] font-bold text-amber-300">Morning Weigh-In</span>
               </>
             ) : (
               <>
-                <Moon class="w-3.5 h-3.5 text-indigo-400" />
-                <span class="text-[11px] font-bold text-indigo-300">Evening Weigh-In</span>
+                <Moon className="w-3.5 h-3.5 text-indigo-400" />
+                <span className="text-[11px] font-bold text-indigo-300">Evening Weigh-In</span>
               </>
             )}
           </div>
         </div>
 
         {/* Input */}
-        <div class="flex items-center justify-between gap-3 pt-1 border-t border-white/[0.04]">
-          <div class="relative w-36">
+        <div className="flex items-center justify-between gap-3 pt-1 border-t border-white/[0.04]">
+          <div className="relative w-36">
             <input
               type="number"
               step="0.05"
@@ -374,34 +374,34 @@ export default function TodayTab({
                 }
               }}
               placeholder="--.-"
-              class="w-full bg-dark-900 border border-white/10 rounded-xl pl-3 pr-8 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:border-volt"
+              className="w-full bg-dark-900 border border-white/10 rounded-xl pl-3 pr-8 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:border-volt"
             />
-            <span class="absolute right-2.5 top-2 text-[10px] text-zinc-500 font-bold">kg</span>
+            <span className="absolute right-2.5 top-2 text-[10px] text-zinc-500 font-bold">kg</span>
           </div>
 
-          <div class="flex items-center space-x-2">
+          <div className="flex items-center space-x-2">
             <button
               type="button"
               onClick={onOpenWeightModal}
               title="Open weight log history"
-              class="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/5 transition"
+              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/5 transition"
             >
-              <Calendar class="w-3.5 h-3.5" />
+              <Calendar className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       </div>
 
       {/* 4. EMBEDDED INTERACTIVE WORKOUT LOGGER */}
-      <div id="interactive-logger" class="space-y-3 pt-2">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <TbBarbell class="w-4 h-4 text-volt" />
-            <h3 class="text-xs font-bold text-white font-heading">
+      <div id="interactive-logger" className="space-y-3 pt-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <TbBarbell className="w-4 h-4 text-volt" />
+            <h3 className="text-xs font-bold text-white font-heading">
               Interactive Training Logger • Day {todayDay.day_number}
             </h3>
           </div>
-          <span class="text-[10px] font-mono text-zinc-400">
+          <span className="text-[10px] font-mono text-zinc-400">
             {(todayDay.parsed_exercises || []).length} Movements • Live Tracker
           </span>
         </div>

@@ -47,26 +47,26 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
   };
 
   return (
-    <div class="space-y-4 max-w-4xl mx-auto animate-in fade-in duration-300">
+    <div className="space-y-4 max-w-4xl mx-auto animate-in fade-in duration-300">
       {/* 1. HORIZONTAL WEEK SELECTOR SLIDER (W1 - W13) */}
-      <div class="p-3 sm:p-4 rounded-2xl bg-dark-850 border border-white/[0.06]">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-bold text-white font-heading">Program Schedule (13 Weeks)</span>
+      <div className="p-3 sm:p-4 rounded-2xl bg-dark-850 border border-white/[0.06]">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-bold text-white font-heading">Program Schedule (13 Weeks)</span>
           {(selectedWeek !== null || selectedFilter !== 'all' || searchQuery) && (
             <button
               onClick={resetFilters}
-              class="text-[11px] font-bold text-volt hover:underline flex items-center space-x-1"
+              className="text-[11px] font-bold text-volt hover:underline flex items-center space-x-1"
             >
-              <RotateCcw class="w-3 h-3" />
+              <RotateCcw className="w-3 h-3" />
               <span>Reset</span>
             </button>
           )}
         </div>
 
-        <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-1">
+        <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-1">
           <button
             onClick={() => setSelectedWeek(null)}
-            class={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition ${
               selectedWeek === null
                 ? 'bg-volt text-dark-950 shadow-md shadow-volt/20'
                 : 'bg-dark-900 text-zinc-400 hover:text-white border border-white/[0.06]'
@@ -86,7 +86,7 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
               <button
                 key={w}
                 onClick={() => setSelectedWeek(w)}
-                class={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition flex items-center space-x-1 ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition flex items-center space-x-1 ${
                   isSelected
                     ? 'bg-volt text-dark-950 shadow-md shadow-volt/20'
                     : isDeload
@@ -97,8 +97,8 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
                 }`}
               >
                 <span>W{w}</span>
-                {isDeload && <span class="text-[9px]">⚡</span>}
-                {pct > 0 && <span class="text-[10px] opacity-80">• {pct}%</span>}
+                {isDeload && <span className="text-[9px]">⚡</span>}
+                {pct > 0 && <span className="text-[10px] opacity-80">• {pct}%</span>}
               </button>
             );
           })}
@@ -106,19 +106,19 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
       </div>
 
       {/* 2. SEARCH & QUICK FILTER PILLS */}
-      <div class="space-y-2">
-        <div class="relative">
-          <Search class="w-4 h-4 text-zinc-400 absolute left-3.5 top-3" />
+      <div className="space-y-2">
+        <div className="relative">
+          <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search exercises, lifts (e.g. bench, squat, lats, rows)..."
-            class="w-full bg-dark-850 border border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-volt"
+            className="w-full bg-dark-850 border border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-volt"
           />
         </div>
 
-        <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5">
+        <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5">
           {[
             { id: 'all', label: `All (${allDays.length})` },
             { id: 'push', label: 'Push Lifts' },
@@ -131,7 +131,7 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
             <button
               key={f.id}
               onClick={() => setSelectedFilter(f.id)}
-              class={`px-3 py-1 rounded-lg text-xs font-bold shrink-0 transition ${
+              className={`px-3 py-1 rounded-lg text-xs font-bold shrink-0 transition ${
                 selectedFilter === f.id
                   ? 'bg-white/20 text-white border border-white/30'
                   : 'bg-dark-850 text-zinc-400 hover:text-white border border-white/[0.04]'
@@ -144,7 +144,7 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
       </div>
 
       {/* 3. WORKOUT DAYS GRID */}
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {filteredDays.map((day) => {
           const isDone = !!day.completed;
           const isDeload = !!day.is_deload;
@@ -156,7 +156,7 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
             <div
               key={day.day_number}
               onClick={() => onOpenWorkoutModal(day)}
-              class={`p-4 rounded-2xl transition cursor-pointer flex flex-col justify-between ${
+              className={`p-4 rounded-2xl transition cursor-pointer flex flex-col justify-between ${
                 isDone
                   ? 'bg-dark-850 border border-emerald-500/30 hover:border-emerald-500/60 shadow-sm'
                   : pct > 0
@@ -166,9 +166,9 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
             >
               <div>
                 {/* Header Strip */}
-                <div class="flex items-center justify-between gap-2 mb-2">
-                  <div class="flex items-center space-x-2">
-                    <span class={`text-[10px] font-black font-heading px-2 py-0.5 rounded ${
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center space-x-2">
+                    <span className={`text-[10px] font-black font-heading px-2 py-0.5 rounded ${
                       isDone
                         ? 'bg-emerald-500/20 text-emerald-400'
                         : pct > 0
@@ -177,45 +177,45 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
                     }`}>
                       DAY {day.day_number}
                     </span>
-                    <span class="text-xs text-zinc-400 font-bold">{day.date_display} • W{day.week_number}</span>
+                    <span className="text-xs text-zinc-400 font-bold">{day.date_display} • W{day.week_number}</span>
                   </div>
 
-                  <div class="flex items-center space-x-1.5">
+                  <div className="flex items-center space-x-1.5">
                     {isDeload && (
-                      <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">
+                      <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">
                         ⚡ DELOAD
                       </span>
                     )}
                     {isDone ? (
-                      <CheckCircle2 class="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
                     ) : pct > 0 ? (
-                      <span class="text-[10px] font-mono font-bold text-volt">{pct}%</span>
+                      <span className="text-[10px] font-mono font-bold text-volt">{pct}%</span>
                     ) : null}
                   </div>
                 </div>
 
                 {/* Title */}
-                <h3 class="text-base font-bold text-white font-heading mb-1">{day.day_type}</h3>
-                <p class="text-xs text-zinc-400 line-clamp-2 mb-3">
+                <h3 className="text-base font-bold text-white font-heading mb-1">{day.day_type}</h3>
+                <p className="text-xs text-zinc-400 line-clamp-2 mb-3">
                   {day.strength_workout || day.cardio || 'Active Recovery Routine'}
                 </p>
 
                 {/* Exercises Photo Thumbnails Strip */}
                 {exercises.length > 0 && (
-                  <div class="flex items-center space-x-1.5 mb-3 overflow-x-auto no-scrollbar">
+                  <div className="flex items-center space-x-1.5 mb-3 overflow-x-auto no-scrollbar">
                     {exercises.slice(0, 4).map((ex, i) => {
                       const thumb = ex.gif_url || ex.media?.gif_url || ex.media?.images?.[0];
                       const isGif = Boolean(ex.gif_url || ex.media?.gif_url || (thumb && thumb.toLowerCase().includes('.gif')));
                       return thumb ? (
                         <div
                           key={i}
-                          class="w-9 h-9 rounded-lg overflow-hidden bg-dark-950 border border-white/10 shrink-0 relative"
+                          className="w-9 h-9 rounded-lg overflow-hidden bg-dark-950 border border-white/10 shrink-0 relative"
                           title={ex.name}
                         >
                           <img
                             src={thumb}
                             alt={ex.name}
-                            class="w-full h-full object-cover"
+                            className="w-full h-full object-cover"
                             onError={(e) => {
                               const staticImg = ex.media?.images?.find((p) => !p.toLowerCase().includes('.gif'));
                               if (staticImg && e.currentTarget.src !== staticImg) {
@@ -229,7 +229,7 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
                       ) : (
                         <div
                           key={i}
-                          class="w-9 h-9 rounded-lg bg-dark-950 flex items-center justify-center text-[10px] font-bold text-zinc-500 border border-white/5 shrink-0"
+                          className="w-9 h-9 rounded-lg bg-dark-950 flex items-center justify-center text-[10px] font-bold text-zinc-500 border border-white/5 shrink-0"
                           title={ex.name}
                         >
                           {i + 1}
@@ -237,7 +237,7 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
                       );
                     })}
                     {exercises.length > 4 && (
-                      <div class="w-9 h-9 rounded-lg bg-dark-900 border border-white/5 flex items-center justify-center text-[10px] font-bold text-zinc-400 shrink-0">
+                      <div className="w-9 h-9 rounded-lg bg-dark-900 border border-white/5 flex items-center justify-center text-[10px] font-bold text-zinc-400 shrink-0">
                         +{exercises.length - 4}
                       </div>
                     )}
@@ -259,28 +259,28 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
                 )}
 
                 {/* Visual mini progress bar */}
-                <div class="w-full h-1.5 rounded-full bg-dark-950 overflow-hidden mb-2">
+                <div className="w-full h-1.5 rounded-full bg-dark-950 overflow-hidden mb-2">
                   <div
-                    class={`h-full rounded-full transition-all ${isDone ? 'bg-emerald-400' : 'bg-volt'}`}
+                    className={`h-full rounded-full transition-all ${isDone ? 'bg-emerald-400' : 'bg-volt'}`}
                     style={{ width: `${Math.min(100, Math.max(pct > 0 ? 5 : 0, pct))}%` }}
                   />
                 </div>
 
-                <div class="pt-1.5 border-t border-white/[0.04] flex items-center justify-between text-[11px]">
-                  <div class="flex items-center space-x-1 text-zinc-400">
-                    <FaFireFlameCurved class="w-3.5 h-3.5 text-amber-400" />
-                    <span class="font-mono">
+                <div className="pt-1.5 border-t border-white/[0.04] flex items-center justify-between text-[11px]">
+                  <div className="flex items-center space-x-1 text-zinc-400">
+                    <FaFireFlameCurved className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="font-mono">
                       {isDone ? `${cal.total_completed_kcal} kcal` : `~${cal.total_estimated_kcal} kcal`}
                     </span>
                     <span>•</span>
-                    <span class={`font-bold ${isDone ? 'text-emerald-400' : pct > 0 ? 'text-volt' : 'text-zinc-500'}`}>
+                    <span className={`font-bold ${isDone ? 'text-emerald-400' : pct > 0 ? 'text-volt' : 'text-zinc-500'}`}>
                       {pct}% Done
                     </span>
                   </div>
 
-                  <div class="text-volt font-bold flex items-center space-x-0.5 hover:underline">
+                  <div className="text-volt font-bold flex items-center space-x-0.5 hover:underline">
                     <span>Log Sets</span>
-                    <ChevronRight class="w-3.5 h-3.5" />
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </div>
                 </div>
               </div>
@@ -290,9 +290,9 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
       </div>
 
       {filteredDays.length === 0 && (
-        <div class="py-12 text-center text-zinc-400">
-          <p class="text-sm font-semibold mb-2">No workouts match the current filter.</p>
-          <button onClick={resetFilters} class="text-xs text-volt font-bold hover:underline">
+        <div className="py-12 text-center text-zinc-400">
+          <p className="text-sm font-semibold mb-2">No workouts match the current filter.</p>
+          <button onClick={resetFilters} className="text-xs text-volt font-bold hover:underline">
             Reset Filters
           </button>
         </div>

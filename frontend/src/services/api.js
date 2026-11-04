@@ -1,3 +1,5 @@
+import { getIndianTodayIsoDate } from '../utils/timeFormat';
+
 // Resilient API Client connecting to FastAPI backend
 
 const API_BASE = '/api';
@@ -121,7 +123,7 @@ export const api = {
     const payload = {
       weight_kg: Number(weightKg),
       notes: notes || '',
-      date_display: date || new Date().toISOString().split('T')[0],
+      date_display: date || getIndianTodayIsoDate(),
       time_of_day: timeOfDay || 'morning',
     };
     if (dayNumber) payload.day_number = Number(dayNumber);

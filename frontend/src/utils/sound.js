@@ -39,6 +39,9 @@ class SoundManager {
 
   playSetCheck() {
     this.playBeep(1046.5, 'sine', 0.1, 0.2); // C6 note
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      try { navigator.vibrate(40); } catch (_) {}
+    }
   }
 
   playTimerDone() {
@@ -51,6 +54,9 @@ class SoundManager {
           this.playBeep(freq, 'triangle', 0.22, 0.35);
         }, idx * 160);
       });
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try { navigator.vibrate([150, 80, 150, 80, 250]); } catch (_) {}
+      }
     } catch (e) {}
   }
 }

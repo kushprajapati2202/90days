@@ -260,7 +260,7 @@ export default function App() {
   };
 
   return (
-    <div class="min-h-screen bg-dark-900 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-dark-900 text-slate-100 flex flex-col font-sans">
       {/* 1. TOP HEADER APP BAR */}
       <Navbar
         activeTab={activeTab}
@@ -273,23 +273,23 @@ export default function App() {
       />
 
       {/* 2. MAIN WORKSPACE VIEW */}
-      <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 pb-20 md:pb-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 pb-4 md:pb-8">
         {isLoading ? (
-          <div class="py-24 text-center">
-            <div class="w-10 h-10 border-2 border-volt border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <h3 class="text-sm font-bold text-white font-heading">Loading Your 90-Day Plan</h3>
-            <p class="text-xs text-zinc-400 mt-1">Syncing your workouts, weights, and daily targets...</p>
+          <div className="py-24 text-center">
+            <div className="w-10 h-10 border-2 border-volt border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <h3 className="text-sm font-bold text-white font-heading">Loading Your 90-Day Plan</h3>
+            <p className="text-xs text-zinc-400 mt-1">Syncing your workouts, weights, and daily targets...</p>
           </div>
         ) : loadError ? (
-          <div class="py-12 px-4 max-w-md mx-auto text-center bg-dark-850 rounded-3xl border border-rose-500/30 shadow-2xl">
-            <div class="w-10 h-10 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto mb-3 font-bold text-lg">
+          <div className="py-12 px-4 max-w-md mx-auto text-center bg-dark-850 rounded-3xl border border-rose-500/30 shadow-2xl">
+            <div className="w-10 h-10 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto mb-3 font-bold text-lg">
               !
             </div>
-            <h3 class="text-base font-bold text-white font-heading mb-1">Unable to Load Plan</h3>
-            <p class="text-xs text-zinc-400 mb-4">Please check your internet connection and try again.</p>
+            <h3 className="text-base font-bold text-white font-heading mb-1">Unable to Load Plan</h3>
+            <p className="text-xs text-zinc-400 mb-4">Please check your internet connection and try again.</p>
             <button
               onClick={loadData}
-              class="px-5 py-2.5 rounded-xl bg-volt text-dark-950 font-black text-xs hover:bg-[#b8e600] active:scale-95 transition"
+              className="px-5 py-2.5 rounded-xl bg-volt text-dark-950 font-black text-xs hover:bg-[#b8e600] active:scale-95 transition"
             >
               Reload Training Plan
             </button>
@@ -341,17 +341,6 @@ export default function App() {
       {/* 3. MOBILE BOTTOM DOCK (4 SEGMENTS) */}
       <BottomDock activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      {/* 4. REST TIMER FLOATING CARD */}
-      <RestTimer
-        isOpen={isTimerOpen}
-        onClose={() => setIsTimerOpen(false)}
-        secondsLeft={timerSeconds}
-        isRunning={isTimerRunning}
-        onToggleRun={handleToggleTimerRun}
-        onReset={handleResetTimer}
-        onSetPreset={handleSetTimerPreset}
-      />
-
       {/* 5. WORKOUT EXECUTION MODAL */}
       <WorkoutModal
         day={selectedWorkout}
@@ -362,6 +351,17 @@ export default function App() {
         onOpenExerciseGuide={(ex) => setSelectedExerciseGuide(ex)}
         stats={stats}
         allDays={allDays}
+      />
+
+      {/* 4. REST TIMER FLOATING CARD (Rendered after WorkoutModal so it stays on top) */}
+      <RestTimer
+        isOpen={isTimerOpen}
+        onClose={() => setIsTimerOpen(false)}
+        secondsLeft={timerSeconds}
+        isRunning={isTimerRunning}
+        onToggleRun={handleToggleTimerRun}
+        onReset={handleResetTimer}
+        onSetPreset={handleSetTimerPreset}
       />
 
       {/* 6. WEIGH-IN MODAL */}

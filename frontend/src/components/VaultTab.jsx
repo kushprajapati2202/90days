@@ -197,7 +197,7 @@ export default function VaultTab({ onSelectExerciseGuide }) {
             type="text"
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="Search by exercise name, target muscle (e.g. lats, chest, quads) or equipment..."
+            placeholder="Search exercise, muscle, or gear..."
             className="w-full bg-dark-900 border border-white/10 rounded-2xl pl-10 pr-10 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-volt transition"
           />
           {search && (

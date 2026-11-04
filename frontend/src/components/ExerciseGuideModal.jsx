@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, ExternalLink } from 'lucide-react';
 import { TbBarbell, TbActivity } from 'react-icons/tb';
 import { FaDumbbell } from 'react-icons/fa6';
@@ -7,6 +7,21 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
   if (!isOpen || !exercise) return null;
 
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
+  const [imageError, setImageError] = useState(false);
+
+  // Escape key dismiss listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  // Reset image error on photo change
+  useEffect(() => {
+    setImageError(false);
+  }, [activePhotoIdx, exercise]);
 
   // Collect all photos and prioritize GIF demonstration if available
   let rawPhotos = Array.isArray(exercise.images) ? [...exercise.images] : [];
@@ -28,7 +43,14 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
     : `https://www.youtube.com/results?search_query=${encodeURIComponent((exercise.display_name || exercise.name) + ' proper form')}`;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
+    >
       <div className="w-full max-w-lg bg-dark-850 border border-white/[0.1] rounded-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="p-3.5 sm:p-4 border-b border-white/[0.08] bg-dark-900 flex items-center justify-between shrink-0">
@@ -54,7 +76,7 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
           </div>
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-white p-1.5 rounded-xl hover:bg-white/5 transition"
+            className="w-10 h-10 flex items-center justify-center text-zinc-400 hover:text-white rounded-xl hover:bg-white/5 transition"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -67,26 +89,46 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
           {photos.length > 0 ? (
             <div className="space-y-2">
               <div className="w-full h-64 sm:h-72 rounded-2xl bg-black overflow-hidden border border-white/[0.08] relative flex items-center justify-center">
-                <img
-                  src={activeSrc}
-                  alt={exercise.name}
-                  className="max-h-full max-w-full object-contain"
-                  onError={(e) => {
-                    const fallback = photos.find((p) => p !== activeSrc && !p.toLowerCase().includes('.gif')) || photos[1];
-                    if (fallback && e.currentTarget.src !== fallback) {
-                      e.currentTarget.src = fallback;
-                    }
-                  }}
-                />
-                <div className="absolute top-2.5 left-2.5 flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-dark-950/85 backdrop-blur-md text-[10px] font-bold text-zinc-200 border border-white/10">
-                  <span>
-                    {isCurrentGif
-                      ? 'Movement Demonstration'
-                      : photos.length > 1
-                      ? (activePhotoIdx === (photos[0]?.includes('.gif') ? 1 : 0) ? 'Phase 1: Starting Setup' : 'Phase 2: Peak Contraction')
-                      : 'Movement Demonstration'}
-                  </span>
-                </div>
+                {imageError ? (
+                  <div className="flex flex-col items-center justify-center p-6 text-center space-y-2">
+                    <TbBarbell className="w-12 h-12 text-volt/60 mb-1" />
+                    <span className="text-xs text-zinc-400 font-medium">Visual preview not directly accessible</span>
+                    <a
+                      href={videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-volt font-bold underline flex items-center space-x-1 pt-1"
+                    >
+                      <span>Watch proper form on YouTube</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                ) : (
+                  <img
+                    src={activeSrc}
+                    alt={exercise.name}
+                    className="max-h-full max-w-full object-contain"
+                    onError={(e) => {
+                      const fallback = photos.find((p) => p !== activeSrc && !p.toLowerCase().includes('.gif')) || photos[1];
+                      if (fallback && e.currentTarget.src !== fallback) {
+                        e.currentTarget.src = fallback;
+                      } else {
+                        setImageError(true);
+                      }
+                    }}
+                  />
+                )}
+                {!imageError && (
+                  <div className="absolute top-2.5 left-2.5 flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-dark-950/85 backdrop-blur-md text-[10px] font-bold text-zinc-200 border border-white/10">
+                    <span>
+                      {isCurrentGif
+                        ? 'Movement Demonstration'
+                        : photos.length > 1
+                        ? (activePhotoIdx === (photos[0]?.includes('.gif') ? 1 : 0) ? 'Phase 1: Starting Setup' : 'Phase 2: Peak Contraction')
+                        : 'Movement Demonstration'}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {photos.length > 1 && (
