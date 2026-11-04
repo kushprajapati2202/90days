@@ -233,9 +233,37 @@ export default function WorkoutModal({
 
     const newProgress = calculateProgress(clone);
     clone.completion_percentage = newProgress;
-    if (newProgress === 100 && !activeDay.completed) {
+
+    // Auto-detect when all exercise sets are completed -> auto stop session
+    const allExercisesFinished = (clone.parsed_exercises || []).length > 0 &&
+      (clone.parsed_exercises || []).every((exercise) => {
+        const sets = exercise.logged_sets || [];
+        return sets.length > 0 && sets.every((s) => s.completed);
+      });
+
+    if (allExercisesFinished) {
+      const nowIso = new Date().toISOString();
       clone.completed = true;
-      clone.completed_at = new Date().toISOString();
+      clone.completed_at = nowIso;
+      clone.ended_at = nowIso;
+      clone.completion_percentage = 100;
+      try {
+        const s = new Date(clone.started_at || nowIso).getTime();
+        const dur = Math.max(1, Math.round((Date.now() - s) / 60000));
+        clone.actual_duration_min = dur <= 240 ? dur : 65;
+      } catch (_) {
+        clone.actual_duration_min = 65;
+      }
+      setShowCelebration(true);
+    } else if (!willBeCompleted && clone.completed) {
+      // Reopen session if a completed set is unchecked
+      clone.completed = false;
+      clone.completed_at = null;
+    } else if (newProgress === 100 && !activeDay.completed) {
+      const nowIso = new Date().toISOString();
+      clone.completed = true;
+      clone.completed_at = nowIso;
+      clone.ended_at = nowIso;
       setShowCelebration(true);
     }
     triggerAutoSave(clone);
@@ -394,40 +422,11 @@ export default function WorkoutModal({
 
           <div class="flex items-center space-x-2 text-[11px] font-mono">
             {activeDay.started_at && (
-              <span class="text-zinc-400 hidden sm:inline">
+              <span class="text-zinc-400">
                 Started {formatTimeOfDay(activeDay.started_at)}
                 {activeDay.ended_at && ` • Last activity ${formatTimeOfDay(activeDay.ended_at)}`}
               </span>
             )}
-
-            {!activeDay.started_at ? (
-              <button
-                type="button"
-                onClick={handleStartWorkoutSession}
-                class="px-2.5 py-1 rounded-lg bg-volt text-dark-950 hover:bg-volt-light font-black text-[11px] shadow-sm shadow-volt/20 transition flex items-center space-x-1"
-              >
-                <Play class="w-3 h-3 fill-dark-950" />
-                <span>Start Timer</span>
-              </button>
-            ) : !activeDay.completed ? (
-              <div class="flex items-center space-x-1.5">
-                <button
-                  type="button"
-                  onClick={handleResetSessionTimer}
-                  title="Reset session start time to now"
-                  class="px-2 py-1 rounded-lg text-[10px] text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 transition"
-                >
-                  Reset Time
-                </button>
-                <button
-                  type="button"
-                  onClick={handleFinishWorkoutSession}
-                  class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-400 hover:text-dark-950 font-bold text-[11px] border border-emerald-500/30 transition flex items-center space-x-1"
-                >
-                  <span>Finish Session ✓</span>
-                </button>
-              </div>
-            ) : null}
           </div>
         </div>
 
