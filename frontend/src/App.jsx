@@ -14,10 +14,44 @@ import { sounds } from './utils/sound';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('today');
-  const [allDays, setAllDays] = useState([]);
-  const [stats, setStats] = useState(null);
-  const [weightHistory, setWeightHistory] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  // Instant-load from local storage cache on refresh / visit
+  const [allDays, setAllDays] = useState(() => {
+    try {
+      const saved = localStorage.getItem('90days_cache_days');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [stats, setStats] = useState(() => {
+    try {
+      const saved = localStorage.getItem('90days_cache_stats');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const [weightHistory, setWeightHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem('90days_cache_weight');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [isLoading, setIsLoading] = useState(() => {
+    try {
+      const saved = localStorage.getItem('90days_cache_days');
+      return !saved || JSON.parse(saved).length === 0;
+    } catch (e) {
+      return true;
+    }
+  });
+
   const [loadError, setLoadError] = useState(null);
 
   // Modals
@@ -31,10 +65,10 @@ export default function App() {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const timerIntervalRef = useRef(null);
 
-  // Load initial data
-  const loadData = async () => {
+  // Load initial data with silent background refresh
+  const loadData = async (silent = false) => {
     try {
-      setIsLoading(true);
+      if (!silent) setIsLoading(true);
       setLoadError(null);
       const [daysRes, statsRes, weightRes] = await Promise.all([
         api.getDays(),
@@ -48,19 +82,36 @@ export default function App() {
         }),
       ]);
 
-      setAllDays(daysRes.days || []);
+      const days = daysRes.days || [];
+      const weight = weightRes.history || [];
+
+      setAllDays(days);
       if (statsRes) setStats(statsRes);
-      setWeightHistory(weightRes.history || []);
+      setWeightHistory(weight);
+
+      // Persist to local storage for instantaneous future loads
+      try {
+        localStorage.setItem('90days_cache_days', JSON.stringify(days));
+        if (statsRes) localStorage.setItem('90days_cache_stats', JSON.stringify(statsRes));
+        localStorage.setItem('90days_cache_weight', JSON.stringify(weight));
+      } catch (storageErr) {
+        console.warn('Cache storage notice:', storageErr);
+      }
     } catch (err) {
       console.error('Failed to load application data:', err);
-      setLoadError(err.message || 'Unable to connect to service.');
+      // Only display block error if there is zero cached data to show
+      if (allDays.length === 0) {
+        setLoadError(err.message || 'Unable to connect to service.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    // If cached data exists, load silently in background without showing a spinner
+    const hasCached = allDays && allDays.length > 0;
+    loadData(hasCached);
   }, []);
 
   // Timer Tick logic
@@ -117,13 +168,25 @@ export default function App() {
 
   const todayDay = getTodayDay();
 
-  // Optimistic updates
+  // Optimistic updates with instant cache synchronization
   const handleDayUpdated = (updatedDay) => {
-    setAllDays((prev) =>
-      prev.map((d) => (d.day_number === updatedDay.day_number ? updatedDay : d))
-    );
+    setAllDays((prev) => {
+      const next = prev.map((d) => (d.day_number === updatedDay.day_number ? updatedDay : d));
+      try {
+        localStorage.setItem('90days_cache_days', JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+
     // Refresh stats in background
-    api.getStats().then((s) => setStats(s)).catch(() => {});
+    api.getStats().then((s) => {
+      if (s) {
+        setStats(s);
+        try {
+          localStorage.setItem('90days_cache_stats', JSON.stringify(s));
+        } catch (e) {}
+      }
+    }).catch(() => {});
   };
 
   const handleQuickLogWeight = async (weightKg) => {
@@ -132,8 +195,13 @@ export default function App() {
       api.getStats(),
       api.getWeightHistory(),
     ]);
-    setStats(statsRes);
-    setWeightHistory(weightRes.history || []);
+    if (statsRes) {
+      setStats(statsRes);
+      try { localStorage.setItem('90days_cache_stats', JSON.stringify(statsRes)); } catch (e) {}
+    }
+    const history = weightRes.history || [];
+    setWeightHistory(history);
+    try { localStorage.setItem('90days_cache_weight', JSON.stringify(history)); } catch (e) {}
   };
 
   const handleDeleteWeightLog = async (logId) => {
@@ -143,8 +211,13 @@ export default function App() {
         api.getStats(),
         api.getWeightHistory(),
       ]);
-      setStats(statsRes);
-      setWeightHistory(weightRes.history || []);
+      if (statsRes) {
+        setStats(statsRes);
+        try { localStorage.setItem('90days_cache_stats', JSON.stringify(statsRes)); } catch (e) {}
+      }
+      const history = weightRes.history || [];
+      setWeightHistory(history);
+      try { localStorage.setItem('90days_cache_weight', JSON.stringify(history)); } catch (e) {}
     } catch (e) {
       console.error('Delete weight log failed:', e);
     }
@@ -187,7 +260,7 @@ export default function App() {
           </div>
         ) : (
           <>
-            {activeTab === 'today' && (
+            <div className={activeTab === 'today' ? 'block' : 'hidden'}>
               <TodayTab
                 todayDay={todayDay}
                 allDays={allDays}
@@ -197,30 +270,30 @@ export default function App() {
                 onQuickLogWeight={handleQuickLogWeight}
                 onSelectDay={(d) => setSelectedWorkout(d)}
               />
-            )}
+            </div>
 
-            {activeTab === 'workouts' && (
+            <div className={activeTab === 'workouts' ? 'block' : 'hidden'}>
               <WorkoutsTab
                 allDays={allDays}
                 stats={stats}
                 onOpenWorkoutModal={(d) => setSelectedWorkout(d)}
               />
-            )}
+            </div>
 
-            {activeTab === 'progress' && (
+            <div className={activeTab === 'progress' ? 'block' : 'hidden'}>
               <ProgressTab
                 stats={stats}
                 weightHistory={weightHistory}
                 onOpenWeightModal={() => setIsWeightModalOpen(true)}
                 onDeleteWeightLog={handleDeleteWeightLog}
               />
-            )}
+            </div>
 
-            {activeTab === 'vault' && (
+            <div className={activeTab === 'vault' ? 'block' : 'hidden'}>
               <VaultTab
                 onSelectExerciseGuide={(ex) => setSelectedExerciseGuide(ex)}
               />
-            )}
+            </div>
           </>
         )}
       </main>

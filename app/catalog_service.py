@@ -6,6 +6,8 @@ Combines and normalizes all 2,200+ exercises across MongoDB Atlas collections:
 - EXERCISE_MEDIA_DATABASE (64 core plan exercises)
 """
 
+import os
+import json
 import re
 import logging
 from typing import Optional, Dict, List, Any
@@ -229,12 +231,31 @@ def build_unified_catalog() -> List[Dict[str, Any]]:
     logger.info(f"Loaded unified exercise vault: {len(unified_list)} total exercises")
     return unified_list
 
+_CACHED_CATALOG: Optional[List[Dict[str, Any]]] = None
+_CACHED_FILTERS: Optional[Dict[str, Any]] = None
+
 def get_cached_catalog() -> List[Dict[str, Any]]:
-    """Return in-memory cached catalog or initialize it."""
+    """Return in-memory cached catalog, or load from fast precomputed disk cache, or build it."""
     global _CACHED_CATALOG
-    if _CACHED_CATALOG is None:
-        return build_unified_catalog()
-    return _CACHED_CATALOG
+    if _CACHED_CATALOG is not None:
+        return _CACHED_CATALOG
+
+    # 1. Try loading from fast precomputed local disk cache (~10ms)
+    try:
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        cache_path = os.path.join(base_dir, "data", "unified_vault_cache.json")
+        if os.path.exists(cache_path):
+            with open(cache_path, "r", encoding="utf-8") as f:
+                loaded = json.load(f)
+                if loaded and isinstance(loaded, list) and len(loaded) > 0:
+                    _CACHED_CATALOG = loaded
+                    logger.info(f"Loaded unified exercise vault from precomputed cache: {len(loaded)} exercises")
+                    return _CACHED_CATALOG
+    except Exception as e:
+        logger.warning(f"Could not load precomputed catalog cache: {e}")
+
+    # 2. Fall back to building it dynamically
+    return build_unified_catalog()
 
 def query_vault(
     group: Optional[str] = None,
@@ -298,7 +319,11 @@ def query_vault(
     }
 
 def get_vault_filters() -> Dict[str, Any]:
-    """Return counts for every category and equipment type across the full catalog."""
+    """Return counts for every category and equipment type across the full catalog with instant caching."""
+    global _CACHED_FILTERS
+    if _CACHED_FILTERS is not None:
+        return _CACHED_FILTERS
+
     catalog = get_cached_catalog()
     groups: Dict[str, int] = {}
     equipment: Dict[str, int] = {}
@@ -310,9 +335,10 @@ def get_vault_filters() -> Dict[str, Any]:
         eq = e.get("equipment") or "Other"
         equipment[eq] = equipment.get(eq, 0) + 1
 
-    return {
+    _CACHED_FILTERS = {
         "total": len(catalog),
         "groups": groups,
         "equipment": equipment,
     }
+    return _CACHED_FILTERS
 

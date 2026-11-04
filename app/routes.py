@@ -318,6 +318,7 @@ def update_profile(data: ProfileUpdateModel):
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     
     db.profile.update_one({"_id": "user_profile"}, {"$set": update_data}, upsert=True)
+    invalidate_routes_cache()
     updated = db.profile.find_one({"_id": "user_profile"}, {"_id": 0})
     return {"status": "success", "profile": updated}
 
@@ -358,6 +359,16 @@ def enrich_day_exercise_gifs(d: dict) -> dict:
                 s["media"] = s_media
     return d
 
+_DAYS_CACHE = None
+_STATS_CACHE = None
+_WEIGHT_CACHE = None
+
+def invalidate_routes_cache():
+    global _DAYS_CACHE, _STATS_CACHE, _WEIGHT_CACHE
+    _DAYS_CACHE = None
+    _STATS_CACHE = None
+    _WEIGHT_CACHE = None
+
 @router.get("/days")
 def get_days(
     week: Optional[int] = Query(None, ge=1, le=13),
@@ -366,7 +377,8 @@ def get_days(
     is_deload: Optional[bool] = None,
     search: Optional[str] = None
 ):
-    """Get workout days with flexible filtering."""
+    """Get workout days with flexible filtering and instant memory caching."""
+    global _DAYS_CACHE
     db = get_db()
     query = {}
     if isinstance(week, int):
@@ -386,6 +398,10 @@ def get_days(
             {"date_display": {"$regex": search, "$options": "i"}}
         ]
 
+    # Return cached full days payload instantly when default full list is queried
+    if not query and _DAYS_CACHE is not None:
+        return _DAYS_CACHE
+
     try:
         days = list(db.workout_days.find(query, {"_id": 0}).sort("day_number", 1))
         if not days and not query:
@@ -396,7 +412,10 @@ def get_days(
             d["completion_percentage"] = calculate_day_completion(d)
             w = float(d.get("actual_weight_kg") or 90.0)
             d["calories"] = calculate_day_calories(d, w)
-        return {"total": len(days), "days": days}
+        result = {"total": len(days), "days": days}
+        if not query:
+            _DAYS_CACHE = result
+        return result
     except HTTPException:
         raise
     except Exception as e:
@@ -528,6 +547,7 @@ def update_day(day_number: int, data: DayUpdateModel):
         updated["completion_percentage"] = pct
         w = float(updated.get("actual_weight_kg") or 90.0)
         updated["calories"] = calculate_day_calories(updated, w)
+    invalidate_routes_cache()
     return {"status": "success", "day": updated}
 
 @router.post("/days/{day_number}/start")
@@ -549,6 +569,7 @@ def start_workout_session(day_number: int):
     w = float(updated.get("actual_weight_kg") or 90.0)
     updated["completion_percentage"] = calculate_day_completion(updated)
     updated["calories"] = calculate_day_calories(updated, w)
+    invalidate_routes_cache()
     return {"status": "started", "started_at": updated.get("started_at"), "day": updated}
 
 @router.post("/days/{day_number}/finish")
@@ -581,6 +602,7 @@ def finish_workout_session(day_number: int):
     w = float(updated.get("actual_weight_kg") or 90.0)
     updated["completion_percentage"] = calculate_day_completion(updated)
     updated["calories"] = calculate_day_calories(updated, w)
+    invalidate_routes_cache()
     return {"status": "finished", "actual_duration_min": dur_mins, "day": updated}
 
 @router.post("/days/{day_number}/toggle")
@@ -632,6 +654,7 @@ def toggle_day_completion(day_number: int):
     calories = calculate_day_calories(updated_day, w) if updated_day else {}
     if updated_day:
         updated_day["calories"] = calories
+    invalidate_routes_cache()
     return {
         "status": "success",
         "day_number": day_number,
@@ -644,7 +667,11 @@ def toggle_day_completion(day_number: int):
 
 @router.get("/stats")
 def get_stats():
-    """Calculate overall 90-day progress, streak, weight tracking, phase breakdowns."""
+    """Calculate overall 90-day progress, streak, weight tracking, phase breakdowns with fast caching."""
+    global _STATS_CACHE
+    if _STATS_CACHE is not None:
+        return _STATS_CACHE
+
     db = get_db()
     profile = db.profile.find_one({"_id": "user_profile"}, {"_id": 0}) or {}
     total_days = 90
@@ -718,7 +745,7 @@ def get_stats():
             c = calculate_day_calories(d, w)
             total_calories_burned += c.get("total_completed_kcal", 0)
 
-    return {
+    stats_result = {
         "total_days": total_days,
         "total_calories_burned": total_calories_burned,
         "completed_days": completed_days,
@@ -761,11 +788,17 @@ def get_stats():
             "progress_percentage": min(100.0, max(0.0, weight_pct))
         }
     }
+    _STATS_CACHE = stats_result
+    return stats_result
 
 @router.get("/weight-history")
 @router.get("/weight/history")
 def get_weight_history():
-    """Return historical weight logs and projected linear goal line."""
+    """Return historical weight logs and projected linear goal line with memory caching."""
+    global _WEIGHT_CACHE
+    if _WEIGHT_CACHE is not None:
+        return _WEIGHT_CACHE
+
     db = get_db()
     profile = db.profile.find_one({"_id": "user_profile"}, {"_id": 0}) or {}
     start_weight = float(profile.get("start_weight_kg", 92.5))
@@ -781,13 +814,15 @@ def get_weight_history():
         expected = round(start_weight - prog * (start_weight - target_weight), 2)
         ideal_curve.append({"day": day, "expected_weight": expected})
 
-    return {
+    result = {
         "start_weight": start_weight,
         "target_weight": target_weight,
         "logs": logs,
         "history": logs,
         "ideal_curve": ideal_curve
     }
+    _WEIGHT_CACHE = result
+    return result
 
 @router.post("/weight-log")
 @router.post("/weight")
@@ -809,6 +844,7 @@ def create_weight_log(data: WeightLogCreateModel):
     if day:
         db.workout_days.update_one({"day_number": day_num}, {"$set": {"actual_weight_kg": data.weight_kg}})
 
+    invalidate_routes_cache()
     return {"status": "success", "log": doc}
 
 @router.delete("/weight/{day_num}")
@@ -817,11 +853,13 @@ def delete_weight_log(day_num: int):
     """Delete a weight log entry."""
     db = get_db()
     db.weight_logs.delete_one({"day_number": day_num})
+    invalidate_routes_cache()
     return {"status": "success"}
 
 @router.post("/seed")
 def trigger_seed(force: bool = False):
     """Re-seed the database from CSV."""
+    invalidate_routes_cache()
     result = seed_database(force_reset=force)
     return result
 

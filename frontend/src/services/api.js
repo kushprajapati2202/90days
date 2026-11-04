@@ -35,6 +35,10 @@ async function request(endpoint, options = {}) {
   }
 }
 
+// Memory caches for instant tab switching and zero-latency catalog exploration
+const vaultQueryCache = new Map();
+let vaultFiltersCache = null;
+
 export const api = {
   // Days
   async getDays() {
@@ -145,19 +149,35 @@ export const api = {
     }
   },
 
-  // Unified Movement Vault (2,200+ exercises)
+  // Unified Movement Vault (2,200+ exercises) with instant client-side caching
   async getVaultExercises({ group = 'All', equipment = 'All', search = '', page = 1, limit = 48 } = {}) {
+    const cacheKey = `${group}_${equipment}_${search.trim().toLowerCase()}_${page}_${limit}`;
+    if (vaultQueryCache.has(cacheKey)) {
+      return vaultQueryCache.get(cacheKey);
+    }
+
     const params = new URLSearchParams();
     if (group && group !== 'All') params.append('group', group);
     if (equipment && equipment !== 'All') params.append('equipment', equipment);
     if (search && search.trim()) params.append('search', search.trim());
     params.append('page', page);
     params.append('limit', limit);
-    return request(`/exercises/vault?${params.toString()}`);
+    const result = await request(`/exercises/vault?${params.toString()}`);
+    if (result && result.exercises) {
+      vaultQueryCache.set(cacheKey, result);
+    }
+    return result;
   },
 
   async getVaultFilters() {
-    return request('/exercises/vault/filters');
+    if (vaultFiltersCache) {
+      return vaultFiltersCache;
+    }
+    const result = await request('/exercises/vault/filters');
+    if (result) {
+      vaultFiltersCache = result;
+    }
+    return result;
   },
 
   // Exercise Library

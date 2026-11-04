@@ -27,26 +27,59 @@ const EQUIPMENT_OPTIONS = [
 ];
 
 export default function VaultTab({ onSelectExerciseGuide }) {
-  const [exercises, setExercises] = useState([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
+  const [exercises, setExercises] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('90days_vault_default');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [totalCount, setTotalCount] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('90days_vault_total');
+      return saved ? Number(saved) : 0;
+    } catch (e) {
+      return 0;
+    }
+  });
+  const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('90days_vault_default');
+      return !saved || JSON.parse(saved).length === 0;
+    } catch (e) {
+      return true;
+    }
+  });
   const [loadingMore, setLoadingMore] = useState(false);
 
   const [selectedGroup, setSelectedGroup] = useState('All');
   const [selectedEquipment, setSelectedEquipment] = useState('All Equipment');
   const [search, setSearch] = useState('');
-  const [filterStats, setFilterStats] = useState({ groups: {}, equipment: {}, total: 0 });
+  const [filterStats, setFilterStats] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('90days_vault_filters');
+      return saved ? JSON.parse(saved) : { groups: {}, equipment: {}, total: 0 };
+    } catch (e) {
+      return { groups: {}, equipment: {}, total: 0 };
+    }
+  });
 
   const searchDebounceRef = useRef(null);
 
-  // Load filter counts on mount
+  // Load filter counts on mount with instant session cache
   useEffect(() => {
     async function loadStats() {
       try {
         const stats = await api.getVaultFilters();
-        if (stats) setFilterStats(stats);
+        if (stats) {
+          setFilterStats(stats);
+          try {
+            sessionStorage.setItem('90days_vault_filters', JSON.stringify(stats));
+          } catch (e) {}
+        }
       } catch (e) {
         console.warn('Failed to load vault filter counts:', e);
       }
@@ -59,7 +92,7 @@ export default function VaultTab({ onSelectExerciseGuide }) {
     try {
       if (isLoadMore) {
         setLoadingMore(true);
-      } else {
+      } else if (!exercises.length) {
         setLoading(true);
       }
 
@@ -76,6 +109,12 @@ export default function VaultTab({ onSelectExerciseGuide }) {
           setExercises((prev) => [...prev, ...res.exercises]);
         } else {
           setExercises(res.exercises);
+          if (selectedGroup === 'All' && selectedEquipment === 'All Equipment' && !search.trim() && pageNum === 1) {
+            try {
+              sessionStorage.setItem('90days_vault_default', JSON.stringify(res.exercises));
+              sessionStorage.setItem('90days_vault_total', String(res.total || 0));
+            } catch (e) {}
+          }
         }
         setTotalCount(res.total || 0);
         setHasMore(Boolean(res.has_more));
@@ -87,7 +126,7 @@ export default function VaultTab({ onSelectExerciseGuide }) {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [selectedGroup, selectedEquipment, search]);
+  }, [selectedGroup, selectedEquipment, search, exercises.length]);
 
   // Initial load and filter change trigger
   useEffect(() => {
