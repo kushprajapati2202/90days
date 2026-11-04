@@ -212,7 +212,19 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
                           class="w-9 h-9 rounded-lg overflow-hidden bg-dark-950 border border-white/10 shrink-0 relative"
                           title={ex.name}
                         >
-                          <img src={thumb} alt={ex.name} class="w-full h-full object-cover" />
+                          <img
+                            src={thumb}
+                            alt={ex.name}
+                            class="w-full h-full object-cover"
+                            onError={(e) => {
+                              const staticImg = ex.media?.images?.find((p) => !p.toLowerCase().includes('.gif'));
+                              if (staticImg && e.currentTarget.src !== staticImg) {
+                                e.currentTarget.src = staticImg;
+                              } else {
+                                e.currentTarget.style.display = 'none';
+                              }
+                            }}
+                          />
                           {isGif && (
                             <span class="absolute bottom-0 right-0 px-0.5 rounded bg-volt text-dark-950 text-[6px] font-black uppercase shadow">
                               GIF

@@ -401,7 +401,19 @@ export default function WorkoutModal({
                             class="w-11 h-11 rounded-lg overflow-hidden bg-dark-950 shrink-0 border border-white/10 cursor-pointer relative group"
                             title="Tap to see form guide"
                           >
-                            <img src={thumb} alt={stretch.name} class="w-full h-full object-cover object-center group-hover:scale-105 transition" />
+                            <img
+                              src={thumb}
+                              alt={stretch.name}
+                              class="w-full h-full object-cover object-center group-hover:scale-105 transition"
+                              onError={(e) => {
+                                const staticImg = stretch.media?.images?.find((p) => !p.toLowerCase().includes('.gif'));
+                                if (staticImg && e.currentTarget.src !== staticImg) {
+                                  e.currentTarget.src = staticImg;
+                                } else {
+                                  e.currentTarget.style.display = 'none';
+                                }
+                              }}
+                            />
                             {isGif && (
                               <span class="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-volt text-dark-950 text-[7px] font-black uppercase shadow">
                                 GIF
@@ -485,6 +497,14 @@ export default function WorkoutModal({
                             src={thumbUrl}
                             alt={ex.name}
                             class="w-full h-full object-cover object-center group-hover:scale-105 transition"
+                            onError={(e) => {
+                              const staticImg = ex.media?.images?.find((p) => !p.toLowerCase().includes('.gif'));
+                              if (staticImg && e.currentTarget.src !== staticImg) {
+                                e.currentTarget.src = staticImg;
+                              } else {
+                                e.currentTarget.style.display = 'none';
+                              }
+                            }}
                           />
                           <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition" />
                           {isGif && (
@@ -677,7 +697,19 @@ export default function WorkoutModal({
                             class="w-11 h-11 rounded-lg overflow-hidden bg-dark-950 shrink-0 border border-white/10 cursor-pointer relative group"
                             title="Tap to see form guide"
                           >
-                            <img src={thumb} alt={stretch.name} class="w-full h-full object-cover object-center group-hover:scale-105 transition" />
+                            <img
+                              src={thumb}
+                              alt={stretch.name}
+                              class="w-full h-full object-cover object-center group-hover:scale-105 transition"
+                              onError={(e) => {
+                                const staticImg = stretch.media?.images?.find((p) => !p.toLowerCase().includes('.gif'));
+                                if (staticImg && e.currentTarget.src !== staticImg) {
+                                  e.currentTarget.src = staticImg;
+                                } else {
+                                  e.currentTarget.style.display = 'none';
+                                }
+                              }}
+                            />
                             {isGif && (
                               <span class="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-volt text-dark-950 text-[7px] font-black uppercase shadow">
                                 GIF

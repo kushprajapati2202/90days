@@ -76,6 +76,12 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
                   src={activeSrc}
                   alt={exercise.name}
                   className="max-h-full max-w-full object-contain"
+                  onError={(e) => {
+                    const fallback = photos.find((p) => p !== activeSrc && !p.toLowerCase().includes('.gif')) || photos[1];
+                    if (fallback && e.currentTarget.src !== fallback) {
+                      e.currentTarget.src = fallback;
+                    }
+                  }}
                 />
                 <div className="absolute top-2.5 left-2.5 flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-dark-950/85 backdrop-blur-md text-[10px] font-bold text-zinc-200 border border-white/10">
                   {isCurrentGif ? (
@@ -112,7 +118,14 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
                         }`}
                       >
                         <div className="w-10 h-10 rounded-lg overflow-hidden bg-black shrink-0 relative">
-                          <img src={src} alt="thumb" className="w-full h-full object-cover" />
+                          <img
+                            src={src}
+                            alt="thumb"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
                           {isGif && (
                             <span className="absolute bottom-0 right-0 px-1 py-0.2 rounded bg-volt text-dark-950 text-[7px] font-black uppercase">
                               GIF

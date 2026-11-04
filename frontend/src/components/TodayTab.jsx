@@ -357,6 +357,14 @@ export default function TodayTab({
                         alt={ex.name}
                         loading="lazy"
                         class="w-full h-full object-cover object-center"
+                        onError={(e) => {
+                          const staticImg = ex.media?.images?.find((p) => !p.toLowerCase().includes('.gif'));
+                          if (staticImg && e.currentTarget.src !== staticImg) {
+                            e.currentTarget.src = staticImg;
+                          } else {
+                            e.currentTarget.style.display = 'none';
+                          }
+                        }}
                       />
                       {isGif && (
                         <span class="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-volt text-dark-950 text-[7px] font-black uppercase shadow">

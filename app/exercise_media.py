@@ -1010,7 +1010,7 @@ PLAN_EXERCISE_GIFS = {
     "triceps pushdown": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0199-PskORrA.gif",
     "Lat pulldown": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1325-CmEr4pM.gif",
     "seated cable row": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0159-kesXOpB.gif",
-    "chest-supported row": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0293-6oV1F5S.gif",
+    "chest-supported row": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0049-dmgMp3n.gif",
     "face pull": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0177-CuaWCmC.gif",
     "DB curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1650-J74XlNf.gif",
     "hammer curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0313-slDvUAU.gif",
@@ -1026,13 +1026,13 @@ PLAN_EXERCISE_GIFS = {
     "Assisted pull-up": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0017-kiJ4Z2K.gif",
     "one-arm DB row": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0292-C0MA9bC.gif",
     "close-grip pulldown": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/3117-4LoWllp.gif",
-    "reverse pec deck": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0176-B32i3zY.gif",
+    "reverse pec deck": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0993-sTfvVsG.gif",
     "EZ curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1682-Dsfz0Id.gif",
     "cable curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1634-otqIxU4.gif",
     "Leg press or hack squat": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1385-IeDEXTe.gif",
     "split squat": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0410-qx4fgX7.gif",
-    "hip thrust": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0043-sM9sL6l.gif",
-    "seated leg curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1679-84sESNy.gif"
+    "hip thrust": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/3562-qg2PGl6.gif",
+    "seated leg curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0586-17lJ1kr.gif"
 }
 
 STRETCH_GIFS = {
@@ -1040,7 +1040,7 @@ STRETCH_GIFS = {
     "push-ups": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0662-I4hDWkc.gif",
     "plank": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/3544-5VXmnV5.gif",
     "mountain climbers": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0630-RJgzwny.gif",
-    "bodyweight squat": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/3168-3xK09Sk.gif",
+    "bodyweight squat": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1004-TUZLh71.gif",
     "overhead triceps": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0092-5uFK1xr.gif",
     "quad stretch": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1512-qBcKorM.gif",
     "hamstring stretch": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1560-yRYyfdA.gif",

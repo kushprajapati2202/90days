@@ -290,7 +290,12 @@ export default function VaultTab({ onSelectExerciseGuide }) {
                         loading="lazy"
                         className="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300"
                         onError={(e) => {
-                          e.target.style.display = 'none';
+                          const staticImg = ex.images?.find((p) => !p.toLowerCase().includes('.gif'));
+                          if (staticImg && e.currentTarget.src !== staticImg) {
+                            e.currentTarget.src = staticImg;
+                          } else {
+                            e.currentTarget.style.display = 'none';
+                          }
                         }}
                       />
                     ) : (
