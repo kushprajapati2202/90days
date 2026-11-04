@@ -366,11 +366,6 @@ export default function TodayTab({
                           }
                         }}
                       />
-                      {isGif && (
-                        <span class="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-volt text-dark-950 text-[7px] font-black uppercase shadow">
-                          GIF
-                        </span>
-                      )}
                     </div>
                   ) : (
                     <div class="w-12 h-12 rounded-xl bg-dark-950 flex items-center justify-center shrink-0 text-xs font-mono font-bold text-zinc-400 border border-white/5">

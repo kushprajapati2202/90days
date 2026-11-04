@@ -225,11 +225,6 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
                               }
                             }}
                           />
-                          {isGif && (
-                            <span class="absolute bottom-0 right-0 px-0.5 rounded bg-volt text-dark-950 text-[6px] font-black uppercase shadow">
-                              GIF
-                            </span>
-                          )}
                         </div>
                       ) : (
                         <div

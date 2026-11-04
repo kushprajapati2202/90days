@@ -42,11 +42,6 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
                   90-Day Plan Core
                 </span>
               )}
-              {photos.some((p) => p.toLowerCase().includes('.gif')) && (
-                <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-cyan-400 text-dark-950 uppercase flex items-center space-x-0.5">
-                  <span>⚡ Animated GIF</span>
-                </span>
-              )}
               {exercise.level && (
                 <span className="text-[10px] text-zinc-400 font-mono">
                   • {exercise.level}
@@ -84,18 +79,13 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
                   }}
                 />
                 <div className="absolute top-2.5 left-2.5 flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-dark-950/85 backdrop-blur-md text-[10px] font-bold text-zinc-200 border border-white/10">
-                  {isCurrentGif ? (
-                    <>
-                      <span className="w-2 h-2 rounded-full bg-volt animate-ping" />
-                      <span className="text-volt font-black">⚡ LIVE ANIMATED EXECUTION</span>
-                    </>
-                  ) : (
-                    <span>
-                      {photos.length > 1
-                        ? (activePhotoIdx === (photos[0]?.includes('.gif') ? 1 : 0) ? 'Phase 1: Starting Setup' : 'Phase 2: Peak Contraction')
-                        : 'Movement Demonstration'}
-                    </span>
-                  )}
+                  <span>
+                    {isCurrentGif
+                      ? 'Movement Demonstration'
+                      : photos.length > 1
+                      ? (activePhotoIdx === (photos[0]?.includes('.gif') ? 1 : 0) ? 'Phase 1: Starting Setup' : 'Phase 2: Peak Contraction')
+                      : 'Movement Demonstration'}
+                  </span>
                 </div>
               </div>
 
@@ -104,7 +94,7 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
                   {photos.map((src, i) => {
                     const isGif = src.toLowerCase().includes('.gif');
                     const label = isGif
-                      ? '⚡ Animated GIF'
+                      ? 'Demonstration'
                       : (i === (photos[0]?.includes('.gif') ? 1 : 0) ? 'Phase 1: Setup' : 'Phase 2: Peak');
 
                     return (
@@ -126,11 +116,6 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
                               e.currentTarget.style.display = 'none';
                             }}
                           />
-                          {isGif && (
-                            <span className="absolute bottom-0 right-0 px-1 py-0.2 rounded bg-volt text-dark-950 text-[7px] font-black uppercase">
-                              GIF
-                            </span>
-                          )}
                         </div>
                         <div className="text-[10px] leading-tight min-w-0">
                           <span className="block font-semibold text-white truncate">

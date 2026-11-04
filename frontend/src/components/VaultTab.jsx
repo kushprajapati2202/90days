@@ -310,13 +310,6 @@ export default function VaultTab({ onSelectExerciseGuide }) {
                       {ex.equipment || 'Equipment'}
                     </span>
 
-                    {/* Animated GIF badge */}
-                    {isGif && (
-                      <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md bg-cyan-400 text-dark-950 text-[9px] font-black uppercase tracking-wider shadow">
-                        ⚡ GIF
-                      </span>
-                    )}
-
                     {/* 90-Day Plan Core Badge */}
                     {ex.is_plan && (
                       <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-volt text-dark-950 text-[9px] font-black uppercase tracking-wider shadow-md shadow-volt/30">

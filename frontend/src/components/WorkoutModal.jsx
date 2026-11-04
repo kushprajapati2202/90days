@@ -414,11 +414,7 @@ export default function WorkoutModal({
                                 }
                               }}
                             />
-                            {isGif && (
-                              <span class="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-volt text-dark-950 text-[7px] font-black uppercase shadow">
-                                GIF
-                              </span>
-                            )}
+
                           </div>
                         ) : (
                           <div class="w-11 h-11 rounded-lg bg-dark-950 flex items-center justify-center shrink-0 border border-white/5 text-amber-400/70">
@@ -507,11 +503,7 @@ export default function WorkoutModal({
                             }}
                           />
                           <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition" />
-                          {isGif && (
-                            <span class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-volt text-dark-950 text-[8px] font-black tracking-wider uppercase shadow-md">
-                              GIF
-                            </span>
-                          )}
+
                         </div>
                       ) : (
                         <div class="w-14 h-14 rounded-xl bg-dark-950 flex items-center justify-center shrink-0 border border-white/10 text-volt/60">
@@ -710,11 +702,7 @@ export default function WorkoutModal({
                                 }
                               }}
                             />
-                            {isGif && (
-                              <span class="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-volt text-dark-950 text-[7px] font-black uppercase shadow">
-                                GIF
-                              </span>
-                            )}
+
                           </div>
                         ) : (
                           <div class="w-11 h-11 rounded-lg bg-dark-950 flex items-center justify-center shrink-0 border border-white/5 text-purple-400/70">
