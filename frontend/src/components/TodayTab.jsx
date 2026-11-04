@@ -4,6 +4,7 @@ import { TbBarbell } from 'react-icons/tb';
 import { FaFireFlameCurved, FaWeightScale, FaShoePrints, FaStopwatch } from 'react-icons/fa6';
 import { calculateDayCalories, calculateExerciseTotalCalories } from '../utils/calories';
 import { formatTimeOfDay, formatDuration } from '../utils/timeFormat';
+import { getExerciseHistory } from '../utils/progressiveOverload';
 import { api } from '../services/api';
 
 export default function TodayTab({
@@ -375,8 +376,24 @@ export default function TodayTab({
 
                   <div class="flex-1 min-w-0">
                     <h4 class="text-xs font-bold text-white truncate">{ex.name}</h4>
-                    <div class="flex items-center space-x-2 text-[10px] text-zinc-400 font-mono mt-0.5">
+                    <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-400 font-mono mt-0.5">
                       <span>Target: {ex.target || '3 sets'}</span>
+                      {(() => {
+                        const history = getExerciseHistory(ex.name, todayDay.day_number, allDays);
+                        if (history && history.topLastSet) {
+                          const w = history.topLastSet.weight_kg;
+                          const r = history.topLastSet.reps;
+                          return (
+                            <>
+                              <span>•</span>
+                              <span class="text-volt font-bold">
+                                Last: {w ? `${w}kg × ` : ''}{r} reps
+                              </span>
+                            </>
+                          );
+                        }
+                        return null;
+                      })()}
                       <span>•</span>
                       <span class="text-amber-400 font-bold flex items-center space-x-0.5">
                         <FaFireFlameCurved class="w-3 h-3 text-amber-400" />

@@ -7,6 +7,7 @@ import { sounds } from '../utils/sound';
 import { api } from '../services/api';
 import { calculateDayCalories, calculateSetCalories, calculateExerciseTotalCalories, getExerciseMet } from '../utils/calories';
 import { formatTimeOfDay, formatDuration, formatStopwatch } from '../utils/timeFormat';
+import { getExerciseHistory, getPreviousSet, checkSetProgress } from '../utils/progressiveOverload';
 import CelebrationModal from './CelebrationModal';
 
 export default function WorkoutModal({
@@ -17,6 +18,7 @@ export default function WorkoutModal({
   onLaunchRestTimer,
   onOpenExerciseGuide,
   stats,
+  allDays = [],
 }) {
   if (!isOpen || !day) return null;
 
@@ -223,6 +225,35 @@ export default function WorkoutModal({
       ex.logged_sets[setIdx] = { set_num: setIdx + 1, weight_kg: 0, reps: 10, completed: false };
     }
     ex.logged_sets[setIdx][field] = Number(value) || 0;
+    triggerAutoSave(clone);
+  };
+
+  const handleAutofillPrevious = (exIdx, history) => {
+    if (!history || !history.lastSession || !history.lastSession.sets) return;
+    const clone = stampActivityTimes(JSON.parse(JSON.stringify(activeDay)));
+    const ex = clone.parsed_exercises[exIdx];
+    if (!ex.logged_sets) ex.logged_sets = [];
+
+    const pastSets = history.lastSession.sets;
+    let targetCount = ex.logged_sets.length;
+    if (targetCount === 0 && ex.target) {
+      const m = ex.target.match(/^(\d+)/);
+      targetCount = m ? parseInt(m[1], 10) : 3;
+    }
+    targetCount = Math.max(targetCount, pastSets.length);
+
+    const updatedSets = [];
+    for (let i = 0; i < targetCount; i++) {
+      const past = pastSets[i] || history.topLastSet || pastSets[pastSets.length - 1];
+      const existing = ex.logged_sets[i] || {};
+      updatedSets.push({
+        set_num: i + 1,
+        weight_kg: Number(past?.weight_kg) || 0,
+        reps: Number(past?.reps) || 10,
+        completed: existing.completed || false,
+      });
+    }
+    ex.logged_sets = updatedSets;
     triggerAutoSave(clone);
   };
 
@@ -476,6 +507,7 @@ export default function WorkoutModal({
               const met = getExerciseMet(ex.name);
               const thumbUrl = ex.gif_url || ex.media?.gif_url || ex.media?.images?.[0] || '';
               const isGif = Boolean(ex.gif_url || ex.media?.gif_url || (thumbUrl && thumbUrl.toLowerCase().includes('.gif')));
+              const history = getExerciseHistory(ex.name, activeDay.day_number, allDays);
 
               return (
                 <div key={exIdx} class="p-3 rounded-2xl bg-dark-850 border border-white/[0.06] space-y-2.5">
@@ -559,6 +591,38 @@ export default function WorkoutModal({
                     </div>
                   </div>
 
+                  {/* Previous Performance Memory & Progressive Overload Strip */}
+                  {history && history.lastSession ? (
+                    <div class="p-2 rounded-xl bg-dark-900 border border-volt/15 flex flex-wrap items-center justify-between gap-1.5 text-[11px] font-mono">
+                      <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="px-1.5 py-0.5 rounded bg-volt/10 text-volt text-[10px] font-bold">
+                          Day {history.lastSession.day_number} Best
+                        </span>
+                        <span class="text-white font-bold">
+                          {history.topLastSet?.weight_kg ? `${history.topLastSet.weight_kg} kg × ` : ''}{history.topLastSet?.reps} reps
+                        </span>
+                        {history.overloadTip && (
+                          <span class="text-zinc-400 text-[10px] hidden sm:inline">
+                            • {history.overloadTip}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAutofillPrevious(exIdx, history)}
+                        class="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-volt hover:text-dark-950 text-zinc-300 text-[10px] font-bold border border-white/10 transition flex items-center space-x-1"
+                        title="Auto-fill sets with weights from last session"
+                      >
+                        <span>Fill Last</span>
+                        <span>📋</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div class="px-2.5 py-1.5 rounded-xl bg-dark-900/50 border border-white/[0.04] text-[10px] font-mono text-zinc-400 flex items-center space-x-1">
+                      <span>⚡ Initial benchmark session • Aim for 2–3 reps in reserve</span>
+                    </div>
+                  )}
+
                   {/* Set table */}
                   <div class="space-y-1 pt-1 border-t border-white/[0.04]">
                     <div class="grid grid-cols-12 gap-1 text-[10px] font-mono uppercase text-zinc-500 text-center px-1">
@@ -568,48 +632,69 @@ export default function WorkoutModal({
                       <span class="col-span-2">Done</span>
                     </div>
 
-                    {sets.map((set, setIdx) => (
-                      <div
-                        key={setIdx}
-                        class={`grid grid-cols-12 gap-1 items-center p-1 rounded-lg text-xs font-mono transition ${
-                          set.completed ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-dark-900 border border-white/[0.03]'
-                        }`}
-                      >
-                        <span class="col-span-2 text-zinc-400 font-bold px-1">{set.set_num || setIdx + 1}</span>
-                        <div class="col-span-4">
-                          <input
-                            type="number"
-                            step="0.5"
-                            value={set.weight_kg !== undefined ? set.weight_kg : ''}
-                            onChange={(e) => handleSetInputChange(exIdx, setIdx, 'weight_kg', e.target.value)}
-                            placeholder="kg"
-                            class="w-full bg-dark-850 border border-white/10 rounded px-1.5 py-1 text-xs text-center font-bold text-white focus:outline-none focus:border-volt"
-                          />
+                    {sets.map((set, setIdx) => {
+                      const prevSet = getPreviousSet(history, setIdx);
+                      const progress = prevSet ? checkSetProgress(set.weight_kg, set.reps, prevSet.weight_kg, prevSet.reps) : null;
+                      const weightPlaceholder = prevSet && prevSet.weight_kg ? String(prevSet.weight_kg) : 'kg';
+                      const repsPlaceholder = prevSet && prevSet.reps ? String(prevSet.reps) : 'reps';
+
+                      return (
+                        <div
+                          key={setIdx}
+                          class={`grid grid-cols-12 gap-1 items-center p-1 rounded-lg text-xs font-mono transition ${
+                            set.completed ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-dark-900 border border-white/[0.03]'
+                          }`}
+                        >
+                          <div class="col-span-2 flex flex-col justify-center px-1 leading-none min-w-0">
+                            <span class="text-zinc-300 font-bold">#{set.set_num || setIdx + 1}</span>
+                            {prevSet && (
+                              <span class="text-[9px] text-zinc-500 font-mono mt-0.5 truncate" title={`Previous: ${prevSet.weight_kg || 0}kg × ${prevSet.reps || 0}`}>
+                                {prevSet.weight_kg ? `${prevSet.weight_kg}k` : `${prevSet.reps}r`}
+                              </span>
+                            )}
+                          </div>
+                          <div class="col-span-4 relative">
+                            <input
+                              type="number"
+                              step="0.5"
+                              value={set.weight_kg !== undefined && set.weight_kg !== '' ? set.weight_kg : ''}
+                              onChange={(e) => handleSetInputChange(exIdx, setIdx, 'weight_kg', e.target.value)}
+                              placeholder={weightPlaceholder}
+                              class="w-full bg-dark-850 border border-white/10 rounded px-1.5 py-1 text-xs text-center font-bold text-white focus:outline-none focus:border-volt placeholder:text-zinc-600"
+                            />
+                          </div>
+                          <div class="col-span-4 relative">
+                            <input
+                              type="number"
+                              value={set.reps !== undefined && set.reps !== '' ? set.reps : ''}
+                              onChange={(e) => handleSetInputChange(exIdx, setIdx, 'reps', e.target.value)}
+                              placeholder={repsPlaceholder}
+                              class="w-full bg-dark-850 border border-white/10 rounded px-1.5 py-1 text-xs text-center font-bold text-white focus:outline-none focus:border-volt placeholder:text-zinc-600"
+                            />
+                          </div>
+                          <div class="col-span-2 flex flex-col items-center justify-center space-y-0.5">
+                            <button
+                              type="button"
+                              onClick={() => handleSetToggle(exIdx, setIdx)}
+                              class={`w-6 h-6 rounded-md flex items-center justify-center transition active:scale-90 ${
+                                set.completed
+                                  ? 'bg-emerald-400 text-dark-950 font-bold'
+                                  : 'bg-white/5 border border-zinc-700 text-zinc-500 hover:text-white'
+                              }`}
+                            >
+                              <Check class="w-3.5 h-3.5 stroke-[3]" />
+                            </button>
+                            {progress && (
+                              <span class={`text-[8px] leading-none px-1 py-0.5 rounded font-mono font-black uppercase ${
+                                progress.isPR ? 'bg-amber-400 text-dark-950' : 'bg-white/10 text-zinc-400'
+                              }`}>
+                                {progress.label}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div class="col-span-4">
-                          <input
-                            type="number"
-                            value={set.reps !== undefined ? set.reps : ''}
-                            onChange={(e) => handleSetInputChange(exIdx, setIdx, 'reps', e.target.value)}
-                            placeholder="reps"
-                            class="w-full bg-dark-850 border border-white/10 rounded px-1.5 py-1 text-xs text-center font-bold text-white focus:outline-none focus:border-volt"
-                          />
-                        </div>
-                        <div class="col-span-2 flex justify-center">
-                          <button
-                            type="button"
-                            onClick={() => handleSetToggle(exIdx, setIdx)}
-                            class={`w-6 h-6 rounded-md flex items-center justify-center transition active:scale-90 ${
-                              set.completed
-                                ? 'bg-emerald-400 text-dark-950 font-bold'
-                                : 'bg-white/5 border border-zinc-700 text-zinc-500 hover:text-white'
-                            }`}
-                          >
-                            <Check class="w-3.5 h-3.5 stroke-[3]" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               );

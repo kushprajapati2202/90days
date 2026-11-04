@@ -321,6 +321,7 @@ export default function App() {
         onLaunchRestTimer={launchRestTimer}
         onOpenExerciseGuide={(ex) => setSelectedExerciseGuide(ex)}
         stats={stats}
+        allDays={allDays}
       />
 
       {/* 6. WEIGH-IN MODAL */}
