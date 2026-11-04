@@ -58,8 +58,15 @@ export default function WeightModal({ isOpen, onClose, currentWeight, onWeightLo
                 type="number"
                 step="0.05"
                 required
-                value={weight}
+                value={weight === 0 || weight === '0' ? '' : weight}
                 onChange={(e) => setWeight(e.target.value)}
+                onFocus={(e) => {
+                  if (e.target.value === '0' || e.target.value === '0.0') {
+                    setWeight('');
+                  } else {
+                    e.target.select();
+                  }
+                }}
                 placeholder="91.5"
                 class="w-full bg-dark-900 border border-white/10 rounded-xl pl-3 pr-8 py-2.5 text-sm font-mono font-bold text-white focus:outline-none focus:border-volt"
               />

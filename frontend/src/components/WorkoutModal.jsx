@@ -192,8 +192,8 @@ export default function WorkoutModal({
     while (ex.logged_sets.length < planned) {
       ex.logged_sets.push({
         set_num: ex.logged_sets.length + 1,
-        weight_kg: 0,
-        reps: 10,
+        weight_kg: '',
+        reps: '',
         completed: false,
       });
     }
@@ -222,9 +222,10 @@ export default function WorkoutModal({
     const ex = clone.parsed_exercises[exIdx];
     if (!ex.logged_sets) ex.logged_sets = [];
     if (!ex.logged_sets[setIdx]) {
-      ex.logged_sets[setIdx] = { set_num: setIdx + 1, weight_kg: 0, reps: 10, completed: false };
+      ex.logged_sets[setIdx] = { set_num: setIdx + 1, weight_kg: '', reps: '', completed: false };
     }
-    ex.logged_sets[setIdx][field] = Number(value) || 0;
+    // Store empty string when cleared so input is empty, without converting back to 0
+    ex.logged_sets[setIdx][field] = value === '' ? '' : value;
     triggerAutoSave(clone);
   };
 
@@ -246,10 +247,12 @@ export default function WorkoutModal({
     for (let i = 0; i < targetCount; i++) {
       const past = pastSets[i] || history.topLastSet || pastSets[pastSets.length - 1];
       const existing = ex.logged_sets[i] || {};
+      const w = Number(past?.weight_kg) || 0;
+      const r = Number(past?.reps) || 0;
       updatedSets.push({
         set_num: i + 1,
-        weight_kg: Number(past?.weight_kg) || 0,
-        reps: Number(past?.reps) || 10,
+        weight_kg: w > 0 ? w : '',
+        reps: r > 0 ? r : '',
         completed: existing.completed || false,
       });
     }
@@ -498,7 +501,7 @@ export default function WorkoutModal({
               }
               const sets = ex.logged_sets && ex.logged_sets.length > 0
                 ? ex.logged_sets
-                : Array.from({ length: plannedSetsCount }, (_, i) => ({ set_num: i + 1, weight_kg: 0, reps: 10, completed: false }));
+                : Array.from({ length: plannedSetsCount }, (_, i) => ({ set_num: i + 1, weight_kg: '', reps: '', completed: false }));
 
               const doneCount = sets.filter((s) => s.completed).length;
               const setPct = Math.round((doneCount / Math.max(1, sets.length)) * 100);
@@ -657,8 +660,19 @@ export default function WorkoutModal({
                             <input
                               type="number"
                               step="0.5"
-                              value={set.weight_kg !== undefined && set.weight_kg !== '' ? set.weight_kg : ''}
+                              value={
+                                set.weight_kg === 0 || set.weight_kg === '0' || set.weight_kg === undefined || set.weight_kg === null || set.weight_kg === ''
+                                  ? ''
+                                  : set.weight_kg
+                              }
                               onChange={(e) => handleSetInputChange(exIdx, setIdx, 'weight_kg', e.target.value)}
+                              onFocus={(e) => {
+                                if (e.target.value === '0' || e.target.value === '0.0') {
+                                  handleSetInputChange(exIdx, setIdx, 'weight_kg', '');
+                                } else {
+                                  e.target.select();
+                                }
+                              }}
                               placeholder={weightPlaceholder}
                               class="w-full bg-dark-850 border border-white/10 rounded px-1.5 py-1 text-xs text-center font-bold text-white focus:outline-none focus:border-volt placeholder:text-zinc-600"
                             />
@@ -666,8 +680,19 @@ export default function WorkoutModal({
                           <div class="col-span-4 relative">
                             <input
                               type="number"
-                              value={set.reps !== undefined && set.reps !== '' ? set.reps : ''}
+                              value={
+                                set.reps === 0 || set.reps === '0' || set.reps === undefined || set.reps === null || set.reps === ''
+                                  ? ''
+                                  : set.reps
+                              }
                               onChange={(e) => handleSetInputChange(exIdx, setIdx, 'reps', e.target.value)}
+                              onFocus={(e) => {
+                                if (e.target.value === '0') {
+                                  handleSetInputChange(exIdx, setIdx, 'reps', '');
+                                } else {
+                                  e.target.select();
+                                }
+                              }}
                               placeholder={repsPlaceholder}
                               class="w-full bg-dark-850 border border-white/10 rounded px-1.5 py-1 text-xs text-center font-bold text-white focus:outline-none focus:border-volt placeholder:text-zinc-600"
                             />
@@ -829,11 +854,12 @@ export default function WorkoutModal({
                 <input
                   type="number"
                   step="0.1"
-                  value={activeDay.actual_weight_kg || ''}
+                  value={activeDay.actual_weight_kg === 0 || activeDay.actual_weight_kg === '0' ? '' : (activeDay.actual_weight_kg || '')}
                   onChange={(e) => {
                     const clone = { ...activeDay, actual_weight_kg: e.target.value };
                     triggerAutoSave(clone);
                   }}
+                  onFocus={(e) => e.target.select()}
                   placeholder="91.5"
                   class="w-full bg-dark-850 border border-white/10 rounded-xl px-2.5 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:border-volt"
                 />
@@ -843,11 +869,12 @@ export default function WorkoutModal({
                 <label class="block text-[10px] font-bold text-zinc-400 mb-1 uppercase">Steps</label>
                 <input
                   type="number"
-                  value={activeDay.actual_steps || ''}
+                  value={activeDay.actual_steps === 0 || activeDay.actual_steps === '0' ? '' : (activeDay.actual_steps || '')}
                   onChange={(e) => {
                     const clone = { ...activeDay, actual_steps: e.target.value };
                     triggerAutoSave(clone);
                   }}
+                  onFocus={(e) => e.target.select()}
                   placeholder="8000"
                   class="w-full bg-dark-850 border border-white/10 rounded-xl px-2.5 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:border-volt"
                 />
@@ -857,11 +884,12 @@ export default function WorkoutModal({
                 <label class="block text-[10px] font-bold text-zinc-400 mb-1 uppercase">Duration (min)</label>
                 <input
                   type="number"
-                  value={activeDay.actual_duration_min || ''}
+                  value={activeDay.actual_duration_min === 0 || activeDay.actual_duration_min === '0' ? '' : (activeDay.actual_duration_min || '')}
                   onChange={(e) => {
                     const clone = { ...activeDay, actual_duration_min: e.target.value };
                     triggerAutoSave(clone);
                   }}
+                  onFocus={(e) => e.target.select()}
                   placeholder="65"
                   class="w-full bg-dark-850 border border-white/10 rounded-xl px-2.5 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:border-volt"
                 />

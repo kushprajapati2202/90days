@@ -298,8 +298,15 @@ export default function TodayTab({
             <input
               type="number"
               step="0.05"
-              value={quickWeight}
+              value={quickWeight === 0 || quickWeight === '0' ? '' : quickWeight}
               onChange={(e) => setQuickWeight(e.target.value)}
+              onFocus={(e) => {
+                if (e.target.value === '0' || e.target.value === '0.0') {
+                  setQuickWeight('');
+                } else {
+                  e.target.select();
+                }
+              }}
               placeholder="91.5"
               class="w-full bg-dark-900 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:border-volt"
             />
