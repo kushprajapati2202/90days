@@ -217,6 +217,15 @@ export default function App() {
   };
 
   const handleQuickLogWeight = async (weightKg, timeOfDay = 'morning', dayNum = null) => {
+    // Optimistically update weight on the day in allDays
+    if (dayNum) {
+      setAllDays((prev) => {
+        const next = prev.map((d) => (d.day_number === dayNum ? { ...d, actual_weight_kg: Number(weightKg) } : d));
+        try { localStorage.setItem('90days_cache_days', JSON.stringify(next)); } catch (e) {}
+        return next;
+      });
+    }
+
     await api.logWeight(weightKg, '', null, timeOfDay, dayNum);
     const [statsRes, weightRes] = await Promise.all([
       api.getStats(),
@@ -292,6 +301,7 @@ export default function App() {
                 todayDay={todayDay}
                 allDays={allDays}
                 stats={stats}
+                weightHistory={weightHistory}
                 onOpenWorkoutModal={(d) => setSelectedWorkout(d)}
                 onOpenWeightModal={() => setIsWeightModalOpen(true)}
                 onQuickLogWeight={handleQuickLogWeight}

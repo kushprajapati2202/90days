@@ -10,6 +10,7 @@ export default function TodayTab({
   todayDay,
   allDays = [],
   stats,
+  weightHistory = [],
   onOpenWorkoutModal,
   onOpenWeightModal,
   onQuickLogWeight,
@@ -18,17 +19,30 @@ export default function TodayTab({
   onLaunchRestTimer,
   onOpenExerciseGuide,
 }) {
-  const [quickWeight, setQuickWeight] = useState(stats?.weight_stats?.current_weight_kg || '');
+  // Extract weight specifically recorded for this active day (or empty if future/unlogged)
+  const getSelectedDayWeight = () => {
+    if (!todayDay) return '';
+    const log = (weightHistory || []).find(
+      (w) => w.day_number === todayDay.day_number || (w.date_display && todayDay.date_display && w.date_display.trim() === todayDay.date_display.trim())
+    );
+    if (log && log.weight_kg !== undefined && log.weight_kg !== null) return String(log.weight_kg);
+    if (todayDay.actual_weight_kg !== undefined && todayDay.actual_weight_kg !== null) return String(todayDay.actual_weight_kg);
+    return '';
+  };
+
+  const [quickWeight, setQuickWeight] = useState(() => getSelectedDayWeight());
   const [weightSaveStatus, setWeightSaveStatus] = useState('idle'); // 'idle', 'saving', 'saved', 'error'
   const weightDebounceRef = useRef(null);
 
-  const autoTimeOfDay = getAutoTimeOfDay();
-
+  // Sync weigh-in value whenever selected day switches or weight logs update
   useEffect(() => {
-    if (stats?.weight_stats?.current_weight_kg) {
-      setQuickWeight(stats.weight_stats.current_weight_kg);
-    }
-  }, [stats?.weight_stats?.current_weight_kg]);
+    setQuickWeight(getSelectedDayWeight());
+  }, [todayDay?.day_number, todayDay?.actual_weight_kg, weightHistory]);
+
+  const dayLog = (weightHistory || []).find(
+    (w) => w.day_number === todayDay?.day_number || (w.date_display && todayDay?.date_display && w.date_display.trim() === todayDay.date_display.trim())
+  );
+  const activeTimeOfDay = dayLog?.time_of_day || getAutoTimeOfDay();
 
   if (!todayDay) {
     return (
@@ -74,7 +88,7 @@ export default function TodayTab({
     weightDebounceRef.current = setTimeout(async () => {
       try {
         if (onQuickLogWeight) {
-          await onQuickLogWeight(num, autoTimeOfDay, todayDay.day_number);
+          await onQuickLogWeight(num, activeTimeOfDay, todayDay.day_number);
         }
         setWeightSaveStatus('saved');
         setTimeout(() => setWeightSaveStatus('idle'), 2500);
@@ -321,16 +335,16 @@ export default function TodayTab({
                 )}
               </div>
               <p class="text-[11px] text-zinc-400">
-                {autoTimeOfDay === 'morning'
-                  ? 'Fasting morning weigh-in'
-                  : 'Evening / post-workout weigh-in'}
+                {quickWeight
+                  ? `Day ${todayDay.day_number} (${todayDay.date_display}) reading`
+                  : `No weigh-in logged for Day ${todayDay.day_number}`}
               </p>
             </div>
           </div>
 
           {/* Morning / Evening Badge */}
           <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-dark-900 border border-white/10 self-start sm:self-center">
-            {autoTimeOfDay === 'morning' ? (
+            {activeTimeOfDay === 'morning' ? (
               <>
                 <Sun class="w-3.5 h-3.5 text-amber-400" />
                 <span class="text-[11px] font-bold text-amber-300">Morning Weigh-In</span>
@@ -359,7 +373,7 @@ export default function TodayTab({
                   e.target.select();
                 }
               }}
-              placeholder="91.5"
+              placeholder="--.-"
               class="w-full bg-dark-900 border border-white/10 rounded-xl pl-3 pr-8 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:border-volt"
             />
             <span class="absolute right-2.5 top-2 text-[10px] text-zinc-500 font-bold">kg</span>
