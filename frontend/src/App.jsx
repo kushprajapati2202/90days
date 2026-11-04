@@ -168,21 +168,21 @@ export default function App() {
         {isLoading ? (
           <div class="py-24 text-center">
             <div class="w-10 h-10 border-2 border-volt border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <h3 class="text-sm font-bold text-white font-heading">Initializing 90Days Pro Engine</h3>
-            <p class="text-xs text-zinc-400 mt-1">Connecting to MongoDB Atlas...</p>
+            <h3 class="text-sm font-bold text-white font-heading">Loading Your 90-Day Plan</h3>
+            <p class="text-xs text-zinc-400 mt-1">Syncing your workouts, weights, and daily targets...</p>
           </div>
         ) : loadError ? (
           <div class="py-12 px-4 max-w-md mx-auto text-center bg-dark-850 rounded-3xl border border-rose-500/30 shadow-2xl">
             <div class="w-10 h-10 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto mb-3 font-bold text-lg">
               !
             </div>
-            <h3 class="text-base font-bold text-white font-heading mb-1">Service Initializing</h3>
-            <p class="text-xs text-zinc-400 mb-4">{loadError}</p>
+            <h3 class="text-base font-bold text-white font-heading mb-1">Unable to Load Plan</h3>
+            <p class="text-xs text-zinc-400 mb-4">Please check your internet connection and try again.</p>
             <button
               onClick={loadData}
               class="px-5 py-2.5 rounded-xl bg-volt text-dark-950 font-black text-xs hover:bg-[#b8e600] active:scale-95 transition"
             >
-              Retry Connection
+              Reload Training Plan
             </button>
           </div>
         ) : (

@@ -273,7 +273,7 @@ export default function WorkoutModal({
                 class="px-2 py-1 rounded-lg bg-dark-800 hover:bg-dark-750 text-rose-400 text-[11px] font-bold border border-white/5 flex items-center space-x-1"
                 title="Launch Rest Timer"
               >
-                <Timer class="w-3.5 h-3.5" />
+                <FaStopwatch class="w-3.5 h-3.5" />
                 <span class="font-mono">90s Rest</span>
               </button>
 

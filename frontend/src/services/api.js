@@ -13,10 +13,15 @@ async function request(endpoint, options = {}) {
     });
 
     if (!res.ok) {
-      let detail = `Error ${res.status}`;
+      let detail = `Unable to complete request (${res.status})`;
       try {
         const errJson = await res.json();
-        if (errJson && errJson.detail) detail = errJson.detail;
+        if (errJson && errJson.detail) {
+          detail = errJson.detail;
+          if (detail.includes('MongoDB') || detail.includes('database') || detail.includes('whitelist') || detail.includes('Atlas')) {
+            detail = 'Service temporarily syncing. Please try again in a few moments.';
+          }
+        }
       } catch (e) {}
       const err = new Error(detail);
       err.status = res.status;

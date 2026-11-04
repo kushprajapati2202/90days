@@ -135,7 +135,7 @@ export default function VaultTab({ onSelectExerciseGuide }) {
                 </span>
               </h2>
               <p className="text-[11px] text-zinc-400">
-                World-class database with dual-angle photos, animated executions, form cues & YouTube guides.
+                Comprehensive movement library with dual-angle photos, animated executions, form cues & YouTube guides.
               </p>
             </div>
           </div>
@@ -246,13 +246,13 @@ export default function VaultTab({ onSelectExerciseGuide }) {
       {loading ? (
         <div className="py-20 text-center">
           <div className="w-9 h-9 border-2 border-volt border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-xs font-bold text-white">Loading full movement catalog...</p>
-          <p className="text-[11px] text-zinc-400 mt-0.5">Querying 2,200+ exercises across MongoDB Atlas</p>
+          <p className="text-xs font-bold text-white">Loading exercise library...</p>
+          <p className="text-[11px] text-zinc-400 mt-0.5">Accessing 2,200+ exercise movements & protocols...</p>
         </div>
       ) : exercises.length === 0 ? (
         <div className="py-16 text-center bg-dark-850 rounded-3xl border border-white/[0.06] p-6 space-y-3">
           <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-zinc-500">
-            <Dumbbell className="w-6 h-6" />
+            <TbBarbell className="w-7 h-7 text-zinc-500" />
           </div>
           <h3 className="text-sm font-bold text-white font-heading">No movements found</h3>
           <p className="text-xs text-zinc-400 max-w-sm mx-auto">

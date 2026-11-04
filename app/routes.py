@@ -304,10 +304,10 @@ def get_profile():
             profile = db.profile.find_one({"_id": "user_profile"}, {"_id": 0})
         return profile
     except Exception as e:
-        logger.error(f"Error loading profile from MongoDB: {e}")
+        logger.error(f"Error loading profile from database: {e}")
         raise HTTPException(
             status_code=503,
-            detail=f"MongoDB connection failed: {str(e)}. If this is hosted on Vercel, please ensure 0.0.0.0/0 is whitelisted under Network Access in MongoDB Atlas."
+            detail="Service temporarily syncing. Please try again in a few moments."
         )
 
 @router.put("/profile")
@@ -400,10 +400,10 @@ def get_days(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error fetching workout days from MongoDB: {e}")
+        logger.error(f"Error fetching workout days: {e}")
         raise HTTPException(
             status_code=503,
-            detail=f"MongoDB connection failed: {str(e)}. If this is hosted on Vercel, please ensure 0.0.0.0/0 is whitelisted under Network Access in MongoDB Atlas."
+            detail="Service temporarily syncing. Please try again in a few moments."
         )
 
 @router.get("/days/{day_number}")
