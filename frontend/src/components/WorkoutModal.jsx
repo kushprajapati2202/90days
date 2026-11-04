@@ -117,7 +117,7 @@ export default function WorkoutModal({
       if (c.completed) done++;
     });
 
-    if (total === 0) return d.completed ? 100 : 0;
+    if (total === 0 || d.completed) return d.completed ? 100 : 0;
     return Math.round((done / total) * 100);
   };
 

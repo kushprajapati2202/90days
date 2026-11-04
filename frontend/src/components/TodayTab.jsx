@@ -34,7 +34,7 @@ export default function TodayTab({
   const isCompleted = !!todayDay.completed;
   const isDeload = !!todayDay.is_deload;
   const isStarted = !!todayDay.started_at;
-  const pct = todayDay.completion_percentage !== undefined ? todayDay.completion_percentage : (isCompleted ? 100 : 0);
+  const pct = isCompleted ? 100 : (todayDay.completion_percentage !== undefined ? todayDay.completion_percentage : 0);
 
   const handleStartWorkout = () => {
     const clone = JSON.parse(JSON.stringify(todayDay));

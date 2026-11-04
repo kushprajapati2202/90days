@@ -79,7 +79,7 @@ def calculate_day_completion(day: dict) -> float:
     total = warmup_total + sets_total + cond_total + cardio_total + cooldown_total
     done = warmup_done + sets_done + cond_done + cardio_done + cooldown_done
 
-    if total == 0:
+    if total == 0 or day.get("completed"):
         return 100.0 if day.get("completed") else 0.0
 
     pct = round((done / total) * 100.0, 1)
