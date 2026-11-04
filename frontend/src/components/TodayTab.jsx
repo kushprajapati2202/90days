@@ -328,7 +328,7 @@ export default function TodayTab({
             </div>
           </div>
 
-          {/* Automatic Morning / Evening Detection Badge */}
+          {/* Morning / Evening Badge */}
           <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-dark-900 border border-white/10 self-start sm:self-center">
             {autoTimeOfDay === 'morning' ? (
               <>
@@ -341,11 +341,10 @@ export default function TodayTab({
                 <span class="text-[11px] font-bold text-indigo-300">Evening Weigh-In</span>
               </>
             )}
-            <span class="text-[10px] text-zinc-500 font-mono hidden sm:inline">• Auto-detected</span>
           </div>
         </div>
 
-        {/* Input & Auto-Save Status */}
+        {/* Input */}
         <div class="flex items-center justify-between gap-3 pt-1 border-t border-white/[0.04]">
           <div class="relative w-36">
             <input
@@ -367,21 +366,6 @@ export default function TodayTab({
           </div>
 
           <div class="flex items-center space-x-2">
-            <span
-              class={`text-[11px] font-mono font-bold transition ${
-                weightSaveStatus === 'saving'
-                  ? 'text-amber-400'
-                  : weightSaveStatus === 'saved'
-                  ? 'text-emerald-400'
-                  : 'text-zinc-500'
-              }`}
-            >
-              {weightSaveStatus === 'saving'
-                ? 'Auto-saving...'
-                : weightSaveStatus === 'saved'
-                ? 'Auto-saved ✓'
-                : 'Auto-saves on typing'}
-            </span>
             <button
               type="button"
               onClick={onOpenWeightModal}
@@ -391,10 +375,6 @@ export default function TodayTab({
               <Calendar class="w-3.5 h-3.5" />
             </button>
           </div>
-        </div>
-
-        <div class="text-[10px] text-zinc-500 font-mono">
-          Note: Timing is automatically determined based on when you enter your weigh-in.
         </div>
       </div>
 

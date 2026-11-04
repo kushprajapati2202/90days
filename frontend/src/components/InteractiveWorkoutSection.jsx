@@ -353,7 +353,7 @@ export default function InteractiveWorkoutSection({
           ) : (
             <span class="text-zinc-400 flex items-center space-x-1 text-[11px]">
               <Clock class="w-3.5 h-3.5 text-zinc-500" />
-              <span>Timer auto-starts on your first logged rep</span>
+              <span>Timer starts on your first logged rep</span>
             </span>
           )}
         </div>
@@ -365,9 +365,6 @@ export default function InteractiveWorkoutSection({
               {activeDay.ended_at && ` • Last activity ${formatTimeOfDay(activeDay.ended_at)}`}
             </span>
           )}
-          <span class="text-[10px] text-zinc-500">
-            {saveStatus === 'saving' ? 'Saving...' : 'Auto-saved ✓'}
-          </span>
         </div>
       </div>
 

@@ -84,13 +84,11 @@ export default function WeightModal({ isOpen, onClose, currentWeight, onWeightLo
                 <>
                   <Sun class="w-4 h-4 text-amber-400" />
                   <span class="font-bold text-amber-300">Morning Weigh-In</span>
-                  <span class="text-[10px] text-zinc-400 ml-auto font-mono">Auto-detected (AM)</span>
                 </>
               ) : (
                 <>
                   <Moon class="w-4 h-4 text-indigo-400" />
                   <span class="font-bold text-indigo-300">Evening Weigh-In</span>
-                  <span class="text-[10px] text-zinc-400 ml-auto font-mono">Auto-detected (PM)</span>
                 </>
               )}
             </div>

@@ -468,7 +468,7 @@ export default function WorkoutModal({
             ) : (
               <span class="text-zinc-400 flex items-center space-x-1 text-[11px]">
                 <Clock class="w-3.5 h-3.5 text-zinc-500" />
-                <span>Timer auto-starts on your first logged rep</span>
+                <span>Timer starts on your first logged rep</span>
               </span>
             )}
           </div>
@@ -700,7 +700,7 @@ export default function WorkoutModal({
                         type="button"
                         onClick={() => handleAutofillPrevious(exIdx, history)}
                         class="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-volt hover:text-dark-950 text-zinc-300 text-[10px] font-bold border border-white/10 transition flex items-center space-x-1"
-                        title="Auto-fill sets with weights from last session"
+                        title="Fill sets with weights from last session"
                       >
                         <span>Fill Last</span>
                         <span>📋</span>
@@ -1062,9 +1062,6 @@ export default function WorkoutModal({
           </label>
 
           <div class="flex items-center space-x-2">
-            <span class="text-[11px] text-zinc-400 font-mono">
-              {saveStatus === 'saving' ? 'Saving...' : 'Auto-saved ✓'}
-            </span>
             <button
               onClick={onClose}
               class="px-4 py-2 rounded-xl text-xs font-bold bg-volt text-dark-950 hover:bg-[#b8e600] active:scale-95 transition"
