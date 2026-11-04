@@ -87,10 +87,11 @@ async def custom_404_handler(request: Request, exc):
         }
     )
 
-# Mount frontend compiled production distribution
-FRONTEND_DIST = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
-if not os.path.exists(FRONTEND_DIST):
-    os.makedirs(FRONTEND_DIST, exist_ok=True)
+# Mount static files
+STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+if not os.path.exists(STATIC_DIR):
+    os.makedirs(STATIC_DIR, exist_ok=True)
 
-app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend_root")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static_dir")
+app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static_root")
 
