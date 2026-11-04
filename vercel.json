@@ -11,20 +11,16 @@
       "destination": "/api/index.py?__path__=health"
     },
     {
-      "source": "/static/(.*)",
-      "destination": "/static/$1"
-    },
-    {
       "source": "/assets/(.*)",
-      "destination": "/static/assets/$1"
+      "destination": "/frontend/dist/assets/$1"
     },
     {
       "source": "/",
-      "destination": "/static/index.html"
+      "destination": "/frontend/dist/index.html"
     },
     {
       "source": "/(.*)",
-      "destination": "/static/$1"
+      "destination": "/frontend/dist/$1"
     }
   ]
 }
