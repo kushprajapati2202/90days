@@ -40,7 +40,14 @@ export default function WorkoutModal({
       const updateTimer = () => {
         const sTime = new Date(activeDay.started_at).getTime();
         const now = Date.now();
-        setSessionSeconds(Math.max(0, Math.floor((now - sTime) / 1000)));
+        const diffSecs = Math.max(0, Math.floor((now - sTime) / 1000));
+        // If session was started over 4 hours ago, show elapsed up to ended_at or cap
+        if (diffSecs > 4 * 3600 && activeDay.ended_at) {
+          const eTime = new Date(activeDay.ended_at).getTime();
+          setSessionSeconds(Math.max(0, Math.floor((eTime - sTime) / 1000)));
+        } else {
+          setSessionSeconds(diffSecs);
+        }
       };
       updateTimer();
       interval = setInterval(updateTimer, 1000);
@@ -50,7 +57,7 @@ export default function WorkoutModal({
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [activeDay?.started_at, activeDay?.completed]);
+  }, [activeDay?.started_at, activeDay?.ended_at, activeDay?.completed]);
 
   // Automatic timestamp stamping on ANY user logging action
   const stampActivityTimes = (clone) => {
@@ -62,7 +69,12 @@ export default function WorkoutModal({
     try {
       const s = new Date(clone.started_at).getTime();
       const dur = Math.max(1, Math.round((Date.now() - s) / 60000));
-      clone.actual_duration_min = dur;
+      // Only set automatic duration if not set or within realistic single session window (< 240 min)
+      if (!clone.actual_duration_min || Number(clone.actual_duration_min) <= 0) {
+        clone.actual_duration_min = dur <= 240 ? dur : 60;
+      } else if (dur <= 180 && Number(clone.actual_duration_min) > 0 && Number(clone.actual_duration_min) <= 180) {
+        clone.actual_duration_min = dur;
+      }
     } catch (_) {}
     return clone;
   };
@@ -143,6 +155,16 @@ export default function WorkoutModal({
     sounds.playSetCheck();
   };
 
+  const handleResetSessionTimer = () => {
+    const clone = JSON.parse(JSON.stringify(activeDay));
+    const nowIso = new Date().toISOString();
+    clone.started_at = nowIso;
+    clone.ended_at = nowIso;
+    clone.actual_duration_min = 1;
+    triggerAutoSave(clone);
+    sounds.playSetCheck();
+  };
+
   const handleFinishWorkoutSession = () => {
     const clone = JSON.parse(JSON.stringify(activeDay));
     const nowIso = new Date().toISOString();
@@ -154,9 +176,11 @@ export default function WorkoutModal({
     try {
       const s = new Date(clone.started_at).getTime();
       const dur = Math.max(1, Math.round((Date.now() - s) / 60000));
-      clone.actual_duration_min = dur;
+      if (!clone.actual_duration_min || clone.actual_duration_min > 240) {
+        clone.actual_duration_min = dur <= 240 ? dur : 65;
+      }
     } catch (_) {
-      clone.actual_duration_min = 45;
+      clone.actual_duration_min = 65;
     }
     triggerAutoSave(clone);
     setShowCelebration(true);
@@ -386,13 +410,23 @@ export default function WorkoutModal({
                 <span>Start Timer</span>
               </button>
             ) : !activeDay.completed ? (
-              <button
-                type="button"
-                onClick={handleFinishWorkoutSession}
-                class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-400 hover:text-dark-950 font-bold text-[11px] border border-emerald-500/30 transition flex items-center space-x-1"
-              >
-                <span>Finish Session ✓</span>
-              </button>
+              <div class="flex items-center space-x-1.5">
+                <button
+                  type="button"
+                  onClick={handleResetSessionTimer}
+                  title="Reset session start time to now"
+                  class="px-2 py-1 rounded-lg text-[10px] text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 transition"
+                >
+                  Reset Time
+                </button>
+                <button
+                  type="button"
+                  onClick={handleFinishWorkoutSession}
+                  class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-400 hover:text-dark-950 font-bold text-[11px] border border-emerald-500/30 transition flex items-center space-x-1"
+                >
+                  <span>Finish Session ✓</span>
+                </button>
+              </div>
             ) : null}
           </div>
         </div>

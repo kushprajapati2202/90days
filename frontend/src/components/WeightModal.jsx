@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { X, Calendar, Check } from 'lucide-react';
 import { FaWeightScale } from 'react-icons/fa6';
 import { api } from '../services/api';
+import { getIndianTodayIsoDate } from '../utils/timeFormat';
 
 export default function WeightModal({ isOpen, onClose, currentWeight, onWeightLogged }) {
   if (!isOpen) return null;
 
   const [weight, setWeight] = useState(currentWeight || '');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(getIndianTodayIsoDate());
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');

@@ -485,6 +485,8 @@ def update_day(day_number: int, data: DayUpdateModel):
             s_dt = datetime.fromisoformat(active_start.replace("Z", "+00:00"))
             e_dt = datetime.fromisoformat(active_end.replace("Z", "+00:00"))
             dur_mins = max(1, int(round((e_dt - s_dt).total_seconds() / 60.0)))
+            if dur_mins > 240:
+                dur_mins = 65
             if not update_fields.get("actual_duration_min"):
                 update_fields["actual_duration_min"] = dur_mins
         except Exception:
@@ -587,6 +589,8 @@ def finish_workout_session(day_number: int):
         s_dt = datetime.fromisoformat(start_iso.replace("Z", "+00:00"))
         e_dt = datetime.fromisoformat(now_iso.replace("Z", "+00:00"))
         dur_mins = max(1, int(round((e_dt - s_dt).total_seconds() / 60.0)))
+        if dur_mins > 240:
+            dur_mins = 65
     except Exception:
         pass
 

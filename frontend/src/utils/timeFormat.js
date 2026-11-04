@@ -1,12 +1,42 @@
-// Formats an ISO date string to 12-hour time of day, e.g. "1:45 PM"
+// Formats an ISO date string to 12-hour time of day in Indian Standard Time (IST), e.g. "9:18 PM"
 export function formatTimeOfDay(isoStr) {
   if (!isoStr) return '';
   try {
     const d = new Date(isoStr);
     if (isNaN(d.getTime())) return '';
-    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    return d.toLocaleTimeString('en-IN', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'Asia/Kolkata',
+    });
   } catch (_) {
     return '';
+  }
+}
+
+// Formats an ISO date string to Indian date display, e.g. "04 Nov"
+export function formatIndianDate(isoStr) {
+  if (!isoStr) return '';
+  try {
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      timeZone: 'Asia/Kolkata',
+    });
+  } catch (_) {
+    return '';
+  }
+}
+
+// Returns today's date in YYYY-MM-DD format in Indian Standard Time (IST)
+export function getIndianTodayIsoDate() {
+  try {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  } catch (_) {
+    return new Date().toISOString().split('T')[0];
   }
 }
 
