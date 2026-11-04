@@ -50,4 +50,4 @@ class WeightLogCreateModel(BaseModel):
     weight_kg: float
     notes: Optional[str] = ""
     date_display: Optional[str] = None
-    time_of_day: Optional[str] = "morning"
+    time_of_day: Optional[str] = "auto"

@@ -3,7 +3,7 @@ import { Play, CheckCircle2, ChevronRight, Sparkles, Clock, Sun, Moon, Calendar 
 import { TbBarbell } from 'react-icons/tb';
 import { FaFireFlameCurved, FaWeightScale } from 'react-icons/fa6';
 import { calculateDayCalories } from '../utils/calories';
-import { formatTimeOfDay } from '../utils/timeFormat';
+import { formatTimeOfDay, getAutoTimeOfDay } from '../utils/timeFormat';
 import InteractiveWorkoutSection from './InteractiveWorkoutSection';
 
 export default function TodayTab({
@@ -19,9 +19,10 @@ export default function TodayTab({
   onOpenExerciseGuide,
 }) {
   const [quickWeight, setQuickWeight] = useState(stats?.weight_stats?.current_weight_kg || '');
-  const [weightTimeOfDay, setWeightTimeOfDay] = useState('morning');
   const [weightSaveStatus, setWeightSaveStatus] = useState('idle'); // 'idle', 'saving', 'saved', 'error'
   const weightDebounceRef = useRef(null);
+
+  const autoTimeOfDay = getAutoTimeOfDay();
 
   useEffect(() => {
     if (stats?.weight_stats?.current_weight_kg) {
@@ -59,7 +60,7 @@ export default function TodayTab({
   const weekDays = allDays.filter((d) => d.week_number === currentWeekNum).slice(0, 7);
 
   // Auto-Save Weight Handler
-  const handleWeightChange = (newVal, timing = weightTimeOfDay) => {
+  const handleWeightChange = (newVal) => {
     setQuickWeight(newVal);
     if (weightDebounceRef.current) clearTimeout(weightDebounceRef.current);
 
@@ -73,7 +74,7 @@ export default function TodayTab({
     weightDebounceRef.current = setTimeout(async () => {
       try {
         if (onQuickLogWeight) {
-          await onQuickLogWeight(num, timing, todayDay.day_number);
+          await onQuickLogWeight(num, autoTimeOfDay, todayDay.day_number);
         }
         setWeightSaveStatus('saved');
         setTimeout(() => setWeightSaveStatus('idle'), 2500);
@@ -81,14 +82,6 @@ export default function TodayTab({
         setWeightSaveStatus('error');
       }
     }, 700);
-  };
-
-  const handleTimingToggle = (timing) => {
-    setWeightTimeOfDay(timing);
-    const num = parseFloat(quickWeight);
-    if (num && !isNaN(num) && num >= 30) {
-      handleWeightChange(num, timing);
-    }
   };
 
   return (
@@ -311,7 +304,7 @@ export default function TodayTab({
         </div>
       </div>
 
-      {/* 3. AUTO-SAVING WEIGH-IN ROW WITH MORNING / EVENING OPTIONS */}
+      {/* 3. AUTO-SAVING WEIGH-IN ROW (Timing automatically decided by entry time) */}
       <div class="p-4 rounded-2xl bg-dark-850 border border-white/[0.06] space-y-3">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div class="flex items-center space-x-3">
@@ -328,39 +321,27 @@ export default function TodayTab({
                 )}
               </div>
               <p class="text-[11px] text-zinc-400">
-                {weightTimeOfDay === 'morning'
+                {autoTimeOfDay === 'morning'
                   ? 'Fasting morning weigh-in'
                   : 'Evening / post-workout weigh-in'}
               </p>
             </div>
           </div>
 
-          {/* Morning / Evening Toggle Options */}
-          <div class="flex items-center p-1 rounded-xl bg-dark-900 border border-white/10 self-start sm:self-center">
-            <button
-              type="button"
-              onClick={() => handleTimingToggle('morning')}
-              class={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center space-x-1.5 transition ${
-                weightTimeOfDay === 'morning'
-                  ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <Sun class="w-3 h-3 text-amber-400" />
-              <span>Morning</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTimingToggle('evening')}
-              class={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center space-x-1.5 transition ${
-                weightTimeOfDay === 'evening'
-                  ? 'bg-indigo-400/20 text-indigo-300 border border-indigo-400/30'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <Moon class="w-3 h-3 text-indigo-400" />
-              <span>Evening</span>
-            </button>
+          {/* Automatic Morning / Evening Detection Badge */}
+          <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-dark-900 border border-white/10 self-start sm:self-center">
+            {autoTimeOfDay === 'morning' ? (
+              <>
+                <Sun class="w-3.5 h-3.5 text-amber-400" />
+                <span class="text-[11px] font-bold text-amber-300">Morning Weigh-In</span>
+              </>
+            ) : (
+              <>
+                <Moon class="w-3.5 h-3.5 text-indigo-400" />
+                <span class="text-[11px] font-bold text-indigo-300">Evening Weigh-In</span>
+              </>
+            )}
+            <span class="text-[10px] text-zinc-500 font-mono hidden sm:inline">• Auto-detected</span>
           </div>
         </div>
 
@@ -413,7 +394,7 @@ export default function TodayTab({
         </div>
 
         <div class="text-[10px] text-zinc-500 font-mono">
-          Note: Past readings are recorded as evening readings by default.
+          Note: Timing is automatically determined based on when you enter your weigh-in.
         </div>
       </div>
 

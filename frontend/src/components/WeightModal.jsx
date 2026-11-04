@@ -2,17 +2,18 @@ import React, { useState } from 'react';
 import { X, Calendar, Check, Sun, Moon } from 'lucide-react';
 import { FaWeightScale } from 'react-icons/fa6';
 import { api } from '../services/api';
-import { getIndianTodayIsoDate } from '../utils/timeFormat';
+import { getIndianTodayIsoDate, getAutoTimeOfDay } from '../utils/timeFormat';
 
 export default function WeightModal({ isOpen, onClose, currentWeight, onWeightLogged }) {
   if (!isOpen) return null;
 
   const [weight, setWeight] = useState(currentWeight || '');
-  const [timeOfDay, setTimeOfDay] = useState('morning');
   const [date, setDate] = useState(getIndianTodayIsoDate());
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  const autoTimeOfDay = getAutoTimeOfDay();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,7 +22,7 @@ export default function WeightModal({ isOpen, onClose, currentWeight, onWeightLo
     setError('');
 
     try {
-      await api.logWeight(weight, notes, date, timeOfDay);
+      await api.logWeight(weight, notes, date, autoTimeOfDay);
       if (onWeightLogged) onWeightLogged();
       onClose();
     } catch (err) {
@@ -78,31 +79,20 @@ export default function WeightModal({ isOpen, onClose, currentWeight, onWeightLo
 
           <div>
             <label class="block text-[11px] font-bold text-zinc-400 mb-1 uppercase">Timing</label>
-            <div class="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setTimeOfDay('morning')}
-                class={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition ${
-                  timeOfDay === 'morning'
-                    ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30'
-                    : 'bg-dark-900 text-zinc-400 border border-white/5 hover:text-white'
-                }`}
-              >
-                <Sun class="w-3.5 h-3.5 text-amber-400" />
-                <span>Morning</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setTimeOfDay('evening')}
-                class={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition ${
-                  timeOfDay === 'evening'
-                    ? 'bg-indigo-400/20 text-indigo-300 border border-indigo-400/30'
-                    : 'bg-dark-900 text-zinc-400 border border-white/5 hover:text-white'
-                }`}
-              >
-                <Moon class="w-3.5 h-3.5 text-indigo-400" />
-                <span>Evening</span>
-              </button>
+            <div class="flex items-center space-x-2 p-2 rounded-xl bg-dark-900 border border-white/10 text-xs">
+              {autoTimeOfDay === 'morning' ? (
+                <>
+                  <Sun class="w-4 h-4 text-amber-400" />
+                  <span class="font-bold text-amber-300">Morning Weigh-In</span>
+                  <span class="text-[10px] text-zinc-400 ml-auto font-mono">Auto-detected (AM)</span>
+                </>
+              ) : (
+                <>
+                  <Moon class="w-4 h-4 text-indigo-400" />
+                  <span class="font-bold text-indigo-300">Evening Weigh-In</span>
+                  <span class="text-[10px] text-zinc-400 ml-auto font-mono">Auto-detected (PM)</span>
+                </>
+              )}
             </div>
           </div>
 

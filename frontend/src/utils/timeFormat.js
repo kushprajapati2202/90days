@@ -67,3 +67,22 @@ export function formatStopwatch(totalSeconds) {
   return `${mm}:${ss}`;
 }
 
+// Automatically determines time of day ('morning' vs 'evening') based on current Indian Standard Time (IST)
+// Before 12:00 PM (noon) is morning; 12:00 PM onwards is evening
+export function getAutoTimeOfDay() {
+  try {
+    const hour = parseInt(
+      new Intl.DateTimeFormat('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        hour: 'numeric',
+        hour12: false,
+      }).format(new Date()),
+      10
+    );
+    return hour >= 4 && hour < 12 ? 'morning' : 'evening';
+  } catch (_) {
+    const h = new Date().getHours();
+    return h >= 4 && h < 12 ? 'morning' : 'evening';
+  }
+}
+
