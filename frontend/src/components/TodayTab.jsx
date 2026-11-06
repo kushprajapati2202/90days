@@ -98,8 +98,67 @@ export default function TodayTab({
     }, 700);
   };
 
+  // Gym closure window: 8 Nov 2026 to 14 Nov 2026
+  const isGymClosureWindow = (() => {
+    try {
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        timeZone: 'Asia/Kolkata',
+      });
+      const parts = formatter.formatToParts(now);
+      const dayNum = parseInt(parts.find((p) => p.type === 'day')?.value || '0', 10);
+      const monthStr = parts.find((p) => p.type === 'month')?.value?.toLowerCase() || '';
+      return monthStr === 'nov' && dayNum >= 8 && dayNum <= 14;
+    } catch {
+      return false;
+    }
+  })();
+
   return (
     <div className="space-y-4 max-w-3xl mx-auto animate-in fade-in duration-300">
+      {/* Gym Closure & Active Recovery Notice for Nov 8-14 */}
+      {isGymClosureWindow && (
+        <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/5 border border-amber-500/30 shadow-lg">
+          <div className="flex items-start space-x-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-300 flex items-center justify-center shrink-0 border border-amber-500/30 text-lg">
+              🏢
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center space-x-2">
+                <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-400 text-dark-950 uppercase tracking-wider">
+                  Gym Closed (Nov 8 – 14)
+                </span>
+                <span className="text-xs text-amber-300 font-bold font-mono">
+                  Active Recovery Week
+                </span>
+              </div>
+              <h3 className="text-sm sm:text-base font-bold text-white font-heading mt-1">
+                Calendar Paused • Day 9 Resumes Sunday, Nov 15!
+              </h3>
+              <p className="text-xs text-zinc-300 mt-1 leading-relaxed">
+                Your 90-day plan is safely shifted by +7 days so you don't miss any gym lifts. During this week, focus on:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2.5 text-xs text-zinc-200">
+                <div className="bg-black/40 p-2 rounded-xl border border-white/5 flex items-center space-x-1.5">
+                  <span className="text-volt font-bold">👟 10k+</span>
+                  <span>Daily Outdoor Steps</span>
+                </div>
+                <div className="bg-black/40 p-2 rounded-xl border border-white/5 flex items-center space-x-1.5">
+                  <span className="text-cyan-400 font-bold">🥩 Protein</span>
+                  <span>Maintain 1.6–2.0 g/kg</span>
+                </div>
+                <div className="bg-black/40 p-2 rounded-xl border border-white/5 flex items-center space-x-1.5">
+                  <span className="text-purple-400 font-bold">🧘 Mobility</span>
+                  <span>Core & gentle stretching</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 1. TODAY HERO CARD */}
       <div className="p-4 sm:p-6 rounded-3xl bg-dark-850 border border-white/[0.08] shadow-2xl relative overflow-hidden">
         {/* Subtle background ambient glow */}
