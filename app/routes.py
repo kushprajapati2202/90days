@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import logging
 import re
 from typing import Optional
@@ -79,8 +79,11 @@ def calculate_day_completion(day: dict) -> float:
     total = warmup_total + sets_total + cond_total + cardio_total + cooldown_total
     done = warmup_done + sets_done + cond_done + cardio_done + cooldown_done
 
-    if total == 0 or day.get("completed"):
+    if total == 0:
         return 100.0 if day.get("completed") else 0.0
+
+    if done >= total:
+        return 100.0
 
     pct = round((done / total) * 100.0, 1)
     if done < total and pct >= 100.0:
@@ -736,21 +739,20 @@ def get_stats():
 
     db = get_db()
     profile = db.profile.find_one({"_id": "user_profile"}, {"_id": 0}) or {}
-    total_days = 90
-    completed_days = db.workout_days.count_documents({"completed": True})
+    all_days = list(db.workout_days.find({}).sort("day_number", 1))
+    total_days = len(all_days) or 90
+    completed_days = sum(1 for d in all_days if d.get("completed"))
 
     # Streaks calculation
-    days = list(db.workout_days.find({}, {"day_number": 1, "completed": 1, "actual_weight_kg": 1}).sort("day_number", 1))
-    
     current_streak = 0
     max_streak = 0
     temp_streak = 0
     latest_completed_day = 0
 
-    for d in days:
+    for d in all_days:
         if d.get("completed"):
             temp_streak += 1
-            latest_completed_day = d["day_number"]
+            latest_completed_day = d.get("day_number", 0)
             if temp_streak > max_streak:
                 max_streak = temp_streak
         else:
@@ -758,32 +760,31 @@ def get_stats():
 
     # Current streak from latest completed day counting backwards
     current_streak = 0
-    for d in reversed(days):
+    for d in reversed(all_days):
         if d.get("completed"):
             current_streak += 1
         elif current_streak > 0:
             break
 
-    # Phase breakdown
-    phase1_total = db.workout_days.count_documents({"phase": {"$regex": "Phase 1"}})
-    phase1_done = db.workout_days.count_documents({"phase": {"$regex": "Phase 1"}, "completed": True})
+    # Phase breakdown calculated in-memory
+    phase1_days = [d for d in all_days if "phase 1" in str(d.get("phase", "")).lower()]
+    phase2_days = [d for d in all_days if "phase 2" in str(d.get("phase", "")).lower()]
+    phase3_days = [d for d in all_days if "phase 3" in str(d.get("phase", "")).lower()]
 
-    phase2_total = db.workout_days.count_documents({"phase": {"$regex": "Phase 2"}})
-    phase2_done = db.workout_days.count_documents({"phase": {"$regex": "Phase 2"}, "completed": True})
+    phase1_total, phase1_done = len(phase1_days), sum(1 for d in phase1_days if d.get("completed"))
+    phase2_total, phase2_done = len(phase2_days), sum(1 for d in phase2_days if d.get("completed"))
+    phase3_total, phase3_done = len(phase3_days), sum(1 for d in phase3_days if d.get("completed"))
 
-    phase3_total = db.workout_days.count_documents({"phase": {"$regex": "Phase 3"}})
-    phase3_done = db.workout_days.count_documents({"phase": {"$regex": "Phase 3"}, "completed": True})
-
-    # Week breakdown
+    # Week breakdown calculated in-memory
     weeks_stats = {}
     for w in range(1, 14):
-        w_total = db.workout_days.count_documents({"week_number": w})
-        w_done = db.workout_days.count_documents({"week_number": w, "completed": True})
+        w_days = [d for d in all_days if d.get("week_number") == w]
+        w_done = sum(1 for d in w_days if d.get("completed"))
         weeks_stats[str(w)] = {
             "week_number": w,
-            "total": w_total,
+            "total": len(w_days),
             "completed": w_done,
-            "pct": round((w_done / w_total * 100), 1) if w_total else 0.0
+            "pct": round((w_done / len(w_days) * 100), 1) if w_days else 0.0
         }
 
     # Weight tracking
@@ -800,7 +801,6 @@ def get_stats():
     weight_pct = round((total_loss / goal_loss * 100), 1) if goal_loss > 0 and total_loss > 0 else 0.0
 
     total_calories_burned = 0
-    all_days = list(db.workout_days.find({}))
     for d in all_days:
         if d.get("completed"):
             w = float(d.get("actual_weight_kg") or current_weight or 90.0)

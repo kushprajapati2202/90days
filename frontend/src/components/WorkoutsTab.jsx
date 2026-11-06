@@ -146,9 +146,9 @@ export default function WorkoutsTab({ allDays, stats, onOpenWorkoutModal }) {
       {/* 3. WORKOUT DAYS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {filteredDays.map((day) => {
-          const isDone = !!day.completed;
+          const pct = day.completion_percentage !== undefined ? day.completion_percentage : (day.completed ? 100 : 0);
+          const isDone = !!day.completed && pct >= 100;
           const isDeload = !!day.is_deload;
-          const pct = day.completion_percentage !== undefined ? day.completion_percentage : (isDone ? 100 : 0);
           const cal = calculateDayCalories(day, stats?.weight_stats?.current_weight_kg || 91.5);
           const exercises = day.parsed_exercises || [];
 

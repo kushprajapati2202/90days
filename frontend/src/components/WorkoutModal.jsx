@@ -54,9 +54,14 @@ export default function WorkoutModal({
     touchStartYRef.current = null;
   };
 
+  const activeDayNumberRef = useRef(day?.day_number);
+
   useEffect(() => {
-    setActiveDay(JSON.parse(JSON.stringify(day)));
-  }, [day]);
+    if (day && (day.day_number !== activeDayNumberRef.current || !isOpen)) {
+      activeDayNumberRef.current = day.day_number;
+      setActiveDay(JSON.parse(JSON.stringify(day)));
+    }
+  }, [day?.day_number, isOpen]);
 
   // Live session running timer
   useEffect(() => {
@@ -141,13 +146,20 @@ export default function WorkoutModal({
       if (c.completed) done++;
     });
 
-    if (total === 0 || d.completed) return d.completed ? 100 : 0;
-    return Math.round((done / total) * 100);
+    if (total === 0) return d.completed ? 100 : 0;
+    if (done >= total) return 100;
+    const pct = Math.round((done / total) * 100);
+    return pct >= 100 ? 99 : pct;
   };
 
-  const triggerAutoSave = (updatedDay) => {
+  const triggerAutoSave = (updatedDay, immediateParentSync = true, debounceMs = 150) => {
     setActiveDay(updatedDay);
     setSaveStatus('saving');
+
+    // Instant optimistic UI: parent state, progress bars, and localStorage refresh instantly (<1ms)
+    if (immediateParentSync && onDayUpdated) {
+      onDayUpdated(updatedDay);
+    }
 
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(async () => {
@@ -168,12 +180,14 @@ export default function WorkoutModal({
           parsed_exercises: updatedDay.parsed_exercises,
         });
         setSaveStatus('saved');
-        if (onDayUpdated) onDayUpdated(updatedDay);
+        if (!immediateParentSync && onDayUpdated) {
+          onDayUpdated(updatedDay);
+        }
       } catch (e) {
         console.error('AutoSave failed:', e);
         setSaveStatus('error');
       }
-    }, 600);
+    }, debounceMs);
   };
 
   const handleStartWorkoutSession = () => {
@@ -224,10 +238,17 @@ export default function WorkoutModal({
     const newProgress = calculateProgress(clone);
     clone.completion_percentage = newProgress;
     sounds.playSetCheck();
-    if (newProgress === 100 && !activeDay.completed) {
-      clone.completed = true;
-      clone.completed_at = new Date().toISOString();
-      setShowCelebration(true);
+    if (newProgress === 100) {
+      if (!activeDay.completed) {
+        const nowIso = new Date().toISOString();
+        clone.completed = true;
+        clone.completed_at = nowIso;
+        clone.ended_at = nowIso;
+        setShowCelebration(true);
+      }
+    } else {
+      clone.completed = false;
+      clone.completed_at = null;
     }
     triggerAutoSave(clone);
   };
@@ -257,12 +278,17 @@ export default function WorkoutModal({
 
     const newProgress = calculateProgress(clone);
     clone.completion_percentage = newProgress;
-    if (newProgress === 100 && !activeDay.completed) {
-      const nowIso = new Date().toISOString();
-      clone.completed = true;
-      clone.completed_at = nowIso;
-      clone.ended_at = nowIso;
-      setShowCelebration(true);
+    if (newProgress === 100) {
+      if (!activeDay.completed) {
+        const nowIso = new Date().toISOString();
+        clone.completed = true;
+        clone.completed_at = nowIso;
+        clone.ended_at = nowIso;
+        setShowCelebration(true);
+      }
+    } else {
+      clone.completed = false;
+      clone.completed_at = null;
     }
     triggerAutoSave(clone);
   };
@@ -305,43 +331,30 @@ export default function WorkoutModal({
 
     if (willBeCompleted) {
       sounds.playSetCheck();
-      onLaunchRestTimer(90); // auto launch 90s rest
     }
 
     const newProgress = calculateProgress(clone);
     clone.completion_percentage = newProgress;
 
-    // Auto-detect when all exercise sets are completed -> auto stop session
-    const allExercisesFinished = (clone.parsed_exercises || []).length > 0 &&
-      (clone.parsed_exercises || []).every((exercise) => {
-        const sets = exercise.logged_sets || [];
-        return sets.length > 0 && sets.every((s) => s.completed);
-      });
-
-    if (allExercisesFinished) {
-      const nowIso = new Date().toISOString();
-      clone.completed = true;
-      clone.completed_at = nowIso;
-      clone.ended_at = nowIso;
-      clone.completion_percentage = 100;
-      try {
-        const s = new Date(clone.started_at || nowIso).getTime();
-        const dur = Math.max(1, Math.round((Date.now() - s) / 60000));
-        clone.actual_duration_min = dur <= 240 ? dur : 65;
-      } catch (_) {
-        clone.actual_duration_min = 65;
+    // Only 100% completed when ALL tasks across warmups, exercises, conditioning, cardio, and cooldowns are finished!
+    if (newProgress === 100) {
+      if (!activeDay.completed) {
+        const nowIso = new Date().toISOString();
+        clone.completed = true;
+        clone.completed_at = nowIso;
+        clone.ended_at = nowIso;
+        try {
+          const s = new Date(clone.started_at || nowIso).getTime();
+          const dur = Math.max(1, Math.round((Date.now() - s) / 60000));
+          clone.actual_duration_min = dur <= 240 ? dur : 65;
+        } catch (_) {
+          clone.actual_duration_min = 65;
+        }
+        setShowCelebration(true);
       }
-      setShowCelebration(true);
-    } else if (!willBeCompleted && clone.completed) {
-      // Reopen session if a completed set is unchecked
+    } else {
       clone.completed = false;
       clone.completed_at = null;
-    } else if (newProgress === 100 && !activeDay.completed) {
-      const nowIso = new Date().toISOString();
-      clone.completed = true;
-      clone.completed_at = nowIso;
-      clone.ended_at = nowIso;
-      setShowCelebration(true);
     }
     triggerAutoSave(clone);
   };
@@ -355,7 +368,7 @@ export default function WorkoutModal({
     }
     // Store empty string when cleared so input is empty, without converting back to 0
     ex.logged_sets[setIdx][field] = value === '' ? '' : value;
-    triggerAutoSave(clone);
+    triggerAutoSave(clone, false, 300);
   };
 
   const handleAutofillPrevious = (exIdx, history) => {
@@ -406,6 +419,11 @@ export default function WorkoutModal({
   const userWeight = activeDay.actual_weight_kg || 91.5;
   const cal = calculateDayCalories(activeDay, userWeight);
   const pct = activeDay.completion_percentage !== undefined ? activeDay.completion_percentage : (activeDay.completed ? 100 : 0);
+  const allExercisesDone = (activeDay.parsed_exercises || []).length > 0 &&
+    (activeDay.parsed_exercises || []).every((ex) => {
+      const sets = ex.logged_sets || [];
+      return sets.length > 0 && sets.every((s) => s.completed);
+    });
 
   return (
     <div
@@ -556,7 +574,7 @@ export default function WorkoutModal({
                         {/* Thumbnail image if available */}
                         {thumb ? (
                           <div
-                            onClick={() => (stretch.media || stretch) && onOpenExerciseGuide(stretch.media || stretch)}
+                            onClick={() => (stretch.media || stretch) && onOpenExerciseGuide({ ...(stretch.media || {}), name: stretch.name, prescribed_name: stretch.name, focus: stretch.focus })}
                             className="w-11 h-11 rounded-lg overflow-hidden bg-dark-950 shrink-0 border border-white/10 cursor-pointer relative group"
                             title="Tap to see form guide"
                           >
@@ -618,6 +636,13 @@ export default function WorkoutModal({
               </span>
             </div>
 
+            {allExercisesDone && pct < 100 && (
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs flex items-center space-x-2">
+                <span className="font-bold">⚡ All lifts complete!</span>
+                <span className="text-zinc-300 text-[11px]">Finish remaining warm-up, cardio, and cool-down to reach 100%.</span>
+              </div>
+            )}
+
             {(activeDay.parsed_exercises || []).map((ex, exIdx) => {
               let plannedSetsCount = 3;
               if (ex.target) {
@@ -645,7 +670,7 @@ export default function WorkoutModal({
                       {/* Photo / GIF Thumbnail (Tap to open full guide) */}
                       {thumbUrl ? (
                         <div
-                          onClick={() => (ex.media || ex) && onOpenExerciseGuide(ex.media || ex)}
+                          onClick={() => (ex.media || ex) && onOpenExerciseGuide({ ...(ex.media || {}), name: ex.name, prescribed_name: ex.name, target: ex.target })}
                           className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-dark-950 shrink-0 border border-white/10 hover:border-volt/80 transition cursor-pointer relative group shadow-md"
                           title="Tap to see proper form and muscle demonstration"
                         >
@@ -709,7 +734,7 @@ export default function WorkoutModal({
                       {ex.media && (
                         <button
                           type="button"
-                          onClick={() => onOpenExerciseGuide(ex.media)}
+                          onClick={() => onOpenExerciseGuide({ ...(ex.media || {}), name: ex.name, prescribed_name: ex.name, target: ex.target })}
                           className="text-[10px] font-bold text-volt flex items-center space-x-0.5 hover:underline"
                         >
                           <span>Guide</span>
@@ -888,7 +913,7 @@ export default function WorkoutModal({
                         <div className="flex items-center space-x-3 flex-1 min-w-0">
                           {thumb ? (
                             <div
-                              onClick={() => item.media && onOpenExerciseGuide(item.media)}
+                              onClick={() => (item.media || item) && onOpenExerciseGuide({ ...(item.media || {}), name: item.name || item.drill || item.activity, prescribed_name: item.name || item.drill || item.activity })}
                               className="w-11 h-11 rounded-lg overflow-hidden bg-dark-950 shrink-0 border border-white/10 cursor-pointer relative group"
                               title="Tap to see form guide"
                             >
@@ -970,7 +995,7 @@ export default function WorkoutModal({
                       <div className="flex items-center space-x-3 flex-1 min-w-0">
                         {thumb ? (
                           <div
-                            onClick={() => (stretch.media || stretch) && onOpenExerciseGuide(stretch.media || stretch)}
+                            onClick={() => (stretch.media || stretch) && onOpenExerciseGuide({ ...(stretch.media || {}), name: stretch.name, prescribed_name: stretch.name, focus: stretch.focus })}
                             className="w-11 h-11 rounded-lg overflow-hidden bg-dark-950 shrink-0 border border-white/10 cursor-pointer relative group"
                             title="Tap to see form guide"
                           >

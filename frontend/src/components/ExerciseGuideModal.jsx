@@ -54,29 +54,42 @@ export default function ExerciseGuideModal({ exercise, isOpen, onClose }) {
       <div className="w-full max-w-lg bg-dark-850 border border-white/[0.1] rounded-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="p-3.5 sm:p-4 border-b border-white/[0.08] bg-dark-900 flex items-center justify-between shrink-0">
-          <div className="space-y-0.5">
+          <div className="space-y-1 min-w-0 pr-2">
             <div className="flex items-center space-x-2">
               <span className="text-[10px] font-bold uppercase tracking-wider text-volt">
                 {exercise.body_group || exercise.category || 'Strength Movement'}
               </span>
-              {exercise.is_plan && (
+              {(exercise.is_plan || exercise.target) && (
                 <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-volt text-dark-950 uppercase">
-                  90-Day Plan Core
+                  {exercise.target || '90-Day Plan Core'}
                 </span>
               )}
-              {exercise.level && (
-                <span className="text-[10px] text-zinc-400 font-mono">
-                  • {exercise.level}
+              {exercise.equipment && (
+                <span className="text-[10px] text-zinc-400 font-mono hidden sm:inline truncate">
+                  • {exercise.equipment}
                 </span>
               )}
             </div>
-            <h3 className="text-sm sm:text-base font-bold text-white font-heading line-clamp-1">
-              {exercise.display_name || exercise.name}
-            </h3>
+            
+            {exercise.name && exercise.display_name && exercise.name.toLowerCase() !== exercise.display_name.toLowerCase() ? (
+              <div>
+                <div className="text-[11px] font-semibold text-zinc-400 flex items-center gap-1.5 truncate">
+                  <span>Prescribed Lift:</span>
+                  <span className="text-volt font-bold">{exercise.name}</span>
+                </div>
+                <h3 className="text-sm sm:text-base font-bold text-white font-heading line-clamp-1">
+                  {exercise.display_name}
+                </h3>
+              </div>
+            ) : (
+              <h3 className="text-sm sm:text-base font-bold text-white font-heading line-clamp-1">
+                {exercise.display_name || exercise.name}
+              </h3>
+            )}
           </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 flex items-center justify-center text-zinc-400 hover:text-white rounded-xl hover:bg-white/5 transition"
+            className="w-10 h-10 flex items-center justify-center text-zinc-400 hover:text-white rounded-xl hover:bg-white/5 transition shrink-0"
             aria-label="Close"
           >
             <X className="w-5 h-5" />

@@ -195,6 +195,8 @@ export default function App() {
 
   const todayDay = getTodayDay();
 
+  const statsDebounceRef = useRef(null);
+
   // Optimistic updates with instant cache synchronization
   const handleDayUpdated = (updatedDay) => {
     setAllDays((prev) => {
@@ -205,15 +207,18 @@ export default function App() {
       return next;
     });
 
-    // Refresh stats in background
-    api.getStats().then((s) => {
-      if (s) {
-        setStats(s);
-        try {
-          localStorage.setItem('90days_cache_stats', JSON.stringify(s));
-        } catch (e) {}
-      }
-    }).catch(() => {});
+    // Debounced stats refresh in background so rapid ticks/inputs don't spam getStats()
+    if (statsDebounceRef.current) clearTimeout(statsDebounceRef.current);
+    statsDebounceRef.current = setTimeout(() => {
+      api.getStats().then((s) => {
+        if (s) {
+          setStats(s);
+          try {
+            localStorage.setItem('90days_cache_stats', JSON.stringify(s));
+          } catch (e) {}
+        }
+      }).catch(() => {});
+    }, 400);
   };
 
   const handleQuickLogWeight = async (weightKg, timeOfDay = 'morning', dayNum = null) => {

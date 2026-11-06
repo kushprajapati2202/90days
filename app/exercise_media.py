@@ -136,22 +136,22 @@ EXERCISE_MEDIA_DATABASE = {
         "video_query": "seated cable row proper form"
     },
     "chest-supported row": {
-        "id": "Underhand_Cable_Pulldowns",
-        "display_name": "Chest-Supported Row",
+        "id": "Dumbbell_Incline_Row",
+        "display_name": "Chest-Supported Incline DB Row",
         "category": "Strength Lifts",
-        "equipment": "Incline Bench or T-Bar Machine",
+        "equipment": "Incline Bench & Dumbbells (or T-Bar Machine)",
         "primary_muscles": ["Upper Back & Rhomboids"],
         "secondary_muscles": ["Lats", "Biceps", "Rear Delts"],
         "images": [
-            f"{CDN_BASE}/Underhand_Cable_Pulldowns/0.jpg",
-            f"{CDN_BASE}/Underhand_Cable_Pulldowns/1.jpg"
+            f"{CDN_BASE}/Dumbbell_Incline_Row/0.jpg",
+            f"{CDN_BASE}/Dumbbell_Incline_Row/1.jpg"
         ],
         "form_cues": [
-            "Rest chest firmly against bench pad to eliminate lower back fatigue.",
-            "Pull weights towards hips, driving elbows back and retracting scapulae.",
-            "Lower slowly until upper back muscles are fully lengthened."
+            "Set bench to 30°–45° incline. Rest sternum and chest firmly against pad to eliminate spinal compression.",
+            "Let dumbbells hang with neutral grip. Row dumbbells up and back toward hip crease, driving with elbows.",
+            "Retract shoulder blades and hold peak contraction for 1 second. Lower slowly under 2–3s muscular control."
         ],
-        "video_query": "chest supported dumbbell row form"
+        "video_query": "chest supported dumbbell incline row form"
     },
     "face pull": {
         "id": "Face_Pull",
@@ -334,22 +334,22 @@ EXERCISE_MEDIA_DATABASE = {
         "video_query": "incline chest press machine form"
     },
     "cable/pec fly": {
-        "id": "Flat_Bench_Cable_Flyes",
-        "display_name": "Cable / Pec Deck Fly",
+        "id": "Butterfly",
+        "display_name": "Pec Deck Machine Fly (or Cable Crossover)",
         "category": "Strength Lifts",
-        "equipment": "Cable Crossover or Pec Deck Machine",
-        "primary_muscles": ["Chest (Sternal Head)"],
+        "equipment": "Pec Deck (Butterfly) Machine or Cable Crossover",
+        "primary_muscles": ["Chest (Pectoralis Major)"],
         "secondary_muscles": ["Anterior Deltoids"],
         "images": [
-            f"{CDN_BASE}/Flat_Bench_Cable_Flyes/0.jpg",
-            f"{CDN_BASE}/Flat_Bench_Cable_Flyes/1.jpg"
+            f"{CDN_BASE}/Butterfly/0.jpg",
+            f"{CDN_BASE}/Butterfly/1.jpg"
         ],
         "form_cues": [
-            "Maintain a slight, fixed bend in elbows throughout the motion.",
-            "Open arms wide to feel a deep stretch in chest fibers.",
-            "Bring hands together in front of chest in a hugging arc; squeeze chest hard for 1 second."
+            "Sit tall with back and head resting against pad. Grasp handles with slight, fixed elbow bend.",
+            "Bring handles together in front of mid-chest in a wide hugging arc.",
+            "Hold peak contraction for 1 full second and squeeze pectorals. Control return slowly for deep stretch."
         ],
-        "video_query": "cable chest fly proper form"
+        "video_query": "pec deck butterfly machine fly proper form"
     },
     "rope pushdown": {
         "id": "Triceps_Pushdown_-_Rope_Attachment",
@@ -460,38 +460,38 @@ EXERCISE_MEDIA_DATABASE = {
         "video_query": "ez bar curl proper form"
     },
     "cable curl": {
-        "id": "Cable_Preacher_Curl",
+        "id": "Standing_Biceps_Cable_Curl",
         "display_name": "Standing Cable Bicep Curl",
         "category": "Strength Lifts",
         "equipment": "Low Cable Pulley & Straight/Curl Bar",
         "primary_muscles": ["Biceps Brachii (Constant Cable Tension)"],
         "secondary_muscles": ["Forearms"],
         "images": [
-            f"{CDN_BASE}/Cable_Preacher_Curl/0.jpg",
-            f"{CDN_BASE}/Cable_Preacher_Curl/1.jpg"
+            f"{CDN_BASE}/Standing_Biceps_Cable_Curl/0.jpg",
+            f"{CDN_BASE}/Standing_Biceps_Cable_Curl/1.jpg"
         ],
         "form_cues": [
-            "Stand facing low pulley with arms extended down.",
-            "Curl bar up, keeping elbows fixed in space. Cables provide continuous tension throughout.",
-            "Squeeze biceps firmly at peak contraction for 1 second."
+            "Stand facing low pulley with arms extended down. Keep core braced and elbows pinned at sides.",
+            "Curl bar up toward shoulders, keeping elbows fixed in space. Cables provide continuous tension throughout.",
+            "Squeeze biceps firmly at peak contraction for 1 second, then lower under 2–3s control."
         ],
-        "video_query": "cable bicep curl proper form"
+        "video_query": "standing cable bicep curl proper form"
     },
     "Leg press or hack squat": {
-        "id": "Barbell_Hack_Squat",
-        "display_name": "Hack Squat or Leg Press",
+        "id": "Hack_Squat",
+        "display_name": "Machine Hack Squat / Leg Press",
         "category": "Strength Lifts",
-        "equipment": "Hack Squat Machine or Leg Press",
+        "equipment": "Hack Squat Machine or 45° Sled Leg Press",
         "primary_muscles": ["Quadriceps"],
         "secondary_muscles": ["Glutes", "Hamstrings"],
         "images": [
-            f"{CDN_BASE}/Barbell_Hack_Squat/0.jpg",
-            f"{CDN_BASE}/Barbell_Hack_Squat/1.jpg"
+            f"{CDN_BASE}/Hack_Squat/0.jpg",
+            f"{CDN_BASE}/Hack_Squat/1.jpg"
         ],
         "form_cues": [
-            "Shoulders and back pinned to machine pad. Feet flat shoulder-width.",
-            "Lower carriage down until knees reach 90 degrees.",
-            "Drive up through midfoot and heels. Keep knees tracking over 2nd/3rd toes."
+            "Shoulders and back pinned to machine pad. Feet flat shoulder-width on carriage platform.",
+            "Disengage safeties. Lower carriage down under smooth control until knees reach 90 degrees.",
+            "Drive up through midfoot and heels. Keep knees tracking over 2nd/3rd toes without slamming lockout."
         ],
         "video_query": "hack squat machine proper form"
     },
@@ -987,51 +987,206 @@ STRETCHES_AND_CARDIO_DATABASE = {
         "video_query": "seated butterfly stretch proper form"
     },
     "spinal twist": {
-        "display_name": "Lying Supine Spinal Twist",
+        "id": "Ankle_On_The_Knee",
+        "display_name": "Lying Supine Spinal Twist & Glute Release",
         "category": "Cool-Down Static Stretch",
         "equipment": "Mat",
         "primary_muscles": ["Lumbar Spine & Thoracic Rotation"],
         "secondary_muscles": ["Glutes", "Obliques"],
         "images": [
-            f"{CDN_BASE}/Childs_Pose/0.jpg",
-            f"{CDN_BASE}/Childs_Pose/1.jpg"
+            f"{CDN_BASE}/Ankle_On_The_Knee/0.jpg",
+            f"{CDN_BASE}/Ankle_On_The_Knee/1.jpg"
         ],
         "form_cues": ["Lie on back with arms in 'T' shape. Bring one knee to chest and gently guide it across body to opposite floor while keeping shoulders grounded. Hold 45s."],
         "video_query": "lying spinal twist stretch form"
+    },
+    "band pull-aparts": {
+        "id": "Band_Pull_Apart",
+        "display_name": "Band Pull-Aparts (Rotator Cuff & Upper Back)",
+        "category": "Dynamic Warm-Up",
+        "equipment": "Resistance Band",
+        "primary_muscles": ["Rotator Cuff", "Rear Deltoids", "Rhomboids"],
+        "secondary_muscles": ["Middle Trapezius"],
+        "images": [
+            f"{CDN_BASE}/Band_Pull_Apart/0.jpg",
+            f"{CDN_BASE}/Band_Pull_Apart/1.jpg"
+        ],
+        "form_cues": ["Hold resistance band at shoulder height with arms straight.", "Pull band apart horizontally by squeezing shoulder blades together until band touches chest.", "Resist band slowly on return to keep constant tension."],
+        "video_query": "band pull aparts proper form"
+    },
+    "scapular push-ups": {
+        "id": "Pushups",
+        "display_name": "Scapular Push-Ups / Wall Slides",
+        "category": "Dynamic Warm-Up",
+        "equipment": "Floor / Mat",
+        "primary_muscles": ["Serratus Anterior"],
+        "secondary_muscles": ["Rotator Cuff", "Core"],
+        "images": [
+            f"{CDN_BASE}/Pushups/0.jpg",
+            f"{CDN_BASE}/Pushups/1.jpg"
+        ],
+        "form_cues": ["High plank position with arms straight. Without bending elbows, pinch shoulder blades together, then push floor away to dome upper back.", "Activates serratus anterior to stabilize shoulders during pressing."],
+        "video_query": "scapular push ups exercise form"
+    },
+    "thoracic rotations": {
+        "id": "Cat_Stretch",
+        "display_name": "Thoracic Rotations (Thread the Needle)",
+        "category": "Dynamic Warm-Up",
+        "equipment": "Mat",
+        "primary_muscles": ["Thoracic Spine (Mid-Back)"],
+        "secondary_muscles": ["Rotator Cuff", "Rear Deltoid"],
+        "images": [
+            f"{CDN_BASE}/Cat_Stretch/0.jpg",
+            f"{CDN_BASE}/Cat_Stretch/1.jpg"
+        ],
+        "form_cues": ["On all fours, reach one arm underneath chest across body, then rotate upward toward ceiling opening chest.", "Smooth rotational movement mobilizes mid-back and ribs."],
+        "video_query": "thread the needle thoracic rotation stretch"
+    },
+    "walking knee hugs": {
+        "id": "Step-up_with_Knee_Raise",
+        "display_name": "Walking Knee Hugs to Chest",
+        "category": "Dynamic Warm-Up",
+        "equipment": "Bodyweight",
+        "primary_muscles": ["Glutes", "Hip Flexors"],
+        "secondary_muscles": ["Hamstrings", "Ankles"],
+        "images": [
+            f"{CDN_BASE}/Step-up_with_Knee_Raise/0.jpg",
+            f"{CDN_BASE}/Step-up_with_Knee_Raise/1.jpg"
+        ],
+        "form_cues": ["Step forward, draw one knee firmly toward chest with tall upright posture.", "Rise up onto ball of support foot for balance and calf pre-activation."],
+        "video_query": "walking knee hugs dynamic warmup"
+    },
+    "cossack lunges": {
+        "id": "Split_Squats",
+        "display_name": "Lateral Cossack Lunges & Groin Mobility",
+        "category": "Dynamic Warm-Up",
+        "equipment": "Bodyweight",
+        "primary_muscles": ["Adductors (Inner Thighs)", "Hip Joint"],
+        "secondary_muscles": ["Quadriceps", "Ankles"],
+        "images": [
+            f"{CDN_BASE}/Split_Squats/0.jpg",
+            f"{CDN_BASE}/Split_Squats/1.jpg"
+        ],
+        "form_cues": ["Wide stance. Shift weight to one side, squatting deep while keeping opposite leg straight and heel grounded.", "Unlocks groin tightness and deep ankle mobility."],
+        "video_query": "cossack squats warmup mobility"
+    },
+    "seated forward fold": {
+        "id": "Hamstring_Stretch",
+        "display_name": "Seated Forward Fold & Posterior Chain Stretch",
+        "category": "Cool-Down Static Stretch",
+        "equipment": "Mat",
+        "primary_muscles": ["Hamstrings", "Erectors (Lower Back)"],
+        "secondary_muscles": ["Calves", "Thoracolumbar Fascia"],
+        "images": [
+            f"{CDN_BASE}/Hamstring_Stretch/0.jpg",
+            f"{CDN_BASE}/Hamstring_Stretch/1.jpg"
+        ],
+        "form_cues": ["Sit tall with legs straight. Hinge from hips, reaching hands toward ankles with relaxed breathing.", "Gently decompresses posterior chain and lower back."],
+        "video_query": "seated forward fold hamstring stretch"
+    },
+    "cooldown walk": {
+        "id": "Walking_Treadmill",
+        "display_name": "Slow Recovery Walk & Diaphragm Breathing",
+        "category": "Cool-Down Recovery",
+        "equipment": "Flat Ground / Treadmill",
+        "primary_muscles": ["Cardiovascular Recovery", "Calves"],
+        "secondary_muscles": ["CNS Downregulation"],
+        "images": [
+            f"{CDN_BASE}/Walking_Treadmill/0.jpg",
+            f"{CDN_BASE}/Walking_Treadmill/1.jpg"
+        ],
+        "form_cues": ["Walk at easy conversational pace (3.5–4.5 km/h). Deep diaphragmatic breathing facilitates metabolic clearance.", "Helps downregulate heart rate and transitions nervous system into recovery."],
+        "video_query": "cooldown walk breathing recovery"
+    },
+    "downward dog": {
+        "id": "Calf_Stretch_Hands_Against_Wall",
+        "display_name": "Downward Dog Calf & Achilles Stretch",
+        "category": "Cool-Down Static Stretch",
+        "equipment": "Mat",
+        "primary_muscles": ["Calves (Gastrocnemius & Soleus)", "Achilles Tendon"],
+        "secondary_muscles": ["Hamstrings", "Shoulders"],
+        "images": [
+            f"{CDN_BASE}/Calf_Stretch_Hands_Against_Wall/0.jpg",
+            f"{CDN_BASE}/Calf_Stretch_Hands_Against_Wall/1.jpg"
+        ],
+        "form_cues": ["Form an inverted 'V' with hips high. Pedal heels alternatively toward mat to deeply stretch calves and Achilles tendons."],
+        "video_query": "downward dog calf stretch form"
+    },
+    "neck mobility": {
+        "id": "Arm_Circles",
+        "display_name": "Upper Trapezius & Cervical Neck Release",
+        "category": "Cool-Down Static Stretch",
+        "equipment": "Bodyweight",
+        "primary_muscles": ["Upper Trapezius", "Levator Scapulae"],
+        "secondary_muscles": ["Cervical Spine"],
+        "images": [
+            f"{CDN_BASE}/Arm_Circles/0.jpg",
+            f"{CDN_BASE}/Arm_Circles/1.jpg"
+        ],
+        "form_cues": ["Sit upright. Tilt ear gently toward shoulder without shrugging. Hold 20–30s per side with relaxed breaths."],
+        "video_query": "upper trapezius neck stretch form"
+    },
+    "standing side bends": {
+        "id": "Overhead_Lat",
+        "display_name": "Standing Side Bends & Lat Reach",
+        "category": "Dynamic Warm-Up",
+        "equipment": "Bodyweight",
+        "primary_muscles": ["Quadratus Lumborum (QL)", "Intercostals"],
+        "secondary_muscles": ["Latissimus Dorsi", "Obliques"],
+        "images": [
+            f"{CDN_BASE}/Overhead_Lat/0.jpg",
+            f"{CDN_BASE}/Overhead_Lat/1.jpg"
+        ],
+        "form_cues": ["Stand tall with feet hip-width. Reach one arm overhead and laterally flex torso to lengthen flank muscles. Hold 15–20s each side."],
+        "video_query": "standing side bend stretch form"
+    },
+    "savasana": {
+        "id": "Childs_Pose",
+        "display_name": "Savasana / Box Breathing (Downregulation)",
+        "category": "Cool-Down Recovery",
+        "equipment": "Mat",
+        "primary_muscles": ["CNS Parasympathetic Downregulation"],
+        "secondary_muscles": ["Full Body Muscular Relaxation"],
+        "images": [
+            f"{CDN_BASE}/Childs_Pose/0.jpg",
+            f"{CDN_BASE}/Childs_Pose/1.jpg"
+        ],
+        "form_cues": ["Lie completely flat on back with eyes closed. Box breathing: 4s inhale, 4s hold, 4s exhale, 4s hold. Lowers cortisol and begins recovery immediately."],
+        "video_query": "box breathing recovery technique"
     }
 }
 
-# High-precision verified animated demonstration GIFs from ExerciseDB dataset
+# 3. High-precision verified animated demonstration GIFs from ExerciseDB dataset
 PLAN_EXERCISE_GIFS = {
     "Bench press": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0025-EIeI8Vf.gif",
     "incline DB press": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0289-SpYC0Kp.gif",
     "machine chest press": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1301-wDN97Ca.gif",
     "lateral raise": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0334-DsgkuIt.gif",
     "triceps pushdown": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0199-PskORrA.gif",
-    "Lat pulldown": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1325-CmEr4pM.gif",
+    "Lat pulldown": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0198-RVwzP10.gif",
     "seated cable row": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0159-kesXOpB.gif",
-    "chest-supported row": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0049-dmgMp3n.gif",
+    "chest-supported row": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0327-7vG5o25.gif",
     "face pull": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0177-CuaWCmC.gif",
     "DB curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1650-J74XlNf.gif",
     "hammer curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0313-slDvUAU.gif",
     "Squat or goblet squat": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0024-Y7YcmIJ.gif",
-    "leg press": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1425-WWD6FzI.gif",
+    "leg press": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0739-10Z2DXU.gif",
     "Romanian deadlift": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0085-wQ2c4XD.gif",
     "leg curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0586-17lJ1kr.gif",
     "calf raise": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1372-8ozhUIZ.gif",
-    "Shoulder press": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/3547-OeL23VY.gif",
+    "Shoulder press": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0405-znQUdHY.gif",
     "incline chest press": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1289-PDaMuyV.gif",
     "cable/pec fly": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0154-aqvSOQE.gif",
     "rope pushdown": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0200-dU605di.gif",
     "Assisted pull-up": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0017-kiJ4Z2K.gif",
     "one-arm DB row": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0292-C0MA9bC.gif",
-    "close-grip pulldown": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/3117-4LoWllp.gif",
+    "close-grip pulldown": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0818-rkg41Fb.gif",
     "reverse pec deck": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0993-sTfvVsG.gif",
-    "EZ curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1682-Dsfz0Id.gif",
+    "EZ curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0447-6TG6x2w.gif",
     "cable curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1634-otqIxU4.gif",
-    "Leg press or hack squat": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1385-IeDEXTe.gif",
+    "Leg press or hack squat": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0743-Qa55kX1.gif",
     "split squat": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0410-qx4fgX7.gif",
-    "hip thrust": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/3562-qg2PGl6.gif",
+    "hip thrust": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1409-qKBpF7I.gif",
     "seated leg curl": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0586-17lJ1kr.gif"
 }
 
@@ -1045,7 +1200,8 @@ STRETCH_GIFS = {
     "quad stretch": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1512-qBcKorM.gif",
     "hamstring stretch": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/1560-yRYyfdA.gif",
     "treadmill": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/3666-rjiM4L3.gif",
-    "cross trainer": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/2331-XSCHmiI.gif"
+    "cross trainer": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/2331-XSCHmiI.gif",
+    "cooldown walk": "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/3666-rjiM4L3.gif"
 }
 
 # Prioritize animated GIFs across all strength exercises
@@ -1058,73 +1214,187 @@ for key, gif in PLAN_EXERCISE_GIFS.items():
 # Prioritize animated GIFs across warmups and stretches
 for key, gif in STRETCH_GIFS.items():
     for sk in STRETCHES_AND_CARDIO_DATABASE:
-        if key in sk.lower():
+        if key.lower() in sk.lower():
             item = STRETCHES_AND_CARDIO_DATABASE[sk]
             item["gif_url"] = gif
             item["images"] = [gif] + [img for img in item.get("images", []) if img != gif]
 
-def get_exercise_media(name: str) -> dict:
-    """Find media, photos, and form cues for any exercise, stretch, cardio, or bodyweight drill."""
-    clean = name.strip()
-    
-    # 1. Exact match in strength database
-    if clean in EXERCISE_MEDIA_DATABASE:
-        return EXERCISE_MEDIA_DATABASE[clean]
-    
-    # 2. Check in stretches and cardio database
-    for k, v in STRETCHES_AND_CARDIO_DATABASE.items():
-        if k.lower() in clean.lower():
-            return v
-            
-    # 3. Fuzzy search in strength database
-    for k, v in EXERCISE_MEDIA_DATABASE.items():
-        if k.lower() in clean.lower() or clean.lower() in k.lower():
-            return v
-            
-    # 4. Fallback search by keywords
-    lower = clean.lower()
-    if "chest" in lower or "pec" in lower:
-        return STRETCHES_AND_CARDIO_DATABASE["doorway chest stretch"]
-    elif "tricep" in lower:
-        return STRETCHES_AND_CARDIO_DATABASE["overhead triceps"]
-    elif "shoulder" in lower or "delt" in lower:
-        return STRETCHES_AND_CARDIO_DATABASE["cross-body shoulder stretch"]
-    elif "lat" in lower or "pull" in lower or "hang" in lower:
-        return STRETCHES_AND_CARDIO_DATABASE["rack lat stretch"]
-    elif "quad" in lower:
-        return STRETCHES_AND_CARDIO_DATABASE["quad stretch"]
-    elif "hamstring" in lower or "deadlift" in lower:
-        return STRETCHES_AND_CARDIO_DATABASE["hamstring stretch"]
-    elif "hip" in lower or "lunge" in lower or "psoas" in lower:
-        return STRETCHES_AND_CARDIO_DATABASE["hip flexor lunge stretch"]
-    elif "calf" in lower:
-        return STRETCHES_AND_CARDIO_DATABASE["calf wall stretch"]
-    elif "glute" in lower or "pigeon" in lower:
-        return STRETCHES_AND_CARDIO_DATABASE["pigeon pose"]
-    elif "treadmill" in lower or "walk" in lower:
-        return STRETCHES_AND_CARDIO_DATABASE["treadmill"]
-    elif "cross trainer" in lower or "elliptical" in lower:
-        return STRETCHES_AND_CARDIO_DATABASE["cross trainer"]
-    elif "bike" in lower or "cycle" in lower:
-        return STRETCHES_AND_CARDIO_DATABASE["cycle"]
-    elif "child" in lower:
-        return STRETCHES_AND_CARDIO_DATABASE["child's pose"]
-    elif "cat" in lower:
-        return STRETCHES_AND_CARDIO_DATABASE["cat-cow"]
-    elif "butterfly" in lower or "groin" in lower:
-        return STRETCHES_AND_CARDIO_DATABASE["butterfly stretch"]
+# 4. Explicit string normalization aliases for every workout plan drill
+EXERCISE_ALIASES = {
+    # Warmup and Cooldown String Aliases
+    "easy treadmill / incline walk": "treadmill",
+    "easy treadmill or incline walk": "treadmill",
+    "slow cool-down walk & diaphragm breathing": "cooldown walk",
+    "slow cooldown walk": "cooldown walk",
+    "slow cooldown walk & deep breathing": "cooldown walk",
+    "slow flat walk": "cooldown walk",
+    "slow relaxed walk": "cooldown walk",
+    "slow treadmill walk with deep breathing": "cooldown walk",
+    "gentle relaxed walk (outdoors or treadmill)": "cooldown walk",
+    "stationary bike or brisk treadmill walk": "treadmill",
+    "treadmill brisk walk or stepper easy pace": "treadmill",
+    "cross trainer / rower easy pace": "cross trainer",
+    "cross trainer or light rower": "cross trainer",
+    "horizontal & overhead arm swings": "arm circles",
+    "arm circles (small to large)": "arm circles",
+    "band shoulder dislocations / over-and-backs": "shoulder circles",
+    "scapular push-ups / wall slides": "scapular push-ups",
+    "scapular wall slides": "scapular push-ups",
+    "band pull-aparts / light rotations": "band pull-aparts",
+    "band pull-aparts & light face pulls": "band pull-aparts",
+    "wrist mobility & circle stretches": "wrist mobility",
+    "forearm & wrist flexion/extension rotations": "wrist mobility",
+    "doorway pectoral & front delt stretch": "doorway chest stretch",
+    "behind-the-back clasp chest opener": "doorway chest stretch",
+    "overhead triceps & lat stretch": "overhead triceps",
+    "overhead triceps extension stretch": "overhead triceps",
+    "cross-body shoulder stretch": "cross-body shoulder stretch",
+    "cross-body posterior deltoid stretch": "cross-body shoulder stretch",
+    "child's pose with floor arm reach": "child's pose",
+    "child's pose with lateral side reach": "child's pose",
+    "extended child's pose with deep breathing": "child's pose",
+    "cat-cow spinal flexion & extension": "cat-cow",
+    "cat-cow spine warmup": "cat-cow",
+    "cat-cow gentle spinal waves": "cat-cow",
+    "thoracic rotations (thread the needle)": "thoracic rotations",
+    "thoracic open books (lying on side)": "thoracic rotations",
+    "dead hang from pull-up bar": "dead hang",
+    "rack / pole lat stretch": "rack lat stretch",
+    "single-arm rack lat stretch": "rack lat stretch",
+    "cross-arm upper back rhomboid stretch": "cross-body shoulder stretch",
+    "wall bicep & chest stretch": "bicep wall stretch",
+    "doorframe biceps & anterior shoulder stretch": "bicep wall stretch",
+    "seated forward fold / hamstring hang": "seated forward fold",
+    "seated hamstring & erector forward reach": "seated forward fold",
+    "leg swings (front-to-back & side-to-side)": "leg swings",
+    "deep goblet squat hold + ankle rock": "bodyweight squat",
+    "hip 90/90 internal & external switches": "hip 90/90",
+    "glute bridges (bodyweight)": "glute bridge",
+    "standing / kneeling quad stretch": "quad stretch",
+    "standing quad & hip flexor stretch": "quad stretch",
+    "kneeling low lunge hip flexor stretch": "hip flexor lunge stretch",
+    "kneeling hip flexor & psoas stretch": "hip flexor lunge stretch",
+    "seated single-leg hamstring stretch": "hamstring stretch",
+    "lying hamstring stretch with strap/hands": "hamstring stretch",
+    "supine lying hamstring & lower back stretch": "hamstring stretch",
+    "wall standing calf stretch": "calf wall stretch",
+    "downward dog calf & achilles stretch": "downward dog",
+    "figure-4 / pigeon glute stretch": "pigeon pose",
+    "pigeon pose or reclined figure-4": "pigeon pose",
+    "light band lateral raise warmup": "lateral raise",
+    "upper trapezius & levator scapulae neck release": "neck mobility",
+    "standing gentle neck rolls & shoulder shrugs": "neck mobility",
+    "walking knee hugs to chest": "walking knee hugs",
+    "lateral cossack lunges / groin mobility": "cossack lunges",
+    "world's greatest stretch (lunge + reach)": "hip flexor lunge stretch",
+    "bodyweight squats & calf raises": "bodyweight squat",
+    "seated butterfly adductor stretch": "butterfly stretch",
+    "seated butterfly stretch": "butterfly stretch",
+    "supine glute / spinal twist stretch": "spinal twist",
+    "lying spinal twist": "spinal twist",
+    "standing side bends with overhead reach": "standing side bends",
+    "savasana / box breathing (4s in, 4s hold, 4s out, 4s hold)": "savasana"
+}
 
-    # 5. Clean default with working search
-    return {
-        "display_name": clean,
-        "category": "Exercise Drill",
-        "equipment": "Gym Equipment / Bodyweight",
-        "images": [
-            f"{CDN_BASE}/Arm_Circles/0.jpg",
-            f"{CDN_BASE}/Arm_Circles/1.jpg"
-        ],
-        "primary_muscles": ["Target Muscle Group"],
-        "secondary_muscles": ["Stabilizers"],
-        "form_cues": ["Perform with controlled form and full range of motion. Keep 2–3 reps in reserve."],
-        "video_query": f"how to do {clean} exercise proper form"
-    }
+def get_exercise_media(name: str) -> dict:
+    """Find media, photos, and form cues for any exercise, stretch, cardio, or bodyweight drill.
+    Guarantees trainer-accurate biomechanical demonstration, verified GIFs, and preserves prescribed name.
+    """
+    raw = name.strip() if name else ""
+    clean = raw.lower()
+    
+    # 1. Exact or case-insensitive match in strength database
+    for k, v in EXERCISE_MEDIA_DATABASE.items():
+        if k.lower() == clean:
+            res = dict(v)
+            res["prescribed_name"] = raw
+            return res
+
+    # 2. Check explicit workout plan aliases
+    if clean in EXERCISE_ALIASES:
+        alias_target = EXERCISE_ALIASES[clean]
+        if alias_target in EXERCISE_MEDIA_DATABASE:
+            res = dict(EXERCISE_MEDIA_DATABASE[alias_target])
+            res["prescribed_name"] = raw
+            return res
+        if alias_target in STRETCHES_AND_CARDIO_DATABASE:
+            res = dict(STRETCHES_AND_CARDIO_DATABASE[alias_target])
+            res["prescribed_name"] = raw
+            return res
+
+    # 3. Exact match in stretches and cardio database
+    for k, v in STRETCHES_AND_CARDIO_DATABASE.items():
+        if k.lower() == clean:
+            res = dict(v)
+            res["prescribed_name"] = raw
+            return res
+
+    # 4. Fuzzy match in strength database (checks strength lifts BEFORE any stretches!)
+    for k, v in EXERCISE_MEDIA_DATABASE.items():
+        k_low = k.lower()
+        if k_low in clean or clean in k_low:
+            res = dict(v)
+            res["prescribed_name"] = raw
+            return res
+
+    # 5. Fuzzy match in stretches database
+    for k, v in STRETCHES_AND_CARDIO_DATABASE.items():
+        k_low = k.lower()
+        if k_low in clean:
+            res = dict(v)
+            res["prescribed_name"] = raw
+            return res
+
+    # 6. Strict word-boundary keyword search (prevents 'flat' matching 'lat' or 'rotations' matching 'lat'!)
+    import re
+    if re.search(r'\b(walk|treadmill)\b', clean):
+        res = dict(STRETCHES_AND_CARDIO_DATABASE["cooldown walk"])
+    elif re.search(r'\b(bike|cycle)\b', clean):
+        res = dict(STRETCHES_AND_CARDIO_DATABASE["cycle"])
+    elif re.search(r'\b(cross trainer|elliptical|rower)\b', clean):
+        res = dict(STRETCHES_AND_CARDIO_DATABASE["cross trainer"])
+    elif re.search(r'\b(cat-cow|cat cow)\b', clean):
+        res = dict(STRETCHES_AND_CARDIO_DATABASE["cat-cow"])
+    elif re.search(r'\bchild\b', clean):
+        res = dict(STRETCHES_AND_CARDIO_DATABASE["child's pose"])
+    elif re.search(r'\b(hamstring|fold)\b', clean):
+        res = dict(STRETCHES_AND_CARDIO_DATABASE["hamstring stretch"])
+    elif re.search(r'\b(quad|quadriceps)\b', clean):
+        res = dict(STRETCHES_AND_CARDIO_DATABASE["quad stretch"])
+    elif re.search(r'\b(glute|pigeon)\b', clean):
+        res = dict(STRETCHES_AND_CARDIO_DATABASE["pigeon pose"])
+    elif re.search(r'\b(calf|calves|achilles)\b', clean):
+        res = dict(STRETCHES_AND_CARDIO_DATABASE["calf wall stretch"])
+    elif re.search(r'\b(chest|pec)\b', clean):
+        res = dict(STRETCHES_AND_CARDIO_DATABASE["doorway chest stretch"])
+    elif re.search(r'\b(tricep|triceps)\b', clean):
+        res = dict(STRETCHES_AND_CARDIO_DATABASE["overhead triceps"])
+    elif re.search(r'\b(shoulder|delt)\b', clean):
+        res = dict(STRETCHES_AND_CARDIO_DATABASE["cross-body shoulder stretch"])
+    elif re.search(r'\b(lat|lats|hang)\b', clean):
+        res = dict(STRETCHES_AND_CARDIO_DATABASE["rack lat stretch"])
+    elif re.search(r'\b(hip|lunge|psoas)\b', clean):
+        res = dict(STRETCHES_AND_CARDIO_DATABASE["hip flexor lunge stretch"])
+    elif re.search(r'\b(butterfly|groin|adductor)\b', clean):
+        res = dict(STRETCHES_AND_CARDIO_DATABASE["butterfly stretch"])
+    elif re.search(r'\b(twist|spine)\b', clean):
+        res = dict(STRETCHES_AND_CARDIO_DATABASE["spinal twist"])
+    else:
+        # Fallback default preserving clean label
+        res = {
+            "display_name": raw,
+            "category": "Exercise Drill",
+            "equipment": "Gym Equipment / Bodyweight",
+            "images": [
+                f"{CDN_BASE}/Arm_Circles/0.jpg",
+                f"{CDN_BASE}/Arm_Circles/1.jpg"
+            ],
+            "primary_muscles": ["Target Muscle Group"],
+            "secondary_muscles": ["Stabilizers"],
+            "form_cues": ["Perform with controlled form and full range of motion. Keep 2–3 reps in reserve."],
+            "video_query": f"how to do {raw} exercise proper form"
+        }
+
+    res["prescribed_name"] = raw
+    return res
+

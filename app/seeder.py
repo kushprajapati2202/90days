@@ -149,13 +149,19 @@ def get_stretches_for_day(day_type: str) -> tuple[list, list]:
     warmups = []
     for s in routine["warmup"]:
         s_copy = dict(s)
-        s_copy["media"] = get_exercise_media(s["name"])
+        med = get_exercise_media(s["name"])
+        s_copy["media"] = med
+        if med.get("gif_url"):
+            s_copy["gif_url"] = med["gif_url"]
         warmups.append(s_copy)
 
     cooldowns = []
     for s in routine["cooldown"]:
         s_copy = dict(s)
-        s_copy["media"] = get_exercise_media(s["name"])
+        med = get_exercise_media(s["name"])
+        s_copy["media"] = med
+        if med.get("gif_url"):
+            s_copy["gif_url"] = med["gif_url"]
         cooldowns.append(s_copy)
 
     return (warmups, cooldowns)
@@ -171,13 +177,16 @@ def parse_exercise_item(item_str: str) -> dict:
         target = ""
 
     media = get_exercise_media(ex_name)
-    return {
+    doc = {
         "raw": item_str,
         "name": ex_name,
         "target": target,
         "media": media,
         "logged_sets": []
     }
+    if media.get("gif_url"):
+        doc["gif_url"] = media["gif_url"]
+    return doc
 
 def seed_database(force_reset: bool = False) -> dict:
     """Parse CSV and seed MongoDB Atlas database with full stretching, exercises, and cooldown routines."""

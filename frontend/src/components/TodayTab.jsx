@@ -55,10 +55,10 @@ export default function TodayTab({
 
   const userWeight = stats?.weight_stats?.current_weight_kg || 91.5;
   const cal = calculateDayCalories(todayDay, userWeight);
-  const isCompleted = !!todayDay.completed;
+  const pct = todayDay.completion_percentage !== undefined ? todayDay.completion_percentage : (todayDay.completed ? 100 : 0);
+  const isCompleted = !!todayDay.completed && pct >= 100;
   const isDeload = !!todayDay.is_deload;
   const isStarted = !!todayDay.started_at;
-  const pct = isCompleted ? 100 : (todayDay.completion_percentage !== undefined ? todayDay.completion_percentage : 0);
 
   // Primary muscle extraction
   let primaryMuscles = [];

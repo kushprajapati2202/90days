@@ -28,10 +28,14 @@ export default function InteractiveWorkoutSection({
   const [showCelebration, setShowCelebration] = useState(false);
   const [collapsedExercises, setCollapsedExercises] = useState({});
   const autoSaveTimerRef = useRef(null);
+  const activeDayNumberRef = useRef(day?.day_number);
 
   useEffect(() => {
-    setActiveDay(JSON.parse(JSON.stringify(day)));
-  }, [day]);
+    if (day && day.day_number !== activeDayNumberRef.current) {
+      activeDayNumberRef.current = day.day_number;
+      setActiveDay(JSON.parse(JSON.stringify(day)));
+    }
+  }, [day?.day_number]);
 
   // Live session running timer
   useEffect(() => {
@@ -114,13 +118,20 @@ export default function InteractiveWorkoutSection({
       if (c.completed) done++;
     });
 
-    if (total === 0 || d.completed) return d.completed ? 100 : 0;
-    return Math.round((done / total) * 100);
+    if (total === 0) return d.completed ? 100 : 0;
+    if (done >= total) return 100;
+    const pct = Math.round((done / total) * 100);
+    return pct >= 100 ? 99 : pct;
   };
 
-  const triggerAutoSave = (updatedDay) => {
+  const triggerAutoSave = (updatedDay, immediateParentSync = true, debounceMs = 150) => {
     setActiveDay(updatedDay);
     setSaveStatus('saving');
+
+    // Instant optimistic UI: parent state, progress bars, and localStorage refresh instantly (<1ms)
+    if (immediateParentSync && onDayUpdated) {
+      onDayUpdated(updatedDay);
+    }
 
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(async () => {
@@ -141,12 +152,14 @@ export default function InteractiveWorkoutSection({
           parsed_exercises: updatedDay.parsed_exercises,
         });
         setSaveStatus('saved');
-        if (onDayUpdated) onDayUpdated(updatedDay);
+        if (!immediateParentSync && onDayUpdated) {
+          onDayUpdated(updatedDay);
+        }
       } catch (e) {
         console.error('AutoSave failed:', e);
         setSaveStatus('error');
       }
-    }, 600);
+    }, debounceMs);
   };
 
   // Toggle Warmup / Cooldown stretch
@@ -156,12 +169,17 @@ export default function InteractiveWorkoutSection({
     const newProgress = calculateProgress(clone);
     clone.completion_percentage = newProgress;
     sounds.playSetCheck();
-    if (newProgress === 100 && !activeDay.completed) {
-      const nowIso = new Date().toISOString();
-      clone.completed = true;
-      clone.completed_at = nowIso;
-      clone.ended_at = nowIso;
-      setShowCelebration(true);
+    if (newProgress === 100) {
+      if (!activeDay.completed) {
+        const nowIso = new Date().toISOString();
+        clone.completed = true;
+        clone.completed_at = nowIso;
+        clone.ended_at = nowIso;
+        setShowCelebration(true);
+      }
+    } else {
+      clone.completed = false;
+      clone.completed_at = null;
     }
     triggerAutoSave(clone);
   };
@@ -191,12 +209,17 @@ export default function InteractiveWorkoutSection({
 
     const newProgress = calculateProgress(clone);
     clone.completion_percentage = newProgress;
-    if (newProgress === 100 && !activeDay.completed) {
-      const nowIso = new Date().toISOString();
-      clone.completed = true;
-      clone.completed_at = nowIso;
-      clone.ended_at = nowIso;
-      setShowCelebration(true);
+    if (newProgress === 100) {
+      if (!activeDay.completed) {
+        const nowIso = new Date().toISOString();
+        clone.completed = true;
+        clone.completed_at = nowIso;
+        clone.ended_at = nowIso;
+        setShowCelebration(true);
+      }
+    } else {
+      clone.completed = false;
+      clone.completed_at = null;
     }
     triggerAutoSave(clone);
   };
@@ -238,42 +261,30 @@ export default function InteractiveWorkoutSection({
 
     if (willBeCompleted) {
       sounds.playSetCheck();
-      if (onLaunchRestTimer) onLaunchRestTimer(90);
     }
 
     const newProgress = calculateProgress(clone);
     clone.completion_percentage = newProgress;
 
-    // Auto-detect when all exercise sets are completed -> auto stop session
-    const allExercisesFinished = (clone.parsed_exercises || []).length > 0 &&
-      (clone.parsed_exercises || []).every((exercise) => {
-        const sets = exercise.logged_sets || [];
-        return sets.length > 0 && sets.every((s) => s.completed);
-      });
-
-    if (allExercisesFinished) {
-      const nowIso = new Date().toISOString();
-      clone.completed = true;
-      clone.completed_at = nowIso;
-      clone.ended_at = nowIso;
-      clone.completion_percentage = 100;
-      try {
-        const s = new Date(clone.started_at || nowIso).getTime();
-        const dur = Math.max(1, Math.round((Date.now() - s) / 60000));
-        clone.actual_duration_min = dur <= 240 ? dur : 65;
-      } catch (_) {
-        clone.actual_duration_min = 65;
+    // Only 100% completed when ALL tasks across warmups, exercises, conditioning, cardio, and cooldowns are finished!
+    if (newProgress === 100) {
+      if (!activeDay.completed) {
+        const nowIso = new Date().toISOString();
+        clone.completed = true;
+        clone.completed_at = nowIso;
+        clone.ended_at = nowIso;
+        try {
+          const s = new Date(clone.started_at || nowIso).getTime();
+          const dur = Math.max(1, Math.round((Date.now() - s) / 60000));
+          clone.actual_duration_min = dur <= 240 ? dur : 65;
+        } catch (_) {
+          clone.actual_duration_min = 65;
+        }
+        setShowCelebration(true);
       }
-      setShowCelebration(true);
-    } else if (!willBeCompleted && clone.completed) {
+    } else {
       clone.completed = false;
       clone.completed_at = null;
-    } else if (newProgress === 100 && !activeDay.completed) {
-      const nowIso = new Date().toISOString();
-      clone.completed = true;
-      clone.completed_at = nowIso;
-      clone.ended_at = nowIso;
-      setShowCelebration(true);
     }
     triggerAutoSave(clone);
   };
@@ -286,7 +297,7 @@ export default function InteractiveWorkoutSection({
       ex.logged_sets[setIdx] = { set_num: setIdx + 1, weight_kg: '', reps: '', completed: false };
     }
     ex.logged_sets[setIdx][field] = value === '' ? '' : value;
-    triggerAutoSave(clone);
+    triggerAutoSave(clone, false, 300);
   };
 
   const handleAutofillPrevious = (exIdx, history) => {
@@ -328,6 +339,11 @@ export default function InteractiveWorkoutSection({
   const cal = calculateDayCalories(activeDay, userWeight);
   const condCardioItems = parseConditioningAndCardio(activeDay);
   const isAllDone = !!activeDay.completed;
+  const allExercisesDone = (activeDay.parsed_exercises || []).length > 0 &&
+    (activeDay.parsed_exercises || []).every((ex) => {
+      const sets = ex.logged_sets || [];
+      return sets.length > 0 && sets.every((s) => s.completed);
+    });
 
   return (
     <div className="space-y-4">
@@ -398,7 +414,7 @@ export default function InteractiveWorkoutSection({
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
                     {thumb ? (
                       <div
-                        onClick={() => (stretch.media || stretch) && onOpenExerciseGuide && onOpenExerciseGuide(stretch.media || stretch)}
+                        onClick={() => (stretch.media || stretch) && onOpenExerciseGuide && onOpenExerciseGuide({ ...(stretch.media || {}), name: stretch.name, prescribed_name: stretch.name, focus: stretch.focus })}
                         className="w-11 h-11 rounded-lg overflow-hidden bg-dark-950 shrink-0 border border-white/10 cursor-pointer relative group"
                         title="Tap to see form guide"
                       >
@@ -459,6 +475,13 @@ export default function InteractiveWorkoutSection({
           </span>
         </div>
 
+        {allExercisesDone && (activeDay.completion_percentage || 0) < 100 && (
+          <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs flex items-center space-x-2">
+            <span className="font-bold">⚡ All main lifts completed!</span>
+            <span className="text-zinc-300 text-[11px]">Finish remaining warm-up, cardio, and cool-down to reach 100%.</span>
+          </div>
+        )}
+
         <div className="space-y-3">
           {(activeDay.parsed_exercises || []).map((ex, exIdx) => {
             const history = getExerciseHistory(ex.name, activeDay.day_number, allDays);
@@ -489,7 +512,7 @@ export default function InteractiveWorkoutSection({
                     {/* Media Thumbnail */}
                     {thumbUrl ? (
                       <div
-                        onClick={() => (ex.media || ex) && onOpenExerciseGuide && onOpenExerciseGuide(ex.media || ex)}
+                        onClick={() => (ex.media || ex) && onOpenExerciseGuide && onOpenExerciseGuide({ ...(ex.media || {}), name: ex.name, prescribed_name: ex.name, target: ex.target })}
                         className="w-12 h-12 rounded-xl overflow-hidden bg-dark-950 shrink-0 border border-white/10 cursor-pointer relative group"
                         title="Tap to see form guide"
                       >
@@ -698,7 +721,7 @@ export default function InteractiveWorkoutSection({
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
                     {thumb ? (
                       <div
-                        onClick={() => item.media && onOpenExerciseGuide && onOpenExerciseGuide(item.media)}
+                        onClick={() => (item.media || item) && onOpenExerciseGuide && onOpenExerciseGuide({ ...(item.media || {}), name: item.name || item.drill || item.activity, prescribed_name: item.name || item.drill || item.activity })}
                         className="w-11 h-11 rounded-lg overflow-hidden bg-dark-950 shrink-0 border border-white/10 cursor-pointer relative group"
                         title="Tap to see form guide"
                       >
@@ -778,7 +801,7 @@ export default function InteractiveWorkoutSection({
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
                     {thumb ? (
                       <div
-                        onClick={() => (stretch.media || stretch) && onOpenExerciseGuide && onOpenExerciseGuide(stretch.media || stretch)}
+                        onClick={() => (stretch.media || stretch) && onOpenExerciseGuide && onOpenExerciseGuide({ ...(stretch.media || {}), name: stretch.name, prescribed_name: stretch.name, focus: stretch.focus })}
                         className="w-11 h-11 rounded-lg overflow-hidden bg-dark-950 shrink-0 border border-white/10 cursor-pointer relative group"
                         title="Tap to see form guide"
                       >
